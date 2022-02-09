@@ -484,7 +484,7 @@ const sandbox = {
     //Blob : Blob,
     logJS: lib.logJS,
     logIOC: lib.logIOC,
-    functionCounter: 0,
+    functionReturnSet: [],
     functionReturnStack: [],
     ActiveXObject,
     dom,

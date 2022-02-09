@@ -6,5 +6,5 @@ function test(x) {
   return 3;
 }
 
-//should print 0
+//should print undefined
 console.log(test(1));
