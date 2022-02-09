@@ -1,3 +1,5 @@
+//TODO: refactor duplicated code of analyze and analyze_multi_exec.js
+
 //const Blob = require("cross-blob");
 const lib = require("./lib");
 const escodegen = require("escodegen");
@@ -290,8 +292,45 @@ cc decoder.c -o decoder
                 });
             }
 
+            if (argv["multi-exec"]) {
+                lib.verbose("    Rewriting code to force multiexecution", false);
+                traverse(tree, function(key, val) {
+                    if (!val) return;
+                    switch (val.type) {
+                        case "IfStatement":
+                            return require("./patches/multiexec/if.js")(val);
+                        case "SwitchStatement":
+                            return require("./patches/multiexec/switch.js")(val);
+                        case "BreakStatement":
+                            return require("./patches/multiexec/break.js")(val);
+                        case "TryStatement":
+                            return require("./patches/multiexec/try.js")(val);
+                        case "":
+                            return require("./patches/multiexec/try.js")(val);
+                        default:
+                            break;
+                    }
+                });
+                //run function changes after above, as if statement changes tamper with it
+                traverse(tree, function(key, val) {
+                    if (!val) return;
+                    switch (val.type) {
+                        case "FunctionDeclaration":
+                            console.log("In functionbody")
+                            return require("./patches/multiexec/function.js")(val);
+                        default:
+                            break;
+                    }
+                });
+            }
+
+            console.log("rewritten tree is: ", tree)
+            console.log(JSON.stringify(tree));
+
             // console.log(JSON.stringify(tree, null, "\t"));
             code = escodegen.generate(tree);
+
+            console.log("rewritten code is: ", code)
 
             // The modifications may have resulted in more concatenations, eg. "a" + ("foo", "b") + "c" -> "a" + "b" + "c"
             if (argv["dumb-concat-simplify"]) {
@@ -347,6 +386,7 @@ code = fs.readFileSync(path.join(__dirname, "patch.js"), "utf8") + code;
 
 // append more code
 code += "\n\n" + fs.readFileSync(path.join(__dirname, "appended-code.js"));
+
 
 Array.prototype.Count = function() {
     return this.length;
@@ -444,6 +484,8 @@ const sandbox = {
     //Blob : Blob,
     logJS: lib.logJS,
     logIOC: lib.logIOC,
+    functionCounter: 0,
+    functionReturnStack: [],
     ActiveXObject,
     dom,
     alert: (x) => {},
@@ -526,7 +568,18 @@ if (argv["dangerous-vm"]) {
     // Fake up Object.toString not being defined in cscript.exe.
     //code = "Object.prototype.toString = undefined;\n\n" + code;
 
-    vm.run(code);
+    try {
+        vm.run(code);
+    } catch (e) {
+        console.log("IM HERE");
+        console.log(require("util").inspect(e));
+        console.log(typeof e);
+        console.log(e.stack);
+        console.log(e.lineNumber);
+        console.log(e.line);
+        console.log(JSON.stringify(e, null, 4));
+        console.log(e.stackTrace);
+    }
 }
 
 function ActiveXObject(name) {
