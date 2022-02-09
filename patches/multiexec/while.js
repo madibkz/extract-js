@@ -24,16 +24,8 @@ module.exports = (args) => {
                     "expression": {
                         "type": "CallExpression",
                         "callee": {
-                            "type": "MemberExpression",
-                            "object": {
-                                "type": "Identifier",
-                                "name": "console"
-                            },
-                            "property": {
-                                "type": "Identifier",
-                                "name": "log"
-                            },
-                            "computed": false
+                            "type": "Identifier",
+                            "name": "logMultiexec"
                         },
                         "arguments": [
                             {
@@ -49,16 +41,8 @@ module.exports = (args) => {
                     "expression": {
                         "type": "CallExpression",
                         "callee": {
-                            "type": "MemberExpression",
-                            "object": {
-                                "type": "Identifier",
-                                "name": "console"
-                            },
-                            "property": {
-                                "type": "Identifier",
-                                "name": "log"
-                            },
-                            "computed": false
+                            "type": "Identifier",
+                            "name": "logMultiexec"
                         },
                         "arguments": [
                             {

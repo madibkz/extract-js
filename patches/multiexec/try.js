@@ -30,16 +30,8 @@ module.exports = (args) => {
                 "expression": {
                     "type": "CallExpression",
                     "callee": {
-                        "type": "MemberExpression",
-                        "object": {
-                            "type": "Identifier",
-                            "name": "console"
-                        },
-                        "property": {
-                            "type": "Identifier",
-                            "name": "log"
-                        },
-                        "computed": false
+                        "type": "Identifier",
+                        "name": "logMultiexec"
                     },
                     "arguments": [
                         {
@@ -71,16 +63,8 @@ module.exports = (args) => {
                 "expression": {
                     "type": "CallExpression",
                     "callee": {
-                        "type": "MemberExpression",
-                        "object": {
-                            "type": "Identifier",
-                            "name": "console"
-                        },
-                        "property": {
-                            "type": "Identifier",
-                            "name": "log"
-                        },
-                        "computed": false
+                        "type": "Identifier",
+                        "name": "logMultiexec"
                     },
                     "arguments": [
                         {
@@ -100,21 +84,34 @@ module.exports = (args) => {
                 "expression": {
                     "type": "CallExpression",
                     "callee": {
-                        "type": "MemberExpression",
-                        "object": {
-                            "type": "Identifier",
-                            "name": "console"
-                        },
-                        "property": {
-                            "type": "Identifier",
-                            "name": "log"
-                        },
-                        "computed": false
+                        "type": "Identifier",
+                        "name": "logMultiexec"
                     },
                     "arguments": [
                         {
                             "type": "Literal",
                             "value": `Entered finalizer clause`,
+                        }
+                    ]
+                }
+            },
+        ]
+    }) : "";
+    args.finalizer ? args.finalizer.body.push({
+        "type": "BlockStatement",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "CallExpression",
+                    "callee": {
+                        "type": "Identifier",
+                        "name": "logMultiexec"
+                    },
+                    "arguments": [
+                        {
+                            "type": "Literal",
+                            "value": `Exited try statement`,
                         }
                     ]
                 }

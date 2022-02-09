@@ -25,16 +25,8 @@ module.exports = (args) => {
                     "expression": {
                         "type": "CallExpression",
                         "callee": {
-                            "type": "MemberExpression",
-                            "object": {
-                                "type": "Identifier",
-                                "name": "console"
-                            },
-                            "property": {
-                                "type": "Identifier",
-                                "name": "log"
-                            },
-                            "computed": false
+                            "type": "Identifier",
+                            "name": "logMultiexec"
                         },
                         "arguments": [
                             {
@@ -55,16 +47,8 @@ module.exports = (args) => {
                     "expression": {
                         "type": "CallExpression",
                         "callee": {
-                            "type": "MemberExpression",
-                            "object": {
-                                "type": "Identifier",
-                                "name": "console"
-                            },
-                            "property": {
-                                "type": "Identifier",
-                                "name": "log"
-                            },
-                            "computed": false
+                            "type": "Identifier",
+                            "name": "logMultiexec"
                         },
                         "arguments": [
                             {
@@ -74,7 +58,39 @@ module.exports = (args) => {
                         ]
                     }
                 },
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "CallExpression",
+                        "callee": {
+                            "type": "Identifier",
+                            "name": "logMultiexec"
+                        },
+                        "arguments": [
+                            {
+                                "type": "Literal",
+                                "value": `Entering for (${args.init ? escodegen.generate(args.init) : ""}; ${args.test ? escodegen.generate(args.test) : ""}; ${args.update ? escodegen.generate(args.update) : ""};)`,
+                            }
+                        ]
+                    }
+                },
                 args,
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "CallExpression",
+                        "callee": {
+                            "type": "Identifier",
+                            "name": "logMultiexec"
+                        },
+                        "arguments": [
+                            {
+                                "type": "Literal",
+                                "value": `Exited for (${args.init ? escodegen.generate(args.init) : ""}; ${args.test ? escodegen.generate(args.test) : ""}; ${args.update ? escodegen.generate(args.update) : ""};)`,
+                            }
+                        ]
+                    }
+                },
             ],
         };
     }

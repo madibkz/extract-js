@@ -79,14 +79,8 @@ module.exports = (args) => {
         "expression": {
         "type": "CallExpression",
             "callee": {
-            "type": "MemberExpression",
-                "object": {
                 "type": "Identifier",
-                    "name": "console"
-            },
-            "property": {
-                "type": "Identifier",
-                    "name": "log"
+                "name": "logMultiexec"
             },
             "computed": false
         },
@@ -96,7 +90,6 @@ module.exports = (args) => {
                 "value": `Entered function ${args.id.name}`,
             }
         ]
-        },
     });
     traverse(args.body.body, function(key, val) {
         if (!val) return;
@@ -224,17 +217,8 @@ module.exports = (args) => {
                                     "expression": {
                                         "type": "CallExpression",
                                         "callee": {
-                                            "type": "MemberExpression",
-                                            "object": {
-                                                "type": "Identifier",
-                                                "name": "console"
-                                            },
-                                            "property": {
-                                                "type": "Identifier",
-                                                "name": "log"
-                                            },
-                                            "computed": false,
-                                            "optional": false
+                                            "type": "Identifier",
+                                            "name": "logMultiexec"
                                         },
                                         "arguments": val.argument ? [
                                                 {
@@ -268,16 +252,8 @@ module.exports = (args) => {
         "expression": {
             "type": "CallExpression",
             "callee": {
-                "type": "MemberExpression",
-                "object": {
-                    "type": "Identifier",
-                    "name": "console"
-                },
-                "property": {
-                    "type": "Identifier",
-                    "name": "log"
-                },
-                "computed": false
+                "type": "Identifier",
+                "name": "logMultiexec"
             },
             "arguments": [
                 {
