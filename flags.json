@@ -108,7 +108,7 @@
             "description": "Return `false` for Scripting.FileSystemObject.FileExists(x)"
         },
         {
-            "name": "function-rewrite",
+            "name": "no-function-rewrite",
             "type": "Boolean",
             "description": "Rewrite function calls in order to catch eval calls"
         },
