@@ -1,5 +1,4 @@
-/*
-transforms function so that it executes all the code in it and returns the last return value it reached at the end
+/* transforms function so that it executes all the code in it and returns the last return value it reached at the end
 
     function example(x) {
         if (x == 1) {

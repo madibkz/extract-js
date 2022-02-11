@@ -149,6 +149,8 @@ function analyze(directory, filepath, filename, cb, multi_exec = false) {
 
 	multi_exec ? directory += "multi-exec" : directory += "default";
 	fs.mkdirSync(directory);
+	fs.mkdirSync(directory + "/resources");
+	fs.mkdirSync(directory + "/snippets");
 	directory += "/";
 
 	const worker = cp.fork(path.join(__dirname, "analyze"), [filepath, directory, /*multi_exec?*/ multi_exec, ...options]);
