@@ -491,6 +491,7 @@ const sandbox = {
     //Blob : Blob,
     logJS: lib.logJS,
     logIOC: lib.logIOC,
+    logMultiexec: (x) => lib.info("MULTI-EXEC: " + x),
     ActiveXObject,
     dom,
     alert: (x) => {},
@@ -536,12 +537,6 @@ const sandbox = {
     self: {},
     require
 };
-
-if (multi_exec_enabled) {
-    sandbox.logMultiexec = (x) => lib.info("MULTI-EXEC: " + x);
-    // sandbox.functionReturnSet = [];
-    // sandbox.functionReturnStack = [];
-}
 
 // See https://github.com/nodejs/node/issues/8071#issuecomment-240259088
 // It will prevent console.log from calling the "inspect" property,
