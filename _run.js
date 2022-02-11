@@ -115,11 +115,13 @@ else
 const outputDir = argv["output-dir"] || "./";
 tasks.forEach(({filepath, filename}) => {
 	const results_dir = get_results_dir(filename);
-	if (argv["multi-exec"]) {
+	if (argv["only-multi-exec"]) {
+		q.push(cb => analyze(results_dir, filepath, filename, cb, true))
+	} else if (argv["only-default"]) {
+		q.push(cb => analyze(results_dir, filepath, filename, cb, false))
+	} else {
 		q.push(cb => analyze(results_dir, filepath, filename, cb, false, false))
 		q.push(cb => analyze(results_dir, filepath, filename, cb, true, false))
-	} else {
-		q.push(cb => analyze(results_dir, filepath, filename, cb))
 	}
 });
 
