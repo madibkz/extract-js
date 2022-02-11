@@ -32,7 +32,7 @@ function kill(message) {
 	process.exit(0);
 }
 
-function log(tag, text, toFile = true, toStdout = true) {
+function log(tag, text, toFile = true, toStdout = (path.normalize(process.argv[5]) == 'true')) {
 	const levels = {
 		"debug": 0,
 		"verb": 1,
