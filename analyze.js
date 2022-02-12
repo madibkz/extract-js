@@ -305,12 +305,19 @@ cc decoder.c -o decoder
                             return require("./patches/multiexec/if.js")(val);
                         case "SwitchStatement":
                             return require("./patches/multiexec/switch.js")(val);
+                        case "TryStatement":
+                            return require("./patches/multiexec/try.js")(val);
+                        default:
+                            break;
+                    }
+                    if (argv["no-multi-exec-loop"]) {
+                        return;
+                    }
+                    switch (val.type) {
                         case "WhileStatement":
                             return require("./patches/multiexec/while.js")(val);
                         case "DoWhileStatement":
                             return require("./patches/multiexec/dowhile.js")(val);
-                        case "TryStatement":
-                            return require("./patches/multiexec/try.js")(val);
                         case "ForStatement":
                             return require("./patches/multiexec/for.js")(val);
                         default:
@@ -321,14 +328,17 @@ cc decoder.c -o decoder
                 traverse(tree, function(key, val) {
                     if (!val) return;
                     switch (val.type) {
-                        case "ForInStatement":
-                            return require("./patches/multiexec/forin.js")(val);
                         case "FunctionDeclaration":
                             return require("./patches/multiexec/function.js")(val);
-                        case "BreakStatement":
-                            return require("./patches/multiexec/break.js")(val);
-                        case "ContinueStatement":
-                            return require("./patches/multiexec/continue.js")(val);
+                        default:
+                            break;
+                    }
+                    if (argv["no-multi-exec-loop"]) {
+                        return;
+                    }
+                    switch (val.type) {
+                        case "ForInStatement":
+                            return require("./patches/multiexec/forin.js")(val);
                         default:
                             break;
                     }
