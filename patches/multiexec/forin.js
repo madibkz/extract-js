@@ -43,6 +43,10 @@ module.exports = (args) => {
                                         {
                                             "type": "Literal",
                                             "value": `Attempting to force execution of body of for (${escodegen.generate(args.left)} in ${escodegen.generate(args.right)})`,
+                                        },
+                                        {
+                                            "type": "Literal",
+                                            "value": 2,
                                         }
                                     ],
                                     "optional": false
@@ -60,7 +64,11 @@ module.exports = (args) => {
                                     "arguments": [
                                         {
                                             "type": "Literal",
-                                            "value": `Attempt to force execution of For (${escodegen.generate(args.left)} in ${escodegen.generate(args.right)}) succeeded`,
+                                            "value": `Attempt to force execution of for (${escodegen.generate(args.left)} in ${escodegen.generate(args.right)}) succeeded`,
+                                        },
+                                        {
+                                            "type": "Literal",
+                                            "value": 0,
                                         }
                                     ],
                                     "optional": false
@@ -89,6 +97,10 @@ module.exports = (args) => {
                                             {
                                                 "type": "Literal",
                                                 "value": `Attempt to force execution of for (${escodegen.generate(args.left)} in ${escodegen.generate(args.right)}) failed`,
+                                            },
+                                            {
+                                                "type": "Literal",
+                                                "value": 0,
                                             }
                                         ],
                                         "optional": false

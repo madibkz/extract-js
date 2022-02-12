@@ -29,6 +29,10 @@ module.exports = (args) => ({
                     {
                         "type": "Literal",
                         "value": `if (${escodegen.generate(args.test)})`,
+                    },
+                    {
+                        "type": "Literal",
+                        "value": 2,
                     }
                 ],
                 "optional": false
@@ -47,6 +51,10 @@ module.exports = (args) => ({
                 {
                     "type": "Literal",
                     "value": "else",
+                },
+                {
+                    "type": "Literal",
+                    "value": 0,
                 }
             ]
         }
@@ -62,6 +70,10 @@ module.exports = (args) => ({
                 {
                     "type": "Literal",
                     "value": "} (end if)",
+                },
+                {
+                    "type": "Literal",
+                    "value": 0,
                 }
             ]
         }

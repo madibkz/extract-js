@@ -31,6 +31,10 @@ module.exports = (args) => {
                             {
                                 "type": "Literal",
                                 "value": `while (${escodegen.generate(args.test)}) { (forced execution of while body)`,
+                            },
+                            {
+                                "type": "Literal",
+                                "value": 2,
                             }
                         ]
                     }
@@ -47,7 +51,11 @@ module.exports = (args) => {
                         "arguments": [
                             {
                                 "type": "Literal",
-                                "value": `} (end of forced execution of while (${escodegen.generate(args.test)}))`,
+                                "value": `} (end of forced execution of body of while (${escodegen.generate(args.test)}))`,
+                            },
+                            {
+                                "type": "Literal",
+                                "value": 0,
                             }
                         ]
                     }
