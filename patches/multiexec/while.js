@@ -5,7 +5,9 @@ turns:
         body
     }
 =>
-    body
+    if (!test) {
+        body
+    }
     while (test) {
         body
     }
@@ -19,47 +21,75 @@ module.exports = (args) => {
         return {
             "type": "BlockStatement",
             "body": [
+                //FORCED EXECUTION OF WHILE BODY
                 {
-                    "type": "ExpressionStatement",
-                    "expression": {
-                        "type": "CallExpression",
-                        "callee": {
-                            "type": "Identifier",
-                            "name": "logMultiexec"
-                        },
-                        "arguments": [
-                            {
+                    dontRemoveIfStatement: true,
+                    "type": "IfStatement",
+                    "test": args.test ?
+                        {
+                            "type": "UnaryExpression",
+                            "operator": "!",
+                            "prefix": true,
+                            "argument": args.test
+                        }
+                        :
+                        {
+                            "type": "ExpressionStatement",
+                            "expression": {
                                 "type": "Literal",
-                                "value": `while (${escodegen.generate(args.test)}) { (FORCED EXECUTION OF WHILE BODY)`,
+                                "value": true,
                             },
-                            {
-                                "type": "Literal",
-                                "value": 2,
-                            }
-                        ]
-                    }
-                },
-                args.body,
-                {
-                    "type": "ExpressionStatement",
-                    "expression": {
-                        "type": "CallExpression",
-                        "callee": {
-                            "type": "Identifier",
-                            "name": "logMultiexec"
                         },
-                        "arguments": [
+                    "consequent": {
+                        "type": "BlockStatement",
+                        "body": [
                             {
-                                "type": "Literal",
-                                "value": `} (EXITED FORCED EXECUTION OF BODY OF while (${escodegen.generate(args.test)}))`,
+                                "type": "ExpressionStatement",
+                                "expression": {
+                                    "type": "CallExpression",
+                                    "callee": {
+                                        "type": "Identifier",
+                                        "name": "logMultiexec"
+                                    },
+                                    "arguments": [
+                                        {
+                                            "type": "Literal",
+                                            "value": `while (${escodegen.generate(args.test)}) { (FORCED EXECUTION OF WHILE BODY)`,
+                                        },
+                                        {
+                                            "type": "Literal",
+                                            "value": 2,
+                                        }
+                                    ]
+                                }
                             },
+                            args.body,
                             {
-                                "type": "Literal",
-                                "value": 0,
-                            }
+                                "type": "ExpressionStatement",
+                                "expression": {
+                                    "type": "CallExpression",
+                                    "callee": {
+                                        "type": "Identifier",
+                                        "name": "logMultiexec"
+                                    },
+                                    "arguments": [
+                                        {
+                                            "type": "Literal",
+                                            "value": `} (EXITED FORCED EXECUTION OF BODY OF while (${escodegen.generate(args.test)}))`,
+                                        },
+                                        {
+                                            "type": "Literal",
+                                            "value": 0,
+                                        }
+                                    ]
+                                }
+                            },
                         ]
-                    }
+                    },
+                    "alternate": null
                 },
+
+                //WHILE LOOP
                 {
                     "type": "ExpressionStatement",
                     "expression": {
