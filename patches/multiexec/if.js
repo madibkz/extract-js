@@ -14,10 +14,36 @@ turns:
 
 const escodegen = require("escodegen");
 
-module.exports = (args) => ({
-    "type": "BlockStatement",
-    "body": [
-        {
+module.exports = (args) => {
+    if (args.dontRemoveIfStatement === true) {
+        return;
+    }
+    return {
+        "type": "BlockStatement",
+        "body": [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "CallExpression",
+                    "callee": {
+                        "type": "Identifier",
+                        "name": "logMultiexec"
+                    },
+                    "arguments": [
+                        {
+                            "type": "Literal",
+                            "value": `if (${escodegen.generate(args.test)})`,
+                        },
+                        {
+                            "type": "Literal",
+                            "value": 2,
+                        }
+                    ],
+                    "optional": false
+                }
+            },
+            args.consequent,
+        ].concat(args.alternate ? [{
             "type": "ExpressionStatement",
             "expression": {
                 "type": "CallExpression",
@@ -28,54 +54,32 @@ module.exports = (args) => ({
                 "arguments": [
                     {
                         "type": "Literal",
-                        "value": `if (${escodegen.generate(args.test)})`,
+                        "value": "else",
                     },
                     {
                         "type": "Literal",
-                        "value": 2,
+                        "value": 0,
                     }
-                ],
-                "optional": false
+                ]
             }
-        },
-        args.consequent,
-    ].concat(args.alternate ? [{
-        "type": "ExpressionStatement",
-        "expression": {
-            "type": "CallExpression",
-            "callee": {
-                "type": "Identifier",
-                "name": "logMultiexec"
-            },
-            "arguments": [
-                {
-                    "type": "Literal",
-                    "value": "else",
-                },
-                {
-                    "type": "Literal",
-                    "value": 0,
-                }
-            ]
-        }
         }, args.alternate] : [{
-        "type": "ExpressionStatement",
-        "expression": {
-            "type": "CallExpression",
-            "callee": {
-                "type": "Identifier",
-                "name": "logMultiexec"
-            },
-            "arguments": [
-                {
-                    "type": "Literal",
-                    "value": "} (END IF)",
+            "type": "ExpressionStatement",
+            "expression": {
+                "type": "CallExpression",
+                "callee": {
+                    "type": "Identifier",
+                    "name": "logMultiexec"
                 },
-                {
-                    "type": "Literal",
-                    "value": 0,
-                }
-            ]
-        }
-    }])
-});
+                "arguments": [
+                    {
+                        "type": "Literal",
+                        "value": "} (END IF)",
+                    },
+                    {
+                        "type": "Literal",
+                        "value": 0,
+                    }
+                ]
+            }
+        }])
+    }};
