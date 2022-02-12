@@ -33,7 +33,7 @@ module.exports = (args) => {
             "arguments": [
                 {
                     "type": "Literal",
-                    "value": `Entered try statement`,
+                    "value": `try {`,
                 },
                 {
                     "type": "Literal",
@@ -66,7 +66,7 @@ module.exports = (args) => {
         "type": "ThrowStatement",
         "argument": {
             "type": "Literal",
-                "value": "Throwing error on purpose to trigger catch block",
+                "value": "(Throwing error on purpose to trigger catch block)",
         }
     })
     args.handler.body.body.unshift({
@@ -80,7 +80,7 @@ module.exports = (args) => {
             "arguments": [
                 {
                     "type": "Literal",
-                    "value": `Entered catch clause`,
+                    "value": `} catch {`,
                 },
                 {
                     "type": "Literal",
@@ -100,7 +100,7 @@ module.exports = (args) => {
             "arguments": [
                 {
                     "type": "Literal",
-                    "value": `Exited catch clause`,
+                    "value": `} (EXITED CATCH CLAUSE)`,
                 },
                 {
                     "type": "Literal",
@@ -120,7 +120,7 @@ module.exports = (args) => {
                     "arguments": [
                         {
                             "type": "Literal",
-                            "value": `Entered finally clause`,
+                            "value": `} finally {`,
                         },
                         {
                             "type": "Literal",
@@ -140,7 +140,7 @@ module.exports = (args) => {
             "arguments": [
                 {
                     "type": "Literal",
-                    "value": `Exited finally clause`,
+                    "value": `} (EXITED FINALLY CLAUSE)`,
                 },
                 {
                     "type": "Literal",
