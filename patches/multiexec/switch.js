@@ -10,12 +10,12 @@ turns:
             consequent3
     }
 =>
-    lib.logControl("switch (discriminant)");
-    lib.logControl("case (CASE1):");
+    logMultiexec("switch (discriminant)");
+    logMultiexec("case (CASE1):");
     consequent1
-    lib.logControl("case (CASE2):");
+    logMultiexec("case (CASE2):");
     consequent2
-    lib.logControl("default:");
+    logMultiexec("default:");
     consequent3
  */
 
@@ -89,8 +89,7 @@ module.exports = (args) => ({
                 },
             })
         }
-        }),
-    ).concat({
+    })).concat({
         "type": "ExpressionStatement",
         "expression": {
             "type": "CallExpression",

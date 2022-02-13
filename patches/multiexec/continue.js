@@ -1,5 +1,5 @@
 /*
-replaces break with console.log("break")
+replaces break with logMultiexec("continue *label if label is there* (SKIPPED)")
  */
 
 const escodegen = require("escodegen");

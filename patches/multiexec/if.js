@@ -6,9 +6,9 @@ turns:
         alternate
     }
 =>
-    lib.logControl("if (expression)");
+    logMultiexec("if (expression)");
     consequent statement
-    lib.logControl("else");
+    logMultiexec("else");
     alternate
  */
 
@@ -43,43 +43,51 @@ module.exports = (args) => {
                 }
             },
             args.consequent,
-        ].concat(args.alternate ? [{
-            "type": "ExpressionStatement",
-            "expression": {
-                "type": "CallExpression",
-                "callee": {
-                    "type": "Identifier",
-                    "name": "logMultiexec"
-                },
-                "arguments": [
-                    {
-                        "type": "Literal",
-                        "value": "else",
-                    },
-                    {
-                        "type": "Literal",
-                        "value": 0,
+        ].concat(args.alternate ? [
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "CallExpression",
+                        "callee": {
+                            "type": "Identifier",
+                            "name": "logMultiexec"
+                        },
+                        "arguments": [
+                            {
+                                "type": "Literal",
+                                "value": "else",
+                            },
+                            {
+                                "type": "Literal",
+                                "value": 0,
+                            }
+                        ]
                     }
-                ]
-            }
-        }, args.alternate] : [{
-            "type": "ExpressionStatement",
-            "expression": {
-                "type": "CallExpression",
-                "callee": {
-                    "type": "Identifier",
-                    "name": "logMultiexec"
                 },
-                "arguments": [
-                    {
-                        "type": "Literal",
-                        "value": "} (END IF)",
+                args.alternate
+            ]
+            :
+            [
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "CallExpression",
+                    "callee": {
+                        "type": "Identifier",
+                        "name": "logMultiexec"
                     },
-                    {
-                        "type": "Literal",
-                        "value": 0,
-                    }
-                ]
+                    "arguments": [
+                        {
+                            "type": "Literal",
+                            "value": "} (END IF)",
+                        },
+                        {
+                            "type": "Literal",
+                            "value": 0,
+                        }
+                    ]
+                }
             }
-        }])
+            ]
+        )
     }};

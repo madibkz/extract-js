@@ -9,14 +9,14 @@ turns
     }
 =>
     try {
-        console.log("Entered try statement");
+        logMultiexec("Entered try statement");
         statements1
         throw "Throwing error on purpose to trigger catch block"
     } catch (e) {
-        console.log("Entered catch clause");
+        logMultiexec("Entered catch clause");
         statements2
     } finally {
-        console.log("Entered finally clause");
+        logMultiexec("Entered finally clause");
         statements3
     }
  */
@@ -45,7 +45,7 @@ module.exports = (args) => {
             ]
         }
     })
-    args.block.body.push({
+    args.block.body.push({ //change indent level (dont log any text)
         "type": "ExpressionStatement",
         "expression": {
             "type": "CallExpression",
