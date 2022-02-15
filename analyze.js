@@ -372,9 +372,10 @@ cc decoder.c -o decoder
     return code;
 }
 
-numberOfExecutedSnippets = 1;
+let numberOfExecutedSnippets = 1;
+let originalInputScript = code;
 
-lib.logJS(code, `${numberOfExecutedSnippets}_input_script`, "", false, null, "INPUT SCRIPT", true);
+lib.logJS(originalInputScript, `${numberOfExecutedSnippets}_input_script`, "", false, null, "INPUT SCRIPT", true);
 
 code = rewrite(code);
 
@@ -513,7 +514,7 @@ const sandbox = {
     logIOC: lib.logIOC,
     logMultiexec: (x, indent) => {
         if (indent === 0) {
-            multiexec_indent !== "" ?
+            (multiexec_indent !== "" && multiexec_indent.length > 1) ?
                 multiexec_indent = multiexec_indent.slice(0, multiexec_indent.length - 2) :
                 multiexec_indent = "";
             if (x !== "") {
@@ -538,6 +539,7 @@ const sandbox = {
                 codeHadAnError = false;
             } catch (e) {
                 evalCode = replaceErrorCausingCode(e, evalCode, true);
+                //TODO: Maintain correct multiexec_indent
             }
         } while (codeHadAnError)
     },
@@ -623,7 +625,7 @@ if (argv["dangerous-vm"]) {
                 code = replaceErrorCausingCode(e, code);
 
                 //RESTART LOGGING AND SANDBOX STUFF:
-                multiexec_indent = "";
+                restartLoggedState();
             } else {
                 lib.error(e.stack, true, false);
                 throw e;
@@ -802,4 +804,19 @@ function replaceErrorCausingCode(e, code, eval = false) {
 
     //generate code again
     return escodegen.generate(tree);
+}
+
+//After an error has occured in multi-execution, it removes the error causing code and tries again, so restart the
+//stuff that was logged last try to avoid duplication
+function restartLoggedState() {
+    console.log("*RESTARTING MULTI-EXECUTION AFTER ERROR OCCURRED*");
+    //FOR analyze.js
+    numberOfExecutedSnippets = 1;
+    multiexec_indent = "";
+
+    lib.restartState();
+
+    //relog the input file
+    lib.logJS(originalInputScript, `${numberOfExecutedSnippets}_input_script`, "", false, null, "INPUT SCRIPT", true);
+    lib.logJS(code, `${numberOfExecutedSnippets}_input_script_INSTRUMENTED`, "", false, null, "INPUT SCRIPT", false);
 }
