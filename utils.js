@@ -10,6 +10,18 @@ function traverse(obj, func) {
     }
 }
 
+function traverseFully(obj, func) {
+    const keys = Object.keys(obj);
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        const replacement = func.apply(this, [key, obj[key]]);
+        if (replacement) obj[key] = replacement;
+        if (obj[key] !== null && typeof obj[key] === "object")
+            traverse(obj[key], func);
+    }
+}
+
 module.exports = {
     traverse,
+    traverseFully,
 }
