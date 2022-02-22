@@ -1,0 +1,3 @@
+[submodule "ExpoSE"]
+	path = ExpoSE
+	url = https://github.com/ExpoSEJS/ExpoSE
