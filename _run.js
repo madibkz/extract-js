@@ -48,8 +48,13 @@ if (argv.license) {
 
 let timeout = argv.timeout;
 if (!timeout) {
-    console.log("Using a 10 seconds timeout, pass --timeout to specify another timeout in seconds");
-    timeout = 10;
+	if (argv["all"] || argv["sym-exec"]) {
+		console.log("Using a 100 seconds timeout, pass --timeout to specify another timeout in seconds");
+		timeout = 100;
+	} else {
+		console.log("Using a 10 seconds timeout, pass --timeout to specify another timeout in seconds");
+		timeout = 10;
+	}
 }
 
 Array.prototype.functionalSplit = function(f) {

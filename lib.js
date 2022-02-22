@@ -7,7 +7,7 @@ const uuid = require("uuid");
 const argv = require("./argv.js").run;
 const fsextra = require("fs-extra");
 
-const directory = path.normalize(process.argv[3]);
+let directory = path.normalize(process.argv[3]);
 
 let urls = [];
 let activeUrls = [];
@@ -29,6 +29,28 @@ const logSnippet = function(filename, logContent, content, deobfuscate = false) 
 	}
 	fs.writeFileSync(path.join(directory, "snippets.json"), JSON.stringify(snippets, null, "\t"));
 };
+
+//used for symbolic execution mode, when running a new combination of inputs, to log to a new folder
+function new_symex_log_context(count) {
+	let urls = [];
+	let activeUrls = [];
+	let snippets = {};
+	let resources = {};
+	let files = {};
+	let IOC = [];
+
+	if (count > 0) {
+		//reset directory to normal directory
+		directory = directory.substring(0, directory.lastIndexOf("/"));
+	} else {
+		directory += "/executions";
+		fs.mkdirSync(directory);
+	}
+	directory += `/${count}`;
+	fs.mkdirSync(directory);
+	fs.mkdirSync(directory + "/resources");
+	fs.mkdirSync(directory + "/snippets");
+}
 
 //used for multi-execution when an error occurs, to restart all the logging states as it's a fresh start
 function restartState() {
@@ -106,6 +128,7 @@ module.exports = {
 	kill,
 	getUUID,
 	restartState,
+	new_symex_log_context,
 
 	debug: log.bind(null, "debug"),
 	verbose: log.bind(null, "verb"),

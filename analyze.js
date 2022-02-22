@@ -15,6 +15,7 @@ const traverse = require("./utils.js").traverse
 const traverseFully = require("./utils.js").traverseFully
 
 const filename = process.argv[2];
+const directory = process.argv[3];
 const mode = process.argv[4];
 const default_enabled = mode === "default";
 const multi_exec_enabled = mode === "multi-exec";
@@ -67,10 +68,11 @@ lib.logJS(originalInputScript, `${numberOfExecutedSnippets}_input_script`, "", f
 //*INSTRUMENTING CODE*
 code = rewrite(code);
 
-prependUsersPrependCode();
+code = prepend_users_prepend_code(code);
 
 // prepend patch code
 code = fs.readFileSync(path.join(__dirname, "patch.js"), "utf8") + code;
+code = "ReferenceError.prototype.toString = function() { return \"[object Error]\";};\n\n" + code;
 
 // append more code
 code += "\n\n" + fs.readFileSync(path.join(__dirname, "appended-code.js"));
@@ -83,18 +85,75 @@ Array.prototype.Count = function() {
     return this.length;
 };
 
-var wscript_proxy = makeWscriptProxy();
-
-let multiexec_indent = "";
-
-const sandbox = makeSandbox();
 
 // See https://github.com/nodejs/node/issues/8071#issuecomment-240259088
 // It will prevent console.log from calling the "inspect" property,
 // which can be kinda messy with Proxies
 require("util").inspect.defaultOptions.customInspect = false;
 
-run_in_vm();
+let multiexec_indent = "";
+
+var wscript_proxy = require("./activex_mock.js").makeWscriptProxy();
+
+if (default_enabled || multi_exec_enabled) {
+    const sandbox = make_sandbox();
+    run_in_vm(code, sandbox);
+} else if (sym_exec_enabled) {
+    let sym_exec_script = prepend_users_prepend_code(originalInputScript);
+    sym_exec_script = prepend_sym_exec_script(sym_exec_script);
+
+    //write script to temp file
+    let tmp_path = "./tmpsymexscript.js";
+    fs.writeFileSync(tmp_path, sym_exec_script);
+    //log script
+    lib.logJS(sym_exec_script, `input_script_SYM_EX_INSTRUMENTED`, "", false, null, "INPUT SCRIPT INSTRUMENTED FOR SYMBOLIC EXECUTION", false);
+
+    let expose_output_path = path.resolve(directory + "expose_out.json");
+    //run expose on temp file
+    let expose_result = child_process.spawnSync(`./ExpoSE/expoSE`, [tmp_path], {
+        shell: true,
+        env: {
+            //EXPOSE_PRINT_COVERAGE: 1, TODO: format print coverage to show coverage in txt file format
+            EXPOSE_JSON_PATH: expose_output_path
+        }
+    });
+
+    //read/log info from results of expose
+    fs.writeFileSync(directory + "expose_output.log", expose_result.stdout);
+    let expose_json_results = JSON.parse(fs.readFileSync(expose_output_path, "utf8"));
+    let ran_inputs = {};
+
+    //run analysis for each combination of input
+    for (let i = 0; i < expose_json_results.done.length; i++) {
+        //Make new folder for this new input, change directory of logging to be in this folder now
+        lib.new_symex_log_context(i);
+
+        //Write to file that this input is associated to this folder
+        ran_inputs[i] = {
+            "context": expose_json_results.done[i].input,
+            "execution folder": `./executions/${i}`
+        };
+        fs.writeFileSync(directory + "contexts.json", JSON.stringify(ran_inputs, null, 4));
+
+        //Run sandbox for this input combination
+        const sandbox = make_sandbox(expose_json_results.done[i].input);
+        run_in_vm(code, sandbox);
+    }
+}
+
+function prepend_sym_exec_script(sym_exec_script) {
+    let activex_mock_code = fs.readFileSync("./activex_mock.js", "utf-8");
+    activex_mock_code = activex_mock_code.substring(activex_mock_code.indexOf("SYMEXDELETEBEFORE") - 2, activex_mock_code.indexOf("SYMEXDELETEAFTER"));
+    activex_mock_code = activex_mock_code.replace(/lib\.error/g, "throw ");
+    activex_mock_code = activex_mock_code.replace(/lib\.verbose/g, "console.log");
+    activex_mock_code = activex_mock_code.replace(/lib\.kill/g, "throw ");
+
+    let prepend_sym_script = fs.readFileSync("./patches/symexec/prepend_sym_script.js", "utf-8");
+
+    sym_exec_script = prepend_sym_script + /*"\n\n" + activex_mock_code +*/ "\n\n//END OF PATCHING\n" + sym_exec_script;
+
+    return sym_exec_script;
+}
 
 function rewrite(code) {
     if (code.match("@cc_on")) {
@@ -406,7 +465,7 @@ cc decoder.c -o decoder
     return code;
 }
 
-function run_in_vm() {
+function run_in_vm(code, sandbox) {
     if (argv["dangerous-vm"]) {
         lib.verbose("Analyzing with native vm module (dangerous!)");
         const vm = require("vm");
@@ -419,7 +478,6 @@ function run_in_vm() {
         lib.debug("Analyzing with vm2 v" + require("vm2/package.json").version);
 
         // Fake cscript.exe style ReferenceError messages.
-        code = "ReferenceError.prototype.toString = function() { return \"[object Error]\";};\n\n" + code;
         // Fake up Object.toString not being defined in cscript.exe.
         //code = "Object.prototype.toString = undefined;\n\n" + code;
 
@@ -439,6 +497,9 @@ function run_in_vm() {
 
                     //RESTART LOGGING AND SANDBOX STUFF:
                     restartLoggedState();
+                } else if (sym_exec_enabled) {
+                    lib.error(e.stack, true, false);
+                    return;
                 } else {
                     lib.error(e.stack, true, false);
                     throw e;
@@ -448,7 +509,7 @@ function run_in_vm() {
     }
 }
 
-function makeSandbox() {
+function make_sandbox(symex_input = null) {
     return {
         saveAs: function (data, fname) {
             // TODO: If Blob need to extract the data.
@@ -504,7 +565,7 @@ function makeSandbox() {
                 }
             } while (codeHadAnError)
         },
-        ActiveXObject,
+        ActiveXObject : require("./activex_mock.js").ActiveXObject,
         dom,
         alert: (x) => {
         },
@@ -519,10 +580,10 @@ function makeSandbox() {
         GetObject: require("./emulator/WMI").GetObject,
         JSON,
         location: new Proxy({
-            href: "http://www.foobar.com/",
-            protocol: "http:",
-            host: "www.foobar.com",
-            hostname: "www.foobar.com",
+            href: symex_input ? symex_input["location.href"] : "http://www.foobar.com/",
+            protocol: symex_input ? symex_input["location.protocol"] : "http:",
+            host: symex_input ? symex_input["location.host"] : "www.foobar.com",
+            hostname: symex_input ? symex_input["location.hostname"] : "www.foobar.com",
         }, {
             get: function (target, name) {
                 switch (name) {
@@ -551,124 +612,6 @@ function makeSandbox() {
         self: {},
         require //require is required for some of the ActiveX stuff to work - TODO: change this
     };
-}
-
-function makeWscriptProxy() {
-    return new Proxy({
-        arguments: new Proxy((n) => `${n}th argument`, {
-            get: function (target, name) {
-                switch (name) {
-                    case "Unnamed":
-                        return [];
-                    case "length":
-                        return 0;
-                    case "ShowUsage":
-                        return {
-                            typeof: "unknown",
-                        };
-                    case "Named":
-                        return [];
-                    default:
-                        return new Proxy(
-                            target[name], {
-                                get: (target, name) => name.toLowerCase() === "typeof" ? "unknown" : target[name],
-                            }
-                        );
-                }
-            },
-        }),
-        buildversion: "1234",
-        fullname: "C:\\WINDOWS\\system32\\wscript.exe",
-        interactive: true,
-        name: "wscript.exe",
-        path: "C:\\TestFolder\\",
-        //scriptfullname: "C:\\Documents and Settings\\User\\Desktop\\sample.js",
-        //scriptfullname: "C:\\Users\\Sysop12\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\ons.jse",
-        scriptfullname: "C:\Users\\Sysop12\\AppData\\Roaming\\Microsoft\\Templates\\0.2638666.jse",
-        scriptname: "0.2638666.jse",
-        get stderr() {
-            lib.error("WScript.StdErr not implemented");
-        },
-        get stdin() {
-            lib.error("WScript.StdIn not implemented");
-        },
-        get stdout() {
-            lib.error("WScript.StdOut not implemented");
-        },
-        version: "5.8",
-        get connectobject() {
-            lib.error("WScript.ConnectObject not implemented");
-        },
-        createobject: ActiveXObject,
-        get disconnectobject() {
-            lib.error("WScript.DisconnectObject not implemented");
-        },
-        echo() {
-        },
-        get getobject() {
-            lib.error("WScript.GetObject not implemented");
-        },
-        quit() {
-        },
-        // Note that Sleep() is implemented in patch.js because it requires
-        // access to the variable _globalTimeOffset, which belongs to the script
-        // and not to the emulator.
-        [Symbol.toPrimitive]: () => "Windows Script Host",
-        tostring: "Windows Script Host",
-    }, {
-        get(target, prop) {
-            // For whatever reasons, WScript.* properties are case insensitive.
-            if (typeof prop === "string")
-                prop = prop.toLowerCase();
-            return target[prop];
-        }
-    });
-}
-
-function ActiveXObject(name) {
-    lib.verbose(`New ActiveXObject: ${name}`);
-    name = name.toLowerCase();
-    if (name.match("xmlhttp") || name.match("winhttprequest"))
-        return require("./emulator/XMLHTTP");
-    if (name.match("dom")) {
-        return {
-            createElement: require("./emulator/DOM"),
-            load: (filename) => {
-                // console.log(`Loading ${filename} in a virtual DOM environment...`);
-            },
-        };
-    }
-
-    switch (name) {
-        case "windowsinstaller.installer":
-            // Stubbed out for now.
-            return "";
-        case "adodb.stream":
-            return require("./emulator/ADODBStream")();
-        case "adodb.recordset":
-            return require("./emulator/ADODBRecordSet")();
-        case "adodb.connection":
-            return require("./emulator/ADODBConnection")();
-        case "scriptcontrol":
-            return require("./emulator/ScriptControl");
-        case "scripting.filesystemobject":
-            return require("./emulator/FileSystemObject");
-        case "scripting.dictionary":
-            return require("./emulator/Dictionary");
-        case "shell.application":
-            return require("./emulator/ShellApplication");
-        case "wscript.network":
-            return require("./emulator/WScriptNetwork");
-        case "wscript.shell":
-            return require("./emulator/WScriptShell");
-        case "wbemscripting.swbemlocator":
-            return require("./emulator/WBEMScriptingSWBEMLocator");
-        case "msscriptcontrol.scriptcontrol":
-            return require("./emulator/MSScriptControlScriptControl");
-        default:
-            lib.kill(`Unknown ActiveXObject ${name}`);
-            break;
-    }
 }
 
 function replaceErrorCausingCode(e, code, eval = false) {
@@ -773,7 +716,7 @@ function restartLoggedState() {
     lib.logJS(code, `${numberOfExecutedSnippets}_input_script_INSTRUMENTED`, "", false, null, "INPUT SCRIPT", false);
 }
 
-function prependUsersPrependCode() {
+function prepend_users_prepend_code(code) {
 // prepend extra JS containing mock objects in the given file(s) onto the code
     if (argv["prepended-code"]) {
 
@@ -798,8 +741,9 @@ function prependUsersPrependCode() {
             prependedCode += fs.readFileSync(files[i], 'utf-8') + "\n\n"
         }
 
-        code = prependedCode + "\n\n" + code
+        return prependedCode + "\n\n" + code;
     }
+    return code;
 }
 
 function lacksBinary(name) {
