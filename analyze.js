@@ -132,6 +132,7 @@ if (default_enabled || multi_exec_enabled) {
 
     //run analysis for each combination of input
     for (let i = 0; i < expose_json_results.done.length; i++) {
+        numberOfExecutedSnippets = 1;
         //Make new folder for this new input, change directory of logging to be in this folder now
         lib.new_symex_log_context(i);
 

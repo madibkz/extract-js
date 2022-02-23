@@ -21,7 +21,7 @@ let number_of_wscript_code_snippets = 0;
 
 const logSnippet = function(filename, logContent, content, deobfuscate = false) {
 	snippets[filename] = logContent;
-	let save_path = path.join(directory + "snippets/", filename);
+	let save_path = path.join(directory + "/snippets/", filename);
 	fs.writeFileSync(save_path, require("js-beautify").js(content));
 	if (deobfuscate) {
 		//write a deobfuscated version of the JS snippet
@@ -32,12 +32,12 @@ const logSnippet = function(filename, logContent, content, deobfuscate = false) 
 
 //used for symbolic execution mode, when running a new combination of inputs, to log to a new folder
 function new_symex_log_context(count) {
-	let urls = [];
-	let activeUrls = [];
-	let snippets = {};
-	let resources = {};
-	let files = {};
-	let IOC = [];
+	urls = [];
+	activeUrls = [];
+	snippets = {};
+	resources = {};
+	files = {};
+	IOC = [];
 
 	if (count > 0) {
 		//reset directory to normal directory

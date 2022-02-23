@@ -8,7 +8,6 @@ let InstallProduct = (x) => {
 }
 
 var window = global;
-//global.window = global; //TODO: this causes less cases to be found in if_on_location: why?
 
 global.location = new Proxy({
     href: S$.symbol('location.href', "http://www.foobar.com/"),
