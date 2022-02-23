@@ -101,6 +101,7 @@ if (default_enabled || multi_exec_enabled) {
 } else if (sym_exec_enabled) {
     let sym_exec_script = prepend_users_prepend_code(originalInputScript);
     sym_exec_script = prepend_sym_exec_script(sym_exec_script);
+    sym_exec_script = rewrite_code_for_symex_script(sym_exec_script);
 
     //write script to temp file
     let tmp_filename = "./tmpsymexscript";
@@ -466,6 +467,50 @@ cc decoder.c -o decoder
             console.log(e);
             process.exit(3);
         }
+    }
+
+    return code;
+}
+
+function rewrite_code_for_symex_script(code) {
+    try {
+        lib.verbose("Rewriting code for symbolic execution script...", false);
+
+        let tree;
+        try {
+            tree = acorn.parse(code, {
+                allowReturnOutsideFunction: true, // used when rewriting function bodies
+                plugins: {
+                    // enables acorn plugin needed by prototype rewrite
+                    JScriptMemberFunctionStatement: !argv["no-rewrite-prototype"],
+                },
+            });
+        } catch (e) {
+            lib.error("Couldn't parse with Acorn:");
+            lib.error(e);
+            lib.error("");
+            process.exit(4);
+            return;
+        }
+
+        lib.verbose("    Rewriting code to force multiexecution [because of --multiexec]", false);
+        traverse(tree, function(key, val) {
+            if (!val) return;
+            switch (val.type) {
+                case "ThisExpression":
+                    return require("./patches/symexec/this.js")(val);
+                default:
+                    break;
+            }
+        });
+
+        code = escodegen.generate(tree);
+
+        lib.verbose("Rewritten symbolic exec script successfully.", false);
+    } catch (e) {
+        console.log("An error occurred during rewriting:");
+        console.log(e);
+        process.exit(3);
     }
 
     return code;
