@@ -562,6 +562,21 @@ function run_in_vm(code, sandbox) {
 }
 
 function make_sandbox(symex_input = null) {
+    function buildNavigatorProxy(symex_input) {
+        let navigatorJS = require("./emulator/navigator.js");
+        let navigatorObject = navigatorJS.getNavigatorObject();
+        let navigatorHandler = navigatorJS.getNavigatorProxyHandler();
+        let navigatorDefaultFields = navigatorJS.getNavigatorDefaultFields();
+
+        for (let field in navigatorDefaultFields) {
+            if (navigatorDefaultFields.hasOwnProperty(field)) {
+                navigatorObject[field] = symex_input ? symex_input[`navigator.${field}`] : navigatorDefaultFields[field];
+            }
+        }
+
+        return new Proxy(navigatorObject, navigatorHandler);
+    }
+
     return {
         saveAs: function (data, fname) {
             // TODO: If Blob need to extract the data.
@@ -645,7 +660,9 @@ function make_sandbox(symex_input = null) {
                         return target[name.toLowerCase()];
                 }
             },
+            //TODO: logging of tampering with location stuff
         }),
+        navigator: buildNavigatorProxy(symex_input),
         parse: (x) => {
         },
         rewrite: (code, log = false) => {
