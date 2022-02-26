@@ -43,7 +43,15 @@ global.navigator = (() => {
         for (let field in emulatedInnerProxies) {
             if (emulatedInnerProxies.hasOwnProperty(field)) {
                 let innerProxy = emulatedInnerProxies[field];
-                emulatedObject[field] = buildProxyForEmulatedObject(innerProxy.symex_prefix, innerProxy.file_path);
+                if (Array.isArray(emulatedObject)) {
+                    for (let a = 0; a < emulatedObject.length; a++) {
+                        if (emulatedObject[a] === field) {
+                            emulatedObject[a] = buildProxyForEmulatedObject(innerProxy.symex_prefix, innerProxy.file_path);
+                        }
+                    }
+                } else {
+                    emulatedObject[field] = buildProxyForEmulatedObject(innerProxy.symex_prefix, innerProxy.file_path);
+                }
             }
         }
 

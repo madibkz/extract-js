@@ -28,36 +28,35 @@ function getDefaultFields() {
     return {
 //https://developer.mozilla.org/en-US/docs/Web/API/Navigator
 //STANDARD PROPERTIES:
-        //connection: S$.symbol('navigator.connection', {}), experimental complex feature
+        //connection: S$.symbol('navigator.connection', {}), experimental complex feature //TODO
         cookieEnabled: true,
-        //credentials: S$.symbol('navigator.credentials', ""), need CredentialsContainer interface implemented
+        //credentials: S$.symbol('navigator.credentials', ""), need CredentialsContainer interface implemented //TODO show it was checked
         deviceMemory: 2.0,
-        //geolocation: S$.symbol('navigator.geolocation', {}), needs Geolocation object and browser permission
+        //geolocation: S$.symbol('navigator.geolocation', {}), needs Geolocation object and browser permission //TODO show if it was checked for?
         //hid: S$.symbol('navigator.hid', {}), needs HID object but I really doubt malware would use HID
-        //keyboard: S$.symbol('navigator.keyboard', {}),  complicated object
+        //keyboard: S$.symbol('navigator.keyboard', {}),  complicated object //maybe TODO?
         language: "en-US", //technically uses DOMString object but is a string
         languages: ["en-US", "en"],
         //locks: S$.symbol('navigator.languages', ["en-US", "en"]), needs LockManage object
         maxTouchPoints: 1, //seems like malware wouldnt use this
-        //mediaCapabilities: S$.symbol('navigator.mediaCapabilities', ["en-US", "en"]), complex object/ API needed
-        //mediaDevices: S$.symbol('navigator.mediaDevices', {}), //needs MediaDevices object plus malware not sure
-        //mediaSession: S$.symbol('navigator.mediaSession', {}), needs MediaSession object
+        //mediaCapabilities: S$.symbol('navigator.mediaCapabilities', ["en-US", "en"]), complex object/ API needed //maybe TODO?
+        //mediaDevices: S$.symbol('navigator.mediaDevices', {}), //needs MediaDevices object plus malware not sure //TODO show if checked or something
+        //mediaSession: S$.symbol('navigator.mediaSession', {}), needs MediaSession object //
         onLine: true,
         //permissions: S$.symbol('navigator.permissions', {}), //complex object Permissions needed //TODO
         //presentation: S$.symbol('navigator.presentation', {}), //presentation object needed
-        //serial: S$.symbol('navigator.serial', {}), //needs serial object
-        //serviceWorker: S$.symbol('navigator.serviceWorker', {}), //needs ServiceWorkerContainer object
+        //serial: S$.symbol('navigator.serial', {}), //needs serial object //TODO maybe to show if enabled
+        //serviceWorker: S$.symbol('navigator.serviceWorker', {}), //needs ServiceWorkerContainer object //TODO maybe show if the script checks if enabled
         //storage: S$.symbol('navigator.storage', {}), //needs storagemanager object TODO
         userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36",
-        //userAgentData: S$.symbol('navigator.userAgentData', {}), //needs navigatorUAData object TODO
         webdriver: false,
         //windowControlsOverlay: S$.symbol('navigator.windowControlsOverlay', {}),//needs WindowControlsOverlay intrface
         //xr: S$.symbol('navigator.xr', {}), //needs XRsystem object
 //NON-STANDARD PROPERTIES:
         buildID: "20181001000000", //only used in firefox and not that useful for malware
-        //contacts:
-        //securitypolicy:
-        //standalone:
+        //contacts: //TODO show if checked
+        //securitypolicy: //TODO ez
+        //standalone: //TODO ez
         //wakeLock:
 //DEPRECATED PROPERTIES:
         appName: "Netscape",
@@ -68,7 +67,6 @@ function getDefaultFields() {
         //mimeTypes: S$.symbol('navigator.mimeTypes', {}), needs MimeTypeArray object //maybe TODO
         oscpu: "Windows NT 6.0",
         platform: "Win64",
-        //plugins: S$.symbol('navigator.plugins', {}), //needs PluginArray object - TODO
         product: "Gecko",
         prodSub: "20010725",
         vendor: "Google Inc.",
@@ -81,6 +79,10 @@ function getInnerProxies() {
         userAgentData: {
             file_path: "./emulator/navigator/NavigatorUAData.js",
             symex_prefix: "navigator.userAgentData."
+        },
+        plugins: {
+            file_path: "./emulator/navigator/PluginArray.js",
+            symex_prefix: "navigator.plugins."
         },
     };
 }
