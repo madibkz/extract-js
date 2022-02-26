@@ -64,7 +64,6 @@ function getDefaultFields() {
         //activeVRDisplays: S$.symbol('navigator.', {}), needs VRDisplay and doubt its useful
         //battery: S$.symbol('navigator.', {}), needs BatteryManager and doubt its useful
         doNotTrack: "yes",
-        //mimeTypes: S$.symbol('navigator.mimeTypes', {}), needs MimeTypeArray object //maybe TODO
         oscpu: "Windows NT 6.0",
         platform: "Win64",
         product: "Gecko",
@@ -83,6 +82,10 @@ function getInnerProxies() {
         plugins: {
             file_path: "./emulator/navigator/PluginArray.js",
             symex_prefix: "navigator.plugins."
+        },
+        mimeTypes: {
+            file_path: "./emulator/navigator/MimeTypes.js",
+            symex_prefix: "navigator.mimeTypes."
         },
     };
 }
