@@ -1,4 +1,4 @@
-function getNavigatorProxyHandler() {
+function getProxyHandler() {
     return {
         get: function (target, name) {
             switch (name) {
@@ -24,7 +24,7 @@ function getNavigatorProxyHandler() {
     };
 }
 
-function getNavigatorMutableFields() {
+function getDefaultFields() {
     return {
 //https://developer.mozilla.org/en-US/docs/Web/API/Navigator
 //STANDARD PROPERTIES:
@@ -38,23 +38,23 @@ function getNavigatorMutableFields() {
         language: "en-US", //technically uses DOMString object but is a string
         languages: ["en-US", "en"],
         //locks: S$.symbol('navigator.languages', ["en-US", "en"]), needs LockManage object
-        //maxTouchPoints: S$.symbol("navigator.maxTouchPoints", 1) seems like malware wouldnt use this
+        maxTouchPoints: 1, //seems like malware wouldnt use this
         //mediaCapabilities: S$.symbol('navigator.mediaCapabilities', ["en-US", "en"]), complex object/ API needed
         //mediaDevices: S$.symbol('navigator.mediaDevices', {}), //needs MediaDevices object plus malware not sure
         //mediaSession: S$.symbol('navigator.mediaSession', {}), needs MediaSession object
         onLine: true,
-        //permissions: S$.symbol('navigator.permissions', {}), //complex object Permissions needed
+        //permissions: S$.symbol('navigator.permissions', {}), //complex object Permissions needed //TODO
         //presentation: S$.symbol('navigator.presentation', {}), //presentation object needed
         //serial: S$.symbol('navigator.serial', {}), //needs serial object
         //serviceWorker: S$.symbol('navigator.serviceWorker', {}), //needs ServiceWorkerContainer object
         //storage: S$.symbol('navigator.storage', {}), //needs storagemanager object TODO
         userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36",
-        //userAgentData: S$.symbol('navigator.userAgentData', {}), //needs navigatorUAData object
+        //userAgentData: S$.symbol('navigator.userAgentData', {}), //needs navigatorUAData object TODO
         webdriver: false,
         //windowControlsOverlay: S$.symbol('navigator.windowControlsOverlay', {}),//needs WindowControlsOverlay intrface
         //xr: S$.symbol('navigator.xr', {}), //needs XRsystem object
 //NON-STANDARD PROPERTIES:
-        //buildID: S$.symbol('navigator.buildID', "20181001000000"), //only used in firefox and not that useful for malware
+        buildID: "20181001000000", //only used in firefox and not that useful for malware
         //contacts:
         //securitypolicy:
         //standalone:
@@ -65,19 +65,27 @@ function getNavigatorMutableFields() {
         //activeVRDisplays: S$.symbol('navigator.', {}), needs VRDisplay and doubt its useful
         //battery: S$.symbol('navigator.', {}), needs BatteryManager and doubt its useful
         doNotTrack: "yes",
-        //mimeTypes: S$.symbol('navigator.mimeTypes', {}), needs MimeTypeArray object
+        //mimeTypes: S$.symbol('navigator.mimeTypes', {}), needs MimeTypeArray object //maybe TODO
         oscpu: "Windows NT 6.0",
         platform: "Win64",
         //plugins: S$.symbol('navigator.plugins', {}), //needs PluginArray object - TODO
         product: "Gecko",
         prodSub: "20010725",
         vendor: "Google Inc.",
-        //: S$.symbol('navigator.', {}),
         shareBool: true,
     };
 }
 
-function getNavigatorObject() {
+function getInnerProxies() {
+    return {
+        userAgentData: {
+            file_path: "./emulator/navigator/NavigatorUAData.js",
+            symex_prefix: "navigator.userAgentData."
+        },
+    };
+}
+
+function getObject() {
     return {
 //STANDARD PROPERTIES:
         hardwareConcurrency: 1, //can range but I doubt malware would want to ask for this
@@ -130,7 +138,8 @@ function getNavigatorObject() {
 }
 
 module.exports = {
-    getNavigatorDefaultFields: getNavigatorMutableFields,
-    getNavigatorObject,
-    getNavigatorProxyHandler
+    getProxyHandler,
+    getDefaultFields,
+    getInnerProxies,
+    getObject,
 }
