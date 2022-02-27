@@ -7,7 +7,7 @@ if (navigator.cookieEnabled) {
 } else {
   console.log("NO COOKIE BRANCH REACHED");
 }
-/*
+
 if (navigator.userAgent.includes("Opera")) {
   console.log("CHROME BRANCH REACHED");
 }
@@ -15,7 +15,7 @@ if (navigator.userAgent.includes("Opera")) {
 if (navigator.canShare()) {
   console.log("IT CAN SHARE");
 }
-*/
+
 
 console.log(navigator.userAgentData.mobile);
 console.log(navigator.userAgentData.toJSON());

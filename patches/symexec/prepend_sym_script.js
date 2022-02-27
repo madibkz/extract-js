@@ -9,24 +9,7 @@ let InstallProduct = (x) => {
 
 var window = global;
 
-global.location = new Proxy({
-    href: S$.symbol('location.href', "http://www.foobar.com/"),
-    protocol: S$.symbol('location.protocol', "http:"),
-    host: S$.symbol('location.host', "www.foobar.com"),
-    hostname: S$.symbol('location.hostname', "www.foobar.com"),
-}, {
-    get: function (target, name) {
-        switch (name) {
-            case Symbol.toPrimitive:
-                return () => this.href;
-            default:
-                return target[name.toLowerCase()];
-        }
-    },
-})
-
-//navigator
-global.navigator = (() => {
+(() => {
     function buildProxyForEmulatedObject(symex_prefix, file_path) {
         let emulatedPatch = require(file_path);
         let emulatedObject = emulatedPatch.getObject();
@@ -36,7 +19,8 @@ global.navigator = (() => {
 
         for (let field in emulatedDefaultFields) {
             if (emulatedDefaultFields.hasOwnProperty(field)) {
-                emulatedObject[field] = S$.symbol(`${symex_prefix}${field}`, emulatedDefaultFields[field]);
+                //We initialize symbols with the default value that ExpoSE uses for each type
+                emulatedObject[field] = S$.symbol(`${symex_prefix}${field}`, getDefaultValForType(emulatedDefaultFields[field]));
             }
         }
 
@@ -58,7 +42,23 @@ global.navigator = (() => {
         return new Proxy(emulatedObject, emulatedHandler);
     }
 
-    return buildProxyForEmulatedObject("navigator.", "./emulator/navigator/navigator.js");
+    function getDefaultValForType(o) {
+        if (Array.isArray(o)) {
+            return [getDefaultValForType(o[0])];
+        } else if (typeof o === "string") {
+            return "";
+        } else if (typeof o === "number") {
+            return 0;
+        } else if (typeof o === "boolean") {
+            return false;
+        } else if (typeof o === "object") {
+            return o;
+        }
+        throw new Error("(SYM-EXEC MODE): Error in prepend_sym_script.js: cannot find type of object " + o);
+    }
+
+    global.location = buildProxyForEmulatedObject("location.", "./emulator/location.js");
+    global.navigator = buildProxyForEmulatedObject("navigator.", "./emulator/navigator/navigator.js");
 })();
 
 //active x
