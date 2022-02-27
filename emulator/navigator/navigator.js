@@ -6,17 +6,7 @@ function getProxyHandler() {
                     return () => "[object Navigator]";
                 default:
                     if (name in target) {
-                        if (target.requestableProperties.indexOf(name) !== -1) {
-                            //this is so the sym ex registers in contexts.json that the property was requested
-                            //(these properties are kind of rare, and very convoluted/impossible to implement symbolically)
-                            if (target[name]) {
-                                throw new Error(`(SYM-EXEC MODE): script requests navigator.${name} but is not implemented (logged case to contexts.json`);
-                            } else {
-                                throw new Error(`extract-js error: navigator.${name} was requested by the script but is not implemented`);
-                            }
-                        } else {
-                            return target[name];
-                        }
+                        return target[name];
                     }
                     if (name === "__safe_item_to_string") { //this is needed for jalangi/expose
                         return false;
@@ -38,33 +28,21 @@ function getDefaultFields() {
     return {
 //https://developer.mozilla.org/en-US/docs/Web/API/Navigator
 //STANDARD PROPERTIES:
-        connection: false, //not implemented by firefox and not sure really why malware would use this
         cookieEnabled: true,
-        credentials: false, //need CredentialsContainer interface implemented TODO maybe as to do with security but very complicated and async
         deviceMemory: 2.0,
-        geolocation: false,
         //hid: S$.symbol('navigator.hid', {}), needs HID object but I really doubt malware would use HID
-        keyboard: false,  //complicated object and async
         language: "en-US", //technically uses DOMString object but is a string
         languages: ["en-US", "en"],
         //locks: S$.symbol('navigator.languages', ["en-US", "en"]), needs LockManage object
         maxTouchPoints: 1, //seems like malware wouldnt use this
-        mediaCapabilities: false,
-        mediaDevices: false, //needs MediaDevices object plus malware not sure
         //mediaSession: S$.symbol('navigator.mediaSession', {}), needs MediaSession object //
         onLine: true,
-        permissions: false, //needs browser user to click agree to permissions so can't do it
         //presentation: S$.symbol('navigator.presentation', {}), //presentation object needed
-        serial: false, //needs serial object
-        serviceWorker: false, //needs ServiceWorkerContainer object
-        storage: false, //needs storagemanager object TODO: implement after async has been fixed in ExpoSE as StorageManager only has async methods
         userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36",
         webdriver: false,
-        windowControlsOverlay: false,//needs WindowControlsOverlay intrface
         //xr: S$.symbol('navigator.xr', {}), //needs XRsystem object
 //NON-STANDARD PROPERTIES:
         buildID: "20181001000000", //only used in firefox and not that useful for malware
-        contacts: false,
         securitypolicy: "",
         //standalone: //only useful for Apple IoS safari which seems too obscure
         //wakeLock:
@@ -102,24 +80,8 @@ function getInnerProxies() {
 
 function getObject() {
     return {
-//CHECK PROPERTIES:
-        requestableProperties: [
-            "contacts",
-            "credentials",
-            "geolocation",
-            "mediaDevices",
-            "serial",
-            "serviceWorker",
-            "storage",
-            "windowControlsOverlay",
-            "permissions",
-            "mediaCapabilities",
-            "connection",
-            "keyboard",
-        ],
 //STANDARD PROPERTIES:
         hardwareConcurrency: 1, //can range but I doubt malware would want to ask for this
-//NON-STANDARD PROPERTIES:
 //DEPRECATED PROPERTIES:
         vendorSub: "",
         appCodeName: "Mozilla",

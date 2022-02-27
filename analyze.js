@@ -139,7 +139,7 @@ if (default_enabled || multi_exec_enabled) {
     for (let i = 0; i < expose_json_results.done.length; i++) {
         numberOfExecutedSnippets = 1;
         //Make new folder for this new input, change directory of logging to be in this folder now
-        lib.new_symex_log_context(i);
+        lib.new_symex_log_context(i, expose_json_results.done[i].input);
 
         //Write to file that this input is associated to this folder
         ran_inputs[i] = {
