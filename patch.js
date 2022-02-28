@@ -1,4 +1,5 @@
 	window = this;
+	self = this;
 
 	_globalTimeOffset = 0;
 	WScript.sleep = function(delay) {

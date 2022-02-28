@@ -145,7 +145,7 @@ if (default_enabled || multi_exec_enabled) {
         let unique_context = {};
         for (let field in input) { //only include unique values in context
             if (input.hasOwnProperty(field)) {
-                if (!is_default_sym_exec_value(input[field])) {
+                if (!is_default_sym_exec_value(input[field]) && field !== "_bound") {
                     unique_context[field] = input[field];
                 }
             }
@@ -692,6 +692,7 @@ function make_sandbox(symex_input = null) {
         JSON,
         location: buildProxyForEmulatedObject(symex_input, "location.", "./emulator/location.js"),
         navigator: buildProxyForEmulatedObject(symex_input, "navigator.", "./emulator/navigator/navigator.js"),
+        origin: symex_input ? symex_input["origin"] : "https://default-origin.com",
         parse: (x) => {
         },
         rewrite: (code, log = false) => {
