@@ -1,11 +1,4 @@
-var S$ = require('S$');
-
-//from sandbox //TODO: see if can uncomment
-// let Enumerator = require("./emulator/Enumerator");
-// let GetObject = require("./emulator/WMI").GetObject;
-let InstallProduct = (x) => {
-    console.log("InstallProduct " + x);
-}
+var S$ = require('S$'); //TODO: wrap this in an anonymous function maybe?
 
 var window = global;
 var self = global;
@@ -66,7 +59,16 @@ global.origin = S$.symbol("origin", "");
 })();
 
 //active x
-// let wscript_proxy = makeWscriptProxy();
-// let WScript = wscript_proxy;
-// let WSH = wscript_proxy;
+(() => {
+    global.GetObject = require("./emulator/WMI").GetObject;
+    global.InstallProduct = (x) => {
+        console.log("InstallProduct " + x);
+    }
+
+    let activex_mock = require("./activex_mock");
+    let wscript_proxy = activex_mock.makeWscriptProxy();
+    global.WScript = wscript_proxy;
+    global.WSH = wscript_proxy;
+    global.ActiveXObject = activex_mock.ActiveXObject;
+})();
 

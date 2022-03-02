@@ -1,11 +1,13 @@
-const lib = require("./lib");
-//SYMEXDELETEBEFORE (DO NOT DELETE THIS COMMENT)
+const run_by_extract_js = process.argv[1].endsWith("extract-js/analyze");
+const lib = run_by_extract_js ? require("./lib") : require("./symbol-lib");
 
 function makeWscriptProxy() {
     return new Proxy({
         arguments: new Proxy((n) => `${n}th argument`, {
             get: function (target, name) {
                 switch (name) {
+                    case "name":
+                        return "wscript proxy arguments function";
                     case "Unnamed":
                         return [];
                     case "length":
@@ -18,8 +20,11 @@ function makeWscriptProxy() {
                         return [];
                     default:
                         return new Proxy(
-                            target[name], {
-                                get: (target, name) => name.toLowerCase() === "typeof" ? "unknown" : target[name],
+                             target[name],
+                            {
+                                get: (target, name) => {
+                                    return name.toLowerCase() === "typeof" ? "unknown" : target[name];
+                                },
                             }
                         );
                 }
@@ -35,40 +40,45 @@ function makeWscriptProxy() {
         scriptfullname: "C:\Users\\Sysop12\\AppData\\Roaming\\Microsoft\\Templates\\0.2638666.jse",
         scriptname: "0.2638666.jse",
         get stderr() {
-            lib.error("WScript.StdErr not implemented");
+            run_by_extract_js ? lib.error("WScript.StdErr not implemented") : console.log("WScript.StdErr not implemented");
         },
         get stdin() {
-            lib.error("WScript.StdIn not implemented");
+            run_by_extract_js ? lib.error("WScript.StdIn not implemented") : console.log("WScript.StdIn not implemented");
         },
         get stdout() {
-            lib.error("WScript.StdOut not implemented");
+            run_by_extract_js ? lib.error("WScript.StdOut not implemented") : console.log("WScript.StdOut not implemented");
         },
         version: "5.8",
         get connectobject() {
-            lib.error("WScript.ConnectObject not implemented");
+            run_by_extract_js ? lib.error("WScript.ConnectObject not implemented") : console.log("WScript.ConnectObject not implemented");
         },
         createobject: ActiveXObject,
         get disconnectobject() {
-            lib.error("WScript.DisconnectObject not implemented");
+            run_by_extract_js ? lib.error("WScript.DisconnectObject not implemented") : console.log("WScript.DisconnectObject not implemented");
         },
         echo() {
         },
         get getobject() {
-            lib.error("WScript.GetObject not implemented");
+            run_by_extract_js ? lib.error("WScript.GetObject not implemented") : console.log("WScript.GetObject not implemented");
         },
         quit() {
         },
         // Note that Sleep() is implemented in patch.js because it requires
         // access to the variable _globalTimeOffset, which belongs to the script
         // and not to the emulator.
-        [Symbol.toPrimitive]: () => "Windows Script Host",
+        // [Symbol.toPrimitive]: () => "Windows Script Host",
         tostring: "Windows Script Host",
     }, {
         get(target, prop) {
             // For whatever reasons, WScript.* properties are case insensitive.
-            if (typeof prop === "string")
-                prop = prop.toLowerCase();
-            return target[prop];
+            switch (prop) {
+                case Symbol.toPrimitive:
+                    return () => "Windows Script Host";
+                default:
+                    if (typeof prop === "string")
+                        prop = prop.toLowerCase();
+                    return target[prop];
+            }
         }
     });
 }
@@ -119,7 +129,6 @@ function ActiveXObject(name) {
     }
 }
 
-//SYMEXDELETEAFTER (DO NOT DELETE THIS COMMENT)
 module.exports = {
     makeWscriptProxy,
     ActiveXObject
