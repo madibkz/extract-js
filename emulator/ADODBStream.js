@@ -1,4 +1,5 @@
-const lib = require("../lib");
+const run_by_extract_js = process.argv[1].endsWith("extract-js/analyze");
+const lib = run_by_extract_js ? require("../lib") : require("../symbol-lib");
 const iconv = require("iconv-lite");
 
 /* Includes code (ADODBStream.writetext, .loadfromfile) from
@@ -31,17 +32,26 @@ function ADODBStream() {
     this.virtual_filename = "(undefined)";
     this.charset = "";
     this.position = 0;
-    this.open = () => {};
+    this.open = function () {};
     this.savetofile = function(filename) {
         this.virtual_filename = filename;
         lib.writeFile(filename, this.buffer);
         lib.logResource(lib.getUUID(), this.virtual_filename, this.buffer, true);
     };
     this.close = () => {};
-    this.read = this.readtext = function() {
+    this.read = function() {
         return this.buffer;
     };
-    this.write = this.writetext = function(text) {
+    this.readtext = function() {
+        return this.buffer;
+    };
+    this.write = function(text) {
+        if (this.charset)
+            this.buffer = iconv.encode(text, this.charset);
+        else
+            this.buffer = text;
+    };
+    this.writetext = function(text) {
         if (this.charset)
             this.buffer = iconv.encode(text, this.charset);
         else
@@ -56,8 +66,9 @@ function ADODBStream() {
     this.tojson = function(data) {
         console.log(data);
         return "[1]";
-    }
+    };
     this.copyto = (target) => target.write(this.buffer);
+    this.tostring = () => "ADODBStream object";
 }
 
 module.exports = function() {
@@ -69,11 +80,20 @@ module.exports = function() {
             case "length":
                 return target.buffer.length;
             default:
-                if (name in target) return target[name];
+                if (name === "__safe_item_to_string") { //this is needed for jalangi/expose
+                    return false;
+                }
+                if (name in target) {
+                    return target[name];
+                }
                 lib.kill(`ADODBStream.${name} not implemented!`);
             }
         },
         set: function(a, b, c) {
+            if (b === "__safe_item_to_string") { //this is needed for jalangi/expose
+                a[b] = c;
+                return true;
+            }
             b = b.toLowerCase();
             /*      if (c.length < 1024)
                     console.log(`ADODBStream[${b}] = ${c};`);

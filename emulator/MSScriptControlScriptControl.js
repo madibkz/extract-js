@@ -1,14 +1,15 @@
-const lib = require("../lib");
+const run_by_extract_js = process.argv[1].endsWith("extract-js/analyze");
+const lib = run_by_extract_js ? require("../lib") : require("../symbol-lib");
 
 function ScriptControl() {
 
-    this.Language = undefined;
-    this.Timeout = undefined;
+    this.language = "";
+    this.timeout = 10;
 
     this.addcode = code => {
         lib.info(`Script added dynamic code '''${code}'''`);
         lib.logIOC("DynamicCode", {code}, "The script wrote dynamic code with MSScriptControl.ScriptControl ActiveX object.");
-	return 0;
+	    return 0;
     };
 }
 
