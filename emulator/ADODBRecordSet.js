@@ -1,4 +1,5 @@
-const lib = require("../lib");
+const run_by_extract_js = process.argv[1].endsWith("extract-js/analyze");
+const lib = run_by_extract_js ? require("../lib") : require("../symbol-lib");
 
 // http://stackoverflow.com/a/30410454
 function nthOfGenerator(generator, n) {
@@ -42,6 +43,9 @@ function ProxiedField(field, updateFn) {
 					default:
 						if (name in target.value) return target.value[name];
 						if (name in target) return target[name];
+						if (name === "__safe_item_to_string") { //this is needed for jalangi/expose
+							return false;
+						}
 						lib.kill(`ProxiedField.${name} not implemented!`);
 				}
 			},
@@ -101,10 +105,17 @@ function ADODBRecordSet() {
 						});
 					default:
 						if (name in target) return target[name];
+						if (name === "__safe_item_to_string") { //this is needed for jalangi/expose
+							return false;
+						}
 						lib.kill(`ADODBRecordSet.Fields.${name} not implemented!`);
 				}
 			},
 			set: function(a, b, c) {
+				if (b === "__safe_item_to_string") { //this is needed for jalangi/expose
+					a[b] = c;
+					return true;
+				}
 				b = b.toLowerCase();
 				a[b] = c;
 				return true;
@@ -120,9 +131,16 @@ module.exports = function() {
 			name = name.toLowerCase();
 			if (name in target) return target[name];
 			if (name in this._instance) return this._instance[name];
+			if (name === "__safe_item_to_string") { //this is needed for jalangi/expose
+				return false;
+			}
 			lib.kill(`ADODBRecordSet.${name} not implemented!`);
 		},
 		set: function(a, b, c) {
+			if (b === "__safe_item_to_string") { //this is needed for jalangi/expose
+				a[b] = c;
+				return true;
+			}
 			b = b.toLowerCase();
 			a[b] = c;
 			return true;

@@ -45,4 +45,8 @@ module.exports = {
     },
     getUUID: () => 1,
     runShellCommand: (comm) => console.log("Command " + comm + " was run in ShellApplication"),
+    warn: (x) => console.log(x),
+    warning: (x) => console.log(x),
+    writeFile: (fn, buffer) => console.log(`Script wrote ${buffer} to file ${fn}`),
+    readFile: (fn) => "",
 };

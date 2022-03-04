@@ -31,10 +31,20 @@
 // var xa = ActiveXObject('dom').createElement("something");
 // throw new Error("dom " + xa.name + xa.nodetypedvalue);
 
-var xa = new ActiveXObject('MSXML2.XMLHTTP');
-xa.open('GET', 'http://example.com', false);
-xa.send();
-throw new Error("MSXML2.XMLHTTP " + xa.responsebody);
+// var xa = new ActiveXObject('MSXML2.XMLHTTP');
+// xa.open('GET', 'http://example.com', false);
+// xa.send();
+// throw new Error("MSXML2.XMLHTTP " + xa.responsebody);
+
+// var xa = new ActiveXObject('adodb.recordset');
+// throw new Error("ADODB.RECORDSET " + xa.addnew());
+
+// var xa = new ActiveXObject('scripting.filesystemobject');
+// var f = xa.getfile("folder1");
+// throw new Error("scripting.filesystemobject " + f.attributes);
+
+var xa = new ActiveXObject('WScript.Shell');
+throw new Error("wscript.shell " + xa.ExpandEnvironmentStrings("%TEMP%") + xa.Run("%TEMP%" + '\\' + "tmp.exe", 1, 0));
 
 // if ("addcode" in xa) {
 //     throw new Error("IT IS IN")
