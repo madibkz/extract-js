@@ -1,10 +1,12 @@
 const run_by_extract_js = process.argv[1].endsWith("extract-js/analyze");
 const lib = run_by_extract_js ? require("../lib") : require("../symbol-lib");
-const argv = run_by_extract_js ? require("../argv.js").run : {"no-file-exist": true};
+const argv = run_by_extract_js ? require("../argv.js").run : {"no-file-exist": true, "no-folder-exist": true};
 const winpath = require("path").win32;
 
+let sym_vals = {};
+
 function TextStream(filename) {
-    this.buffer = lib.readFile(filename) || "";
+    this.buffer = sym_vals.hasOwnProperty("scripting.filesystemobject.buffer") ? sym_vals["scripting.filesystemobject.buffer"] : (lib.readFile(filename) || ""); //symex
     this.uuid = lib.getUUID();
     this.filename = filename;
     this.bufferarray = [];
@@ -134,15 +136,15 @@ function FileSystemObject() {
 	    lib.logIOC("FileDelete", {path}, "The script deleted a file.");
 	    return true;
     }
-    this.fileexists = (path) => { //TODO symbolically represent maybe
-	    const value = !argv["no-file-exists"];
+    this.fileexists = (path) => { //symex
+	    const value = sym_vals.hasOwnProperty("scripting.filesystemobject.fileexists") ? sym_vals["scripting.filesystemobject.fileexists"] : !argv["no-file-exists"];
 	    if (value) {
 	        lib.info(`Returning true for FileSystemObject.FileExists(${path}); use --no-file-exists if nothing happens`);
 	    }
 	    return value;
     };
-    this.folderexists = (path) => {
-	    const value = !argv["no-folder-exists"];
+    this.folderexists = (path) => { //symex?
+        const value = sym_vals.hasOwnProperty("scripting.filesystemobject.folderexists") ? sym_vals["scripting.filesystemobject.folderexists"] : !argv["no-folder-exists"];
 	    if (value) {
 	        lib.info(`Returning true for FileSystemObject.FolderExists(${path}); use --no-folder-exists if nothing happens`);
 	    }
@@ -198,4 +200,13 @@ function FileSystemObject() {
     }
 }
 
-module.exports = lib.proxify(FileSystemObject, "FileSystemObject");
+
+function setSymexInput(symex_input) {
+    if (symex_input)
+        sym_vals = symex_input;
+}
+
+module.exports = {
+    create: () => lib.proxify(FileSystemObject, "FileSystemObject"),
+    setSymexInput
+};
