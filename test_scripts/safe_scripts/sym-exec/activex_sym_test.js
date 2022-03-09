@@ -51,21 +51,36 @@
 // }
 // xa.close();
 
-var xa = new ActiveXObject('scripting.filesystemobject');
-if (xa.fileexists("fakepath")) {
-    console.log("FILE EXISTS BRANCH");
-} else {
-    console.log("NO FILE EXISTS BRANCH");
-}
-if (xa.folderexists("fakepath")) {
-    console.log("folder EXISTS BRANCH");
-} else {
-    console.log("NO folder EXISTS BRANCH");
-}
-let f = xa.opentextfile("faketextfile");
-if (f.readall() === "BUFFER SYMBOLIZATION WORKS") {
-    console.log("BUFFER BRNACH");
-} else {
-    console.log("NO BUFFER BRNACH");
-}
+// var xa = new ActiveXObject('scripting.filesystemobject');
+// if (xa.fileexists("fakepath")) {
+//     console.log("FILE EXISTS BRANCH");
+// } else {
+//     console.log("NO FILE EXISTS BRANCH");
+// }
+// if (xa.folderexists("fakepath")) {
+//     console.log("folder EXISTS BRANCH");
+// } else {
+//     console.log("NO folder EXISTS BRANCH");
+// }
+// let f = xa.opentextfile("faketextfile");
+// if (f.readall() === "BUFFER SYMBOLIZATION WORKS") {
+//     console.log("BUFFER BRNACH");
+// } else {
+//     console.log("NO BUFFER BRNACH");
+// }
 
+// if (WScript.interactive) {
+//     console.log("SYMEX WORKS");
+// }
+// if (WScript.path == "FAKEPATH") {
+//     console.log("SYMEX WORKS2");
+// }
+// if (WScript.scriptfullname == "fullname") {
+//     console.log("SYMEX WORKS3");
+// }
+// if (WScript.scriptname == "fullname2") {
+//     console.log("SYMEX WORKS4");
+// }
+if (WScript.version == "3") {
+    console.log("SYMEX WORKS5");
+}
