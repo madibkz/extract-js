@@ -81,6 +81,32 @@
 // if (WScript.scriptname == "fullname2") {
 //     console.log("SYMEX WORKS4");
 // }
-if (WScript.version == "3") {
-    console.log("SYMEX WORKS5");
+
+// if (WScript.version == "3") {
+//     console.log("SYMEX WORKS5");
+// }
+
+//GetObject tests
+// let obj = GetObject();
+// let instances = obj.InstancesOf("win32_computersystem");
+// if (instances[0]["pscomputername"] === "TESTNAME") {
+//     console.log("SYMEX WORKS");
+// }
+
+// let obj = GetObject();
+// let instances = obj.InstancesOf("win32_networkadapterconfiguration");
+// if (instances[0]["ipaddress"][0] === "TESTNAME") {
+//     console.log("SYMEX WORKS");
+// }
+
+// let obj = GetObject();
+// let instances = obj.InstancesOf("win32_operatingsystem");
+// if (instances[0]["name"] === "Windows 11") {
+//     console.log("SYMEX WORKS");
+// }
+
+let obj = GetObject();
+let instances = obj.InstancesOf("win32_processstoptrace");
+if (instances[0]["processname"] === "firefox.exe") {
+    console.log("SYMEX WORKS");
 }

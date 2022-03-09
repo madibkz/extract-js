@@ -61,7 +61,7 @@ global.origin = S$.symbol("origin", "");
 
 //build active x emulation/symbol tracking
 (() => {
-    global.GetObject = require("./emulator/WMI").GetObject;
+    let wmi = require("./emulator/WMI");
     global.InstallProduct = (x) => {
         console.log("InstallProduct " + x);
     }
@@ -84,7 +84,6 @@ global.origin = S$.symbol("origin", "");
             "scripting.filesystemobject.fileexists": S$.symbol("scripting.filesystemobject.fileexists", false),
             "scripting.filesystemobject.folderexists": S$.symbol("scripting.filesystemobject.folderexists", false),
 
-
             "wscript.proxy.buildversion": S$.symbol("wscript.proxy.buildversion", ""),
             "wscript.proxy.interactive": S$.symbol("wscript.proxy.interactive", false),
             "wscript.proxy.path": S$.symbol("wscript.proxy.path", ""),
@@ -93,15 +92,71 @@ global.origin = S$.symbol("origin", "");
             "wscript.proxy.version": S$.symbol("wscript.proxy.version", ""),
         }
 
+        let wmi_getobject_symbols = {
+            "wmi.getobject.tables.win32_computersystem.pscomputername": S$.symbol("wmi.getobject.tables.win32_computersystem.pscomputername",""),
+            "wmi.getobject.tables.win32_computersystem.adminpasswordstatus": S$.symbol("wmi.getobject.tables.win32_computersystem.adminpasswordstatus",0),
+            "wmi.getobject.tables.win32_computersystem.status": S$.symbol("wmi.getobject.tables.win32_computersystem.status",""),
+            "wmi.getobject.tables.win32_computersystem.name": S$.symbol("wmi.getobject.tables.win32_computersystem.name",""),
+            "wmi.getobject.tables.win32_computersystem.currenttimezone": S$.symbol("wmi.getobject.tables.win32_computersystem.currenttimezone",0),
+            "wmi.getobject.tables.win32_computersystem.domain": S$.symbol("wmi.getobject.tables.win32_computersystem.domain",""),
+            "wmi.getobject.tables.win32_computersystem.hypervisorpresent": S$.symbol("wmi.getobject.tables.win32_computersystem.hypervisorpresent",""),
+            "wmi.getobject.tables.win32_computersystem.manufacturer": S$.symbol("wmi.getobject.tables.win32_computersystem.manufacturer",""),
+            "wmi.getobject.tables.win32_computersystem.model": S$.symbol("wmi.getobject.tables.win32_computersystem.model",""),
+            "wmi.getobject.tables.win32_computersystem.networkservermodeenabled": S$.symbol("wmi.getobject.tables.win32_computersystem.networkservermodeenabled",""),
+            "wmi.getobject.tables.win32_computersystem.primaryownername": S$.symbol("wmi.getobject.tables.win32_computersystem.primaryownername",""),
+            "wmi.getobject.tables.win32_computersystem.username": S$.symbol("wmi.getobject.tables.win32_computersystem.username",""),
+            "wmi.getobject.tables.win32_networkadapterconfiguration.pscomputername": S$.symbol("wmi.getobject.tables.win32_networkadapterconfiguration.pscomputername",""),
+            "wmi.getobject.tables.win32_networkadapterconfiguration.dhcpenabled": S$.symbol("wmi.getobject.tables.win32_networkadapterconfiguration.dhcpenabled",""),
+            "wmi.getobject.tables.win32_networkadapterconfiguration.dhcpserver": S$.symbol("wmi.getobject.tables.win32_networkadapterconfiguration.dhcpserver",""),
+            "wmi.getobject.tables.win32_networkadapterconfiguration.dnsdomain": S$.symbol("wmi.getobject.tables.win32_networkadapterconfiguration.dnsdomain",""),
+            "wmi.getobject.tables.win32_networkadapterconfiguration.dnshostname": S$.symbol("wmi.getobject.tables.win32_networkadapterconfiguration.dnshostname",""),
+            "wmi.getobject.tables.win32_networkadapterconfiguration.domaindnsregistrationenabled": S$.symbol("wmi.getobject.tables.win32_networkadapterconfiguration.domaindnsregistrationenabled",""),
+            "wmi.getobject.tables.win32_networkadapterconfiguration.fulldnsregistrationenabled": S$.symbol("wmi.getobject.tables.win32_networkadapterconfiguration.fulldnsregistrationenabled",""),
+            "wmi.getobject.tables.win32_networkadapterconfiguration.ipaddress.ip": S$.symbol("wmi.getobject.tables.win32_networkadapterconfiguration.ipaddress.ip",""),
+            "wmi.getobject.tables.win32_networkadapterconfiguration.ipaddress.mac": S$.symbol("wmi.getobject.tables.win32_networkadapterconfiguration.ipaddress.mac",""),
+            "wmi.getobject.tables.win32_networkadapterconfiguration.ipenabled": S$.symbol("wmi.getobject.tables.win32_networkadapterconfiguration.ipenabled",""),
+            "wmi.getobject.tables.win32_networkadapterconfiguration.ipfiltersecurityenabled": S$.symbol("wmi.getobject.tables.win32_networkadapterconfiguration.ipfiltersecurityenabled",""),
+            "wmi.getobject.tables.win32_networkadapterconfiguration.macaddress": S$.symbol("wmi.getobject.tables.win32_networkadapterconfiguration.macaddress",""),
+            "wmi.getobject.tables.win32_networkadapterconfiguration.servicename": S$.symbol("wmi.getobject.tables.win32_networkadapterconfiguration.servicename",""),
+            "wmi.getobject.tables.win32_operatingsystem.pscomputername": S$.symbol("wmi.getobject.tables.win32_operatingsystem.pscomputername",""),
+            "wmi.getobject.tables.win32_operatingsystem.status": S$.symbol("wmi.getobject.tables.win32_operatingsystem.status",""),
+            "wmi.getobject.tables.win32_operatingsystem.name": S$.symbol("wmi.getobject.tables.win32_operatingsystem.name",""),
+            "wmi.getobject.tables.win32_operatingsystem.bootdevice": S$.symbol("wmi.getobject.tables.win32_operatingsystem.bootdevice",""),
+            "wmi.getobject.tables.win32_operatingsystem.buildnumber": S$.symbol("wmi.getobject.tables.win32_operatingsystem.buildnumber",""),
+            "wmi.getobject.tables.win32_operatingsystem.caption": S$.symbol("wmi.getobject.tables.win32_operatingsystem.caption",""),
+            "wmi.getobject.tables.win32_operatingsystem.countrycode": S$.symbol("wmi.getobject.tables.win32_operatingsystem.countrycode",0),
+            "wmi.getobject.tables.win32_operatingsystem.csname": S$.symbol("wmi.getobject.tables.win32_operatingsystem.csname",""),
+            "wmi.getobject.tables.win32_operatingsystem.currenttimezone": S$.symbol("wmi.getobject.tables.win32_operatingsystem.currenttimezone",0),
+            "wmi.getobject.tables.win32_operatingsystem.distributed": S$.symbol("wmi.getobject.tables.win32_operatingsystem.distributed",""),
+            "wmi.getobject.tables.win32_operatingsystem.encryptionlevel": S$.symbol("wmi.getobject.tables.win32_operatingsystem.encryptionlevel",0),
+            "wmi.getobject.tables.win32_operatingsystem.localdatetime": S$.symbol("wmi.getobject.tables.win32_operatingsystem.localdatetime",""),
+            "wmi.getobject.tables.win32_operatingsystem.locale": S$.symbol("wmi.getobject.tables.win32_operatingsystem.locale",""),
+            "wmi.getobject.tables.win32_operatingsystem.numberofusers": S$.symbol("wmi.getobject.tables.win32_operatingsystem.numberofusers",0),
+            "wmi.getobject.tables.win32_operatingsystem.organization": S$.symbol("wmi.getobject.tables.win32_operatingsystem.organization",""),
+            "wmi.getobject.tables.win32_operatingsystem.osarchitecture": S$.symbol("wmi.getobject.tables.win32_operatingsystem.osarchitecture",""),
+            "wmi.getobject.tables.win32_operatingsystem.oslanguage": S$.symbol("wmi.getobject.tables.win32_operatingsystem.oslanguage",0),
+            "wmi.getobject.tables.win32_operatingsystem.osproductsuite": S$.symbol("wmi.getobject.tables.win32_operatingsystem.osproductsuite",0),
+            "wmi.getobject.tables.win32_operatingsystem.ostype": S$.symbol("wmi.getobject.tables.win32_operatingsystem.ostype",0),
+            "wmi.getobject.tables.win32_operatingsystem.registereduser": S$.symbol("wmi.getobject.tables.win32_operatingsystem.registereduser",""),
+            "wmi.getobject.tables.win32_operatingsystem.serialnumber": S$.symbol("wmi.getobject.tables.win32_operatingsystem.serialnumber",""),
+            "wmi.getobject.tables.win32_operatingsystem.systemdevice": S$.symbol("wmi.getobject.tables.win32_operatingsystem.systemdevice",""),
+            "wmi.getobject.tables.win32_operatingsystem.systemdirectory": S$.symbol("wmi.getobject.tables.win32_operatingsystem.systemdirectory",""),
+            "wmi.getobject.tables.win32_operatingsystem.systemdrive": S$.symbol("wmi.getobject.tables.win32_operatingsystem.systemdrive",""),
+            "wmi.getobject.tables.win32_operatingsystem.version": S$.symbol("wmi.getobject.tables.win32_operatingsystem.version",""),
+            "wmi.getobject.tables.win32_processstoptrace.process": S$.symbol("wmi.getobject.tables.win32_processstoptrace.process",""),
+        }
+
         if (activex_buffers_symbolize) {
             activex_symbols["xmlhttp.responsebody"] = S$.symbol("xmlhttp.responsebody", "");
             activex_symbols["adodb.stream.buffer"] = S$.symbol("adodb.stream.buffer", "");
             activex_symbols["scripting.filesystemobject.buffer"] = S$.symbol("scripting.filesystemobject.buffer", "");
         }
 
+        wmi.setSymexInput(wmi_getobject_symbols);
         activex_mock.setSymexInput(activex_symbols);
     }
 
+    global.GetObject = wmi.GetObject;
 
     let wscript_proxy = activex_mock.makeWscriptProxy();
     global.WScript = wscript_proxy;

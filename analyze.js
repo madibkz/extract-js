@@ -624,6 +624,9 @@ function make_sandbox(symex_input = null) {
     activex_mock.setSymexInput(symex_input);
     var wscript_proxy = activex_mock.makeWscriptProxy();
 
+    let wmi = require("./emulator/WMI");
+    wmi.setSymexInput(symex_input);
+
     return {
         saveAs: function (data, fname) {
             // TODO: If Blob need to extract the data.
@@ -691,7 +694,7 @@ function make_sandbox(symex_input = null) {
             log: (x) => lib.info("Script output: " + (multi_exec_enabled ? multiexec_indent : "") + JSON.stringify(x)),
         },
         Enumerator: require("./emulator/Enumerator"),
-        GetObject: require("./emulator/WMI").GetObject,
+        GetObject: wmi.GetObject,
         JSON,
         location: buildProxyForEmulatedObject(symex_input, "location.", "./emulator/location.js"),
         navigator: buildProxyForEmulatedObject(symex_input, "navigator.", "./emulator/navigator/navigator.js"),
