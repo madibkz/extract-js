@@ -36,20 +36,20 @@
 // xa.open('GET', 'http://document.php', false);
 // xa.send();
 
-// var xa = new ActiveXObject('ADODB.Stream');
-// xa.open();
-// xa.write("RANDOM TEXT RANDOM TEXT");
-// if (xa.position === 4) {
-//     console.log("Got position right");
-// }
-// if (xa.charset === "US") {
-//     console.log("Got charset right");
-// }
-// xa.loadfromfile("RANDOMFILE2.txt")
-// if (xa.read() === "REQUIRED READ VALUE") {
-//     console.log("Got it");
-// }
-// xa.close();
+ var xa = new ActiveXObject('ADODB.Stream');
+ xa.open();
+ xa.write("RANDOM TEXT RANDOM TEXT");
+ if (xa.position === 4) {
+     console.log("Got position right");
+ }
+ if (xa.charset === "US") {
+     console.log("Got charset right");
+ }
+ xa.loadfromfile("RANDOMFILE2.txt")
+ if (xa.read() === "REQUIRED READ VALUE") {
+     console.log("Got it");
+ }
+ xa.close();
 
 // var xa = new ActiveXObject('scripting.filesystemobject');
 // if (xa.fileexists("fakepath")) {
@@ -105,8 +105,8 @@
 //     console.log("SYMEX WORKS");
 // }
 
-let obj = GetObject();
-let instances = obj.InstancesOf("win32_processstoptrace");
-if (instances[0]["processname"] === "firefox.exe") {
-    console.log("SYMEX WORKS");
-}
+//let obj = GetObject();
+//let instances = obj.InstancesOf("win32_processstoptrace");
+//if (instances[0]["processname"] === "firefox.exe") {
+    //console.log("SYMEX WORKS");
+//}
