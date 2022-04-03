@@ -33,9 +33,14 @@
             "description": "Run all modes of analysis: default, multi-execution and symbolic-execution."
         },
         {
+            "name": "default",
+            "type": "Boolean",
+            "description": "Run a default analysis: This runs the script under the default sandbox context, logging any interesting information found."
+        },
+        {
             "name": "sym-exec",
             "type": "Boolean",
-            "description": "Only run symbolic execution mode: This runs the script under dynamic symbolic execution to find different sandbox contexts which trigger different behaviours."
+            "description": "Run a symbolic execution analysis: This runs the script under dynamic symbolic execution to find different sandbox contexts which trigger different behaviours."
         },
         {
             "name": "no-sym-exec-activex",
@@ -50,7 +55,7 @@
         {
             "name": "multi-exec",
             "type": "Boolean",
-            "description": "Only run multi-execution analysis: Cover all of the code by forcing execution of the multiple control paths. Since execution is out of order, there may be errors but potentially new information can be extracted."
+            "description": "Run a multi-execution analysis: Cover all of the code by forcing execution of the multiple control paths. Since execution is out of order, there may be errors but potentially new information can be extracted."
         },
         {
             "name": "no-multi-exec-loop",

@@ -15,14 +15,15 @@ let uniq_urls = [];
 let uniq_active_urls = [];
 
 function summarize(results_dir, file_copying = true) {
-    console.log("(AGGREGATOR) Summarizing extracted information across ran modes for " + results_dir);
 
     let default_exists = fs.existsSync(results_dir + "/default");
     let symex_exists = fs.existsSync(results_dir + "/sym-exec");
     let multi_exists = fs.existsSync(results_dir + "/multi-exec");
 
     //if only one folder exists
-    if (default_exists + symex_exists + multi_exists <= 1) return;
+    if (default_exists + symex_exists + multi_exists <= 1 && !symex_exists) return;
+
+    console.log("(AGGREGATOR) Summarizing extracted information across ran modes for " + results_dir);
 
     fs.mkdirSync(results_dir + "/summary");
 
