@@ -147,7 +147,7 @@ q.on("success", () => {
 if (!argv["no-summary"]) {
 	q.on("end", () => {
 		for (let i = 0; i < results_dirs.length; i++) {
-			require("./aggregator.js").summarize(results_dirs[i]);
+			require("./aggregator.js").summarize(results_dirs[i], !argv["no-summary-file-copying"]);
 		}
 	});
 }
