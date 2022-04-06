@@ -188,6 +188,11 @@
             "description": "Emulate Windows XP (influences the value of environment variables)"
         },
         {
+            "name": "vm2",
+            "type": "Boolean",
+            "description": "Analyzes the JavaScript in a vm2 virtual machine instance rather than the default jsdom. This means there is little to no DOM analysis but there is still activex analysis."
+        },
+        {
             "name": "dangerous-vm",
             "type": "Boolean",
             "description": "Use the `vm` module, rather than `vm2`. This sandbox can be broken, so **don't use this** unless you're 100% sure of what you're doing. Helps with debugging by giving correct stack traces."
