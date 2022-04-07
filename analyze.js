@@ -158,7 +158,8 @@ if (default_enabled || multi_exec_enabled) {
 
         //Run sandbox for this input combination
         const sandbox = make_sandbox(input);
-        run_in_vm(code, sandbox);
+        //pass true to make them run in vm2 rather than jsdom for now
+        run_in_vm(code, sandbox, true);
     }
 }
 
@@ -542,8 +543,8 @@ function rewrite_code_for_symex_script(code) {
     return code;
 }
 
-async function run_in_vm(code, sandbox) {
-    if (argv["vm2"]) {
+async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
+    if (argv["vm2"] || sym_ex_vm2_flag) {
         lib.debug("Analyzing with vm2 v" + require("vm2/package.json").version);
 
         // Fake cscript.exe style ReferenceError messages.
