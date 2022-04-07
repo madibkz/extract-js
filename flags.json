@@ -183,6 +183,11 @@
             "description": "[experimental] Use the specified proxy for downloads. This is not relevant if the --download flag is not present."
         },
         {
+            "name": "url",
+            "type": "String",
+            "description": "Specify the document's url and referer attribute for emulation."
+        },
+        {
             "name": "windows-xp",
             "type": "Boolean",
             "description": "Emulate Windows XP (influences the value of environment variables)"
