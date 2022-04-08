@@ -12,6 +12,7 @@ const argv = require("./argv.js").run;
 const jsdom = require("jsdom");
 const JSDOM = jsdom.JSDOM;
 const traverse = require("./utils.js").traverse
+const logged_dom_vals = require("./logged_dom_values");
 
 const filename = process.argv[2];
 const directory = process.argv[3];
@@ -610,13 +611,54 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                     runScripts: "dangerously",
                     pretendToBeVisual: true,
 
+                    //Setting up the global context of the emulation
                     beforeParse(window) {
+                        //add our sandbox properties
                         for (let field in sandbox) {
                             if (sandbox.hasOwnProperty(field)) {
                                 window[field] = sandbox[field];
                             }
                         }
+                        //this boolean is what we use to check that the emulation has reached the end
                         window.emulationFinished = false;
+
+                        //Add logging to the window's members
+                        let window_log_vals = logged_dom_vals.window;
+                        window_log_vals.properties.forEach((prop) => {
+                            let real_val = window[prop[0]];
+                            //if readonly property
+                            if (prop[1]) { //TODO: use some hacky workaround for this duplication
+                                Object.defineProperty(window, prop[0], {
+                                    get: function() {
+                                        lib.logDOM(`window.${prop[0]}`);
+                                        return real_val;
+                                    },
+                                    enumerable: true,
+                                    configurable: !prop[1]
+                                })
+                            } else {
+                                window[`__${prop[0]}`] = real_val;
+                                Object.defineProperty(window, prop[0], {
+                                    get: function() {
+                                        lib.logDOM(`window.${prop[0]}`);
+                                        return window[`__${prop[0]}`];
+                                    },
+                                    set: function(val) {
+                                        window[`__${prop[0]}`] = val;
+                                    },
+                                    enumerable: true,
+                                    configurable: !prop[1]
+                                })
+                            }
+                        })
+
+                        window_log_vals.methods.forEach((m) => {
+                            let og_function = window[m[0]];
+                            window[m[0]] = function () {
+                                lib.logDOM(m[0], false, null, true);
+                                return og_function.apply(window, arguments);
+                            }
+                        })
                     }
                 });
 
@@ -634,7 +676,7 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                     //RESTART LOGGING AND SANDBOX STUFF:
                     restartLoggedState();
                 } else {
-                    lib.error(e.stack, true, false);
+                    lib.error(e.stack ? e.stack : e, true, false);
                     throw e;
                 }
             }
@@ -703,6 +745,7 @@ function make_sandbox(symex_input = null) {
             }
         },
         //Blob : Blob,
+        turnOffLogDOM: lib.turnOffLogDOM,
         logJS: lib.logJS,
         logIOC: lib.logIOC,
         logMultiexec: (x, indent) => { //TODO: maybe reduce the duplication here

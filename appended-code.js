@@ -1,6 +1,8 @@
 
 // go through all declared variables in the script looking for valid JavaScript in the contents
 // eval the javascript so it gets sandboxed
+turnOffLogDOM()
+
 const vm = require('vm');
 let number_of_js_str = 0;
 for (varName in this) {

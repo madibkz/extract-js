@@ -15,9 +15,12 @@ let snippets = {};
 let resources = {};
 let files = {};
 let IOC = [];
+let dom_logs = [];
 
 let latestUrl = "";
 let number_of_wscript_code_snippets = 0;
+
+let logDom = true;
 
 const logSnippet = function(filename, logContent, content, deobfuscate = false) {
 	snippets[filename] = logContent;
@@ -38,6 +41,9 @@ function new_symex_log_context(count, input) {
 	resources = {};
 	files = {};
 	IOC = [];
+	dom_logs = [];
+
+	logDom = true;
 
 	if (count > 0) {
 		//reset directory to normal directory
@@ -62,6 +68,9 @@ function restartState() {
 	resources = {};
 	files = {};
 	IOC = [];
+	dom_logs = [];
+
+	logDom = true;
 
 	latestUrl = "";
 	number_of_wscript_code_snippets = 0;
@@ -252,6 +261,16 @@ module.exports = {
 		}
 		return code; // Helps with tail call optimization
 	},
+	logDOM: function(property, write = false, write_val = null, func = false) {
+		if (logDom) {
+			let dom_str = `DOM: Code ${write ? "modified" : (func ? "called" : "accessed") } ${property}${func ? "()" : ""}${write_val ? " with value " + write_val : ""}`;
+			log("info", dom_str);
+
+			dom_logs.push(dom_str);
+			fs.writeFileSync(path.join(directory, "dom_logs.json"), JSON.stringify(dom_logs, null, "\t"));
+		}
+	},
+	turnOffLogDOM: () => {logDom = false},
 	logIOC,
 	runShellCommand: (command) => {
 		const filename = "WSCRIPT_CODE_" + (++number_of_wscript_code_snippets) + "_" + getUUID();
