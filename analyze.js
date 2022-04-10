@@ -650,6 +650,7 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                                         return window[`__${prop[0]}`];
                                     },
                                     set: function(val) {
+                                        lib.logDOM(`window.${prop[0]}`, true, val);
                                         window[`__${prop[0]}`] = val;
                                     },
                                     enumerable: true,
@@ -666,6 +667,25 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                                     return og_function.apply(window, arguments);
                             }
                         })
+
+                        let loc_proxy = new Proxy(window.document.location, {
+                            get: (target, name) => {
+                                if (name in target) {
+                                    if (typeof name !== "symbol")
+                                        lib.logDOM(`window.location.${name}`);
+                                    return target[name];
+                                }
+                                return undefined;
+                            },
+                            set: function(target, name, val) {
+                                if (name in target) {
+                                    lib.logDOM(`window.location.${name}`, true, val);
+                                    target[name] = val;
+                                }
+                                return false;
+                            },
+                        });
+                        window.location = loc_proxy;
                     }
                 });
 
@@ -752,7 +772,9 @@ function make_sandbox(symex_input = null) {
             }
         },
         //Blob : Blob,
-        turnOffLogDOM: lib.turnOffLogDOM,
+        // turnOnLogDOM: lib.turnOnLogDOM,
+        // turnOffLogDOM: lib.turnOffLogDOM,
+        toggleLogDOM: lib.toggleLogDOM,
         logJS: lib.logJS,
         logIOC: lib.logIOC,
         logMultiexec: (x, indent) => { //TODO: maybe reduce the duplication here
