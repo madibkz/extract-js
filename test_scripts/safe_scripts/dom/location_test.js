@@ -1,8 +1,9 @@
 //console.log("awfawf");
-console.log(location);
-console.log(location.href);
+//console.log("1" + location);
+//console.log("2" + location.href);
+console.log("3" + document.location.href);
 //
-location.host = "awfawf";
-location = "https://google.com";
-console.log(location);
-console.log(location.href);
+//location.host = "awfawf";
+//location = "https://google.com";
+//console.log(location);
+//console.log(location.href);
