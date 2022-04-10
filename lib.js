@@ -19,6 +19,8 @@ let dom_logs = [];
 
 let latestUrl = "";
 let number_of_wscript_code_snippets = 0;
+let numberOfSetTimeoutCalls = 0;
+let numberOfSetIntervalCalls = 0;
 
 let logDom = false;
 
@@ -44,6 +46,11 @@ function new_symex_log_context(count, input) {
 	dom_logs = [];
 
 	logDom = false;
+
+	latestUrl = "";
+	number_of_wscript_code_snippets = 0;
+	numberOfSetTimeoutCalls = 0;
+	numberOfSetIntervalCalls = 0;
 
 	if (count > 0) {
 		//reset directory to normal directory
@@ -74,6 +81,8 @@ function restartState() {
 
 	latestUrl = "";
 	number_of_wscript_code_snippets = 0;
+	numberOfSetTimeoutCalls = 0;
+	numberOfSetIntervalCalls = 0;
 
 	//delete any written files
 	fsextra.emptyDirSync(directory);
@@ -132,6 +141,19 @@ function logUrl(method, url) {
 	latestUrl = url;
 	if (urls.indexOf(url) === -1) urls.push(url);
 	fs.writeFileSync(path.join(directory, "urls.json"), JSON.stringify(urls, null, "\t"));
+}
+
+function logJS(code, prefix = "", suffix = "", id = true, rewrite = null, as = "eval'd JS", deobfuscate = false) {
+	const genid = uuid.v4();
+	const filename = prefix + (id ? genid : "") + suffix +  ".js";
+	log("verb", `Code saved to ${filename}`);
+	logSnippet(filename, {as: as}, code, deobfuscate);
+	if (rewrite) {
+		const filename2 = prefix + (id ? genid : "") + suffix + "_INSTRUMENTED" + ".js";
+		log("verb", `Code saved to ${filename2}`);
+		logSnippet(filename2, {as: as}, rewrite);
+	}
+	return code; // Helps with tail call optimization
 }
 
 module.exports = {
@@ -249,21 +271,13 @@ module.exports = {
 		fs.writeFileSync(path.join(directory, "resources.json"), JSON.stringify(resources, null, "\t"));
 	},
 	logSnippet,
-	logJS: function(code, prefix = "", suffix = "", id = true, rewrite = null, as = "eval'd JS", deobfuscate = false) {
-		const genid = uuid.v4();
-		const filename = prefix + (id ? genid : "") + suffix +  ".js";
-		log("verb", `Code saved to ${filename}`);
-		logSnippet(filename, {as: as}, code, deobfuscate);
-		if (rewrite) {
-			const filename2 = prefix + (id ? genid : "") + suffix + "_INSTRUMENTED" + ".js";
-			log("verb", `Code saved to ${filename2}`);
-			logSnippet(filename2, {as: as}, rewrite);
-		}
-		return code; // Helps with tail call optimization
-	},
+	logJS,
 	logDOM: function(property, write = false, write_val = null, func = false, args = null) {
 		if (logDom) {
 			let dom_str = `DOM: Code ${write ? "modified" : (func ? "called" : "accessed") } ${property}${func ? "()" : ""}${write_val ? " with value " + write_val : ""}${args ? " with arguments " + JSON.stringify(args) : ""}`;
+			if (property === "setTimeout" || property === "setInterval") {
+				logJS(String(args[1]), `${property === "setTimeout" ? ++numberOfSetTimeoutCalls : ++numberOfSetIntervalCalls}_${property}_`, "", true, null, `${property} call`, true);
+			}
 			log("info", dom_str);
 
 			dom_logs.push(dom_str);
