@@ -284,6 +284,9 @@ module.exports = {
 			fs.writeFileSync(path.join(directory, "dom_logs.json"), JSON.stringify(dom_logs, null, "\t"));
 		}
 	},
+	logCookies: function(cookieJar) {
+		fs.writeFileSync(path.join(directory, "cookies.json"), JSON.stringify(cookieJar.serializeSync(), null, "\t"));
+	},
 	// turnOnLogDOM: () => {logDom = true},
 	// turnOffLogDOM: () => {logDom = false},
 	toggleLogDOM: () => {logDom = !logDom},
