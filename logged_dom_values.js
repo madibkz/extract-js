@@ -13,7 +13,7 @@ const window = {
         ["innerHeight", true],
         ["innerWidth", true],
         // ["length", true],
-        ["location", false],
+        // ["location", false],
         ["localStorage", true],
         ["name", false],
         // ["navigator", true],
