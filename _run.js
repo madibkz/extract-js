@@ -73,11 +73,18 @@ const args = process.argv.slice(2);
 args.push(`--timeout=${timeout}`);
 
 let [targets, options] = args.functionalSplit(fs.existsSync);
-if (argv["cookie-file"]) {
-	options.push("--cookie-file="+argv["cookie-file"]);
-	//cookie-file option is detected as a target file, so delete it from targets so it's not analyzed
-	targets.splice(targets.indexOf(argv["cookie-file"]), 1);
+
+function set_proper_path_for_arg(arg) {
+	//file options are detected as target files, so delete it from targets so it's not analyzed
+	if (argv[arg]) {
+		options.push(`--${arg}=${argv[arg]}`);
+		targets.splice(targets.indexOf(argv[arg]), 1);
+	}
 }
+
+set_proper_path_for_arg("cookie-file");
+set_proper_path_for_arg("session-storage-file");
+set_proper_path_for_arg("local-storage-file");
 
 // Array of {filepath, filename}
 const tasks = [];

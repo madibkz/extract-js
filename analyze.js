@@ -592,12 +592,34 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
 
         let url = argv["url"] ? argv["url"] : "https://example.org/";
         let one_cookie = argv.cookie ? "document.cookie = \"" + argv.cookie + "\";" : "";
-        let multiple_cookies = "";
+        let multiple_cookies = ""; //TODO: maybe reduce the duplicate code here
         if (argv["cookie-file"]) {
             try {
                 multiple_cookies = fs.readFileSync(argv["cookie-file"], "utf8").split("\n").map((c) => `document.cookie = \"${c}\";`).join("\n");
             } catch (e) {
                 lib.error("Error setting cookies from " + argv["cookie-file"]);
+            }
+        }
+        let initialLocalStorage = "";
+        if (argv["local-storage-file"]) {
+            try {
+                let localStorageJSON = JSON.parse(fs.readFileSync(argv["local-storage-file"], "utf8"));
+                for (let prop in localStorageJSON) {
+                    initialLocalStorage += `localStorage.setItem(\`${prop}\`, \`${localStorageJSON[prop]}\`);\n`;
+                }
+            } catch (e) {
+                lib.error("Error setting local storage from " + argv["local-storage-file"]);
+            }
+        }
+        let initialSessionStorage = "";
+        if (argv["session-storage-file"]) {
+            try {
+                let sessionStorageJSON = JSON.parse(fs.readFileSync(argv["session-storage-file"], "utf8"));
+                for (let prop in sessionStorageJSON) {
+                    initialSessionStorage += `sessionStorage.setItem(\`${prop}\`, \`${sessionStorageJSON[prop]}\`);\n`;
+                }
+            } catch (e) {
+                lib.error("Error setting session storage from " + argv["session-storage-file"]);
             }
         }
 
@@ -614,7 +636,7 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                     }
                 });
 
-                let dom_str = `<html><head></head><body></body><script>${one_cookie}${multiple_cookies}${code}</script></html>`;
+                let dom_str = `<html><head></head><body></body><script>${initialLocalStorage}${initialSessionStorage}${one_cookie}${multiple_cookies}${code}</script></html>`;
                 let cookie_jar = new jsdom.CookieJar();
                 let cookie_jar_log_funcs = ["setCookie", "setCookieSync", "getCookies", "getCookiesSync", "getCookieString", "getCookieStringSync", "getSetCookieStrings", "getSetCookieStringsSync", "removeAllCookies", "removeAllCookiesSync"];
                 const cookieJar = new Proxy(cookie_jar, {

@@ -211,6 +211,16 @@
             "name": "cookie-file",
             "type": "String",
             "description": "Pass in a path to a file consisting of cookie strings separated by newlines to set multiple initial document.cookie values."
+        },
+        {
+            "name": "session-storage-file",
+            "type": "String",
+            "description": "Pass in a path to a file consisting of a json to set initial sessionStorage values."
+        },
+        {
+            "name": "local-storage-file",
+            "type": "String",
+            "description": "Pass in a path to a file consisting of a json to set initial localStorage values."
         }
     ],
     "export": [
