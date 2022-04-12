@@ -880,6 +880,8 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                 while (!dom.window.emulationFinished) //poll until emulation of main code has finished
                     await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](100);
 
+                lib.logBrowserStorage(dom.window.localStorage, dom.window.sessionStorage);
+
                 dom.window.close();
 
                 lib.logCookies(cookie_jar);

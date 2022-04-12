@@ -4,4 +4,7 @@ localStorage.setItem("key1", "value1");
 console.log(localStorage.getItem("key1"));
 localStorage.removeItem("key1");
 localStorage.setItem("key2", "value2");
-localStorage.clear();
+localStorage.setItem("key3", 123123);
+localStorage.setItem("key4", "AOWIFJOAIWFJOIAWJFIOAWJF");
+sessionStorage.setItem("key5", "AOIFJAWOIFJ");
+//localStorage.clear();
