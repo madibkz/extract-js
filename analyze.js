@@ -699,10 +699,35 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                             },
                         });
 
+                        window._document = new Proxy(window._document, {
+                            get: (target, name) => {
+                                if (name in target) {
+                                    if (name === "cookie") return target[name];
+                                    if (typeof name !== "symbol") {
+                                        if (typeof target[name] === "function") { //log function calls with arguments
+                                            return function () {
+                                                lib.logDOM(`window.document.${name}`,false, null, true, arguments);
+                                                return target[name].apply(target, arguments);
+                                            }
+                                        }
+                                        lib.logDOM(`window.document.${name}`);
+                                    }
+                                    return target[name];
+                                }
+                                return undefined;
+                            },
+                            set: function (target, name, val) {
+                                if (name === "cookie") return target[name];
+                                if (name in target) {
+                                    lib.logDOM(`window.document.${name}`, true, val);
+                                    target[name] = val;
+                                }
+                                return false;
+                            },
+                        });
 
                         //Add logging to the window's members
-                        let window_log_vals = logged_dom_vals.window;
-                        window_log_vals.properties.forEach((prop) => {
+                        logged_dom_vals.window.properties.forEach((prop) => {
                             let real_val = window[prop[0]];
                             //if readonly property
                             if (prop[1]) { //TODO: use some hacky workaround for this duplication
@@ -732,7 +757,7 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                         })
 
                         //window method logging
-                        window_log_vals.methods.forEach((m) => {
+                        logged_dom_vals.window.methods.forEach((m) => {
                             let og_function = window[m[0]];
                             window[m[0]] = function () {
                                 lib.logDOM(m[0], false, null, true, arguments);
