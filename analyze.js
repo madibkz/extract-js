@@ -544,6 +544,17 @@ function rewrite_code_for_symex_script(code) {
     return code;
 }
 
+function sandbox_object_is_default(path_to_obj, instance) {
+    let obj = require(path_to_obj);
+    let obj_default_fields = obj.getDefaultFields();
+
+    for (let f in obj_default_fields)
+        if (instance[f] !== obj_default_fields[f])
+            return false;
+
+    return true;
+}
+
 async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
     if (argv["vm2"] || sym_ex_vm2_flag) {
         lib.debug("Analyzing with vm2 v" + require("vm2/package.json").version);
@@ -587,10 +598,21 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
         });
     } else { //jsdom default emulation context
         lib.debug("Analyzing with jsdom");
-        let delete_in_sandbox = ["setInterval", "setTimeout", "alert", "JSON", /*"console",*/ "location", "navigator", "document", "origin", "self", "window"];
-        delete_in_sandbox.forEach(field => delete sandbox[field]);
+        let dont_set_from_sandbox = ["setInterval", "setTimeout", "alert", "JSON", /*"console",*/ "location", "navigator", "document", "origin", "self", "window"];
 
-        let url = argv["url"] ? argv["url"] : "https://example.org/";
+        let url = "https://example.org/";
+        if (argv["url"]) {
+            url = argv["url"];
+        } else if (!sandbox_object_is_default("./emulator/location.js", sandbox.location)) {
+            //construct a url from location to set as the url in the jsdom emulation
+            // if (require("./emulator/location.js").getDefaultFields().href !== sandbox.location.href)  {
+            //     url = sandbox.location.href;
+            // } else {
+            //     url = sandbox.location.url;
+            // }
+        }
+
+
         let one_cookie = argv.cookie ? "document.cookie = \"" + argv.cookie + "\";" : "";
         let multiple_cookies = ""; //TODO: maybe reduce the duplicate code here
         if (argv["cookie-file"]) {
@@ -731,7 +753,7 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                     beforeParse(window) {
                         //add our sandbox properties
                         for (let field in sandbox) {
-                            if (sandbox.hasOwnProperty(field)) {
+                            if (sandbox.hasOwnProperty(field) && !dont_set_from_sandbox.includes(field)) {
                                 window[field] = sandbox[field];
                             }
                         }
