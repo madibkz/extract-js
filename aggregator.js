@@ -13,6 +13,9 @@ let uniq_resources = {};
 let uniq_iocs = [];
 let uniq_urls = [];
 let uniq_active_urls = [];
+let uniq_cookies = [];
+let uniq_localStorage = {};
+let uniq_sessionStorage = {};
 
 function summarize(results_dir, file_copying = true) {
 
@@ -63,6 +66,12 @@ function summarize(results_dir, file_copying = true) {
         fs.writeFileSync(results_dir + "/summary/unique_urls.json", JSON.stringify(uniq_urls, null, "\t"));
     if (!(uniq_active_urls.length === 0))
         fs.writeFileSync(results_dir + "/summary/unique_active_urls.json", JSON.stringify(uniq_active_urls, null, "\t"));
+    if (!(uniq_cookies.length === 0))
+        fs.writeFileSync(results_dir + "/summary/unique_cookies.json", JSON.stringify(uniq_cookies, null, "\t"));
+    if (!is_empty_obj(uniq_localStorage))
+        fs.writeFileSync(results_dir + "/summary/unique_localStorage.json", JSON.stringify(uniq_localStorage, null, "\t"));
+    if (!is_empty_obj(uniq_sessionStorage))
+        fs.writeFileSync(results_dir + "/summary/unique_sessionStorage.json", JSON.stringify(uniq_sessionStorage, null, "\t"));
 
     //copy the snippet/resource files over to the folders
     if (file_copying && !is_empty_obj(uniq_snippets)) {
@@ -214,6 +223,71 @@ function extract_from_exec(path) {
             }
         }
     }
+
+    let path_to_cookies = path + "/cookies.json";
+    if (fs.existsSync(path_to_cookies)) {
+        let cookies = JSON.parse(fs.readFileSync(path_to_cookies, "utf8")).cookies;
+        for (let i = 0; i < cookies.length; i++) {
+            //for each cookie:
+            //for all unique cookies:
+            //check if this cookie is equal to one of the current uniq_cookies
+            //if there is one it is equal to, then stop searching, add it to the location field of the ioc
+            //otherwise, add this ioc as a unique ioc
+
+            let matched_index = -1;
+            for (let j = 0; j < uniq_cookies.length; j++) {
+                if (cookies[i].key === uniq_cookies[j].key && cookies[i].value === uniq_cookies[j].value && is_equal(cookies[i].extensions, uniq_cookies[j].extensions)) {
+                    matched_index = j;
+                    break;
+                }
+            }
+
+            if (matched_index === -1) {
+                cookies[i].location = [path_to_cookies];
+                uniq_cookies.push(cookies[i])
+            } else {
+                uniq_cookies[matched_index].location.push(path_to_cookies);
+            }
+        }
+    }
+
+    //use a function to reduce duplication between localStorage and sessionStorage
+    function extract_from_storage(path_to_storage, unique_storage_obj) {
+        if (fs.existsSync(path_to_storage)) {
+            let storage = JSON.parse(fs.readFileSync(path_to_storage, "utf8"));
+            for (let storage_key in storage) {
+                if (storage.hasOwnProperty(storage_key)) {
+                    //For each session storage key
+                        //for each unique session storage key:
+                            //check if they are the same
+                            //if they are, then add it to location
+                            //otherwise add unique key
+                    let s = storage[storage_key];
+
+                    let matched_s = "";
+                    for (let uniq_s_name in unique_storage_obj) {
+                        if (unique_storage_obj.hasOwnProperty(uniq_s_name)) {
+                            if (is_equal(unique_storage_obj[uniq_s_name].value, s)) {
+                                matched_s = uniq_s_name;
+                            }
+                        }
+                    }
+
+                    if (matched_s === "") {
+                        s = {value: s};
+                        s.location = [path_to_storage];
+                        unique_storage_obj[storage_key] = s;
+                    } else {
+                        unique_storage_obj[matched_s].location.push(path_to_storage);
+                    }
+                }
+            }
+        }
+    }
+
+    extract_from_storage(path + "/sessionStorage.json", uniq_sessionStorage);
+    extract_from_storage(path + "/localStorage.json", uniq_localStorage);
+
 }
 
 //used to compare whether two ioc value objects are equal
@@ -250,6 +324,8 @@ function is_equal(val1, val2) {
         case "string":
         case "boolean":
             return val1 === val2;
+        case "undefined":
+            return typeof val2 === "undefined";
         default:
             return false;
     }

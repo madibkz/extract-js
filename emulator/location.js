@@ -26,8 +26,8 @@ function getProxyHandler() {
 
 function getDefaultFields() {
     return {
-        href: "http://www.foobar.com/",
-        protocol: "http:",
+        href: "https://www.foobar.com/",
+        protocol: "https:",
         host: "www.foobar.com",
         hostname: "www.foobar.com",
     };
