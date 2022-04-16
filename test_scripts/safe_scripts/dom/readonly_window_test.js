@@ -1,4 +1,3 @@
-console.log(window.name);
-window.name = "test";
-console.log(window.name);
-
+let oldInnerWidth = window.innerWidth;
+window.innerWidth = "test";
+console.log(window.innerWidth === oldInnerWidth);

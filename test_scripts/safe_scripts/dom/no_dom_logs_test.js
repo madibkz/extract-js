@@ -1,0 +1,1 @@
+console.log("there should be no dom_logs.json file produced");

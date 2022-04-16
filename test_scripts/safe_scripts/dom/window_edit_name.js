@@ -1,1 +1,2 @@
-window.name = "bike";
+window.name = "test";
+console.log(name);

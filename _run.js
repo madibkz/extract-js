@@ -85,6 +85,7 @@ function set_proper_path_for_arg(arg) {
 set_proper_path_for_arg("cookie-file");
 set_proper_path_for_arg("session-storage-file");
 set_proper_path_for_arg("local-storage-file");
+set_proper_path_for_arg("output-dir");
 
 // Array of {filepath, filename}
 const tasks = [];
