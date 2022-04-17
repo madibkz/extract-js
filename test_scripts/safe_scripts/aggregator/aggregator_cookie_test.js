@@ -3,5 +3,3 @@ if (1 !== 3) {
 } else {
   document.cookie = "test2=value3;";
 }
-
-document.cookie = "test3=value; extend=val";

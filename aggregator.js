@@ -16,7 +16,7 @@ let uniq_active_urls = [];
 let uniq_cookies = [];
 let uniq_localStorage = {};
 let uniq_sessionStorage = {};
-
+//TODO: REFACTOR the duplication out
 function summarize(results_dir, file_copying = true) {
 
     let default_exists = fs.existsSync(results_dir + "/default");
