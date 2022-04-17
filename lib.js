@@ -342,7 +342,7 @@ module.exports = {
 
 			let dom_str = `DOM: Code ${write ? "modified" : (func ? "called" : "accessed") } ${property}${func ? "(" + (args ? args_to_string() : "") + ")" : ""}${write_val ? " with value " + write_val : ""}`;
 			if (property === "setTimeout" || property === "setInterval") {
-				logJS(String(args[1]), `${property === "setTimeout" ? ++number_of_set_timeout_calls : ++number_of_set_interval_calls}_${property}_`, "", true, null, `${property} call`, true);
+				logJS(String(args[1]), `${property}_${property === "setTimeout" ? ++number_of_set_timeout_calls : ++number_of_set_interval_calls}_`, "", true, null, `${property} call`, true);
 			}
 			log("info", dom_str);
 
