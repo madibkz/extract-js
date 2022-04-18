@@ -833,6 +833,10 @@ async function run_in_jsdom_vm(sandbox, code) {
 
             lib.logBrowserStorage(dom.window.localStorage, dom.window.sessionStorage);
 
+            dom.window.document.scripts.forEach((x) => {
+                lib.checkThatScriptHasBeenLogged(x.innerHTML);
+            })
+
             dom.window.close();
 
             lib.logCookies(cookie_jar);

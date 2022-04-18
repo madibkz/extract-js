@@ -321,7 +321,7 @@ module.exports = {
 				try {
 					if (value.trim() !== "" && !is_one_variable(value)) {
 						const script = new vm.Script(value);
-						logJS(value, `DOM_${++number_of_jsdom_scripts}_`, "", true, null, `JavaScript string found in ${found_in}`);
+						logJS(value, `DOM_${++number_of_jsdom_scripts}_`, "", true, null, `JavaScript string found in ${found_in}`, true);
 					}
 				} catch (err) {
 				}
@@ -374,5 +374,17 @@ module.exports = {
 		if (!argv["no-shell-error"])
 			throw new Error("If you can read this, re-run extract.js with the --no-shell-error flag.");
 		process.send("no-expect-shell-error");
+	},
+	checkThatScriptHasBeenLogged: (script_str) => {
+		let unique = true;
+		script_str = script_str.replace(/\s/g, "");
+		for (let s in snippets) {
+			let snip = fs.readFileSync(path.join(directory, `/snippets/${s}`), "utf8");
+			if (snip.replace(/\s/g, "") === script_str) unique = false;
+		}
+		if (unique) {
+			log("info", "Found an extra script in window.documents.script. Saved as snippet.");
+			logJS(script_str, `DOM_${++number_of_jsdom_scripts}_`, "", true, null, "JavaScript found in window.document.scripts", true);
+		}
 	}
 };
