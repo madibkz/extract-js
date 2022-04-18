@@ -367,7 +367,7 @@ module.exports = {
 	logHTML: function(html_str, as) {
 		log_if_unique_snippet(
 			html_str,
-			() => logSnippet(`HTML_${++number_of_html_snippets}_${uuid.v4()}.txt`, {as}, html_str),
+			() => logSnippet(`HTML_${++number_of_html_snippets === 1 ? "1_initial" : number_of_html_snippets}_${uuid.v4()}.txt`, {as}, html_str),
 			(s) => s.includes("HTML")
 		)
 	},
