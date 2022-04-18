@@ -302,7 +302,7 @@ module.exports = {
 				// if (arg.nodeType) {
 				// 	str += arg.toString() + ", ";
 				// } else {
-					str += arg.toString() + ", ";
+					str += limit_val(arg) + ", ";
 				// }
 			}
 			return str;
@@ -346,6 +346,18 @@ module.exports = {
 			}
 		}
 
+		//this function returns val to be capped in length if the command line argument limit-log-dom-length is on
+		//otherwise it just returns val back
+		function limit_val(val) {
+			if (argv["limit-dom-log-length"]) {
+				let val_str = val.toString();
+				if (val_str.length >= 30)
+					return val_str.substring(0, 30) + "...";
+				return val_str;
+			}
+			return val.toString();
+		}
+
 		if (logDom) {
 			logDom = false;
 
@@ -358,7 +370,7 @@ module.exports = {
 					check_for_javascript_code(write_val, `write value for ${property}`);
 				}
 
-				let dom_str = `DOM: Code ${write ? "modified" : (func ? "called" : "accessed") } ${property}${func ? "(" + (args ? args_to_string() : "") + ")" : ""}${write_val ? " with value " + write_val : ""}`;
+				let dom_str = `DOM: Code ${write ? "modified" : (func ? "called" : "accessed") } ${property}${func ? "(" + (args ? args_to_string() : "") + ")" : ""}${write_val ? " with value " + limit_val(write_val) : ""}`;
 				if ((!write && !func) && dom_str === latestDomStr) { //prevent duplicate accessed logs because they're useless
 					logDom = true;
 					return;

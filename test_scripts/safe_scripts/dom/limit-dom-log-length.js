@@ -1,0 +1,1 @@
+document.onclick = () => "this is a really long string so should be limited in length if the right command line argument is on";
