@@ -18,8 +18,9 @@ let resources = {};
 let files = {};
 let IOC = [];
 let dom_logs = [];
-
+//TODO: format all code to use the same convention of variables naming (either camelCase or underscores)
 let latestUrl = "";
+let latestDomStr = "";
 let number_of_wscript_code_snippets = 0;
 let number_of_set_timeout_calls = 0;
 let number_of_set_interval_calls = 0;
@@ -346,22 +347,35 @@ module.exports = {
 		}
 
 		if (logDom) {
-			if (args) {
-				for (let i = 0; i < args.length; i++) {
-					check_for_javascript_code(args[i], `arg [${i}] of call of ${property}(${args_to_string()})`);
+			logDom = false;
+
+			try {
+				if (args) {
+					for (let i = 0; i < args.length; i++) {
+						check_for_javascript_code(args[i], `arg [${i}] of call of ${property}(${args_to_string()})`);
+					}
+				} else if (write_val) {
+					check_for_javascript_code(write_val, `write value for ${property}`);
 				}
-			} else if (write_val) {
-				check_for_javascript_code(write_val, `write value for ${property}`);
+
+				let dom_str = `DOM: Code ${write ? "modified" : (func ? "called" : "accessed") } ${property}${func ? "(" + (args ? args_to_string() : "") + ")" : ""}${write_val ? " with value " + write_val : ""}`;
+				if ((!write && !func) && dom_str === latestDomStr) { //prevent duplicate accessed logs because they're useless
+					logDom = true;
+					return;
+				}
+				latestDomStr = dom_str;
+				if (property === "setTimeout" || property === "setInterval") {
+					logJS(String(args[1]), `${property}_${property === "setTimeout" ? ++number_of_set_timeout_calls : ++number_of_set_interval_calls}_`, "", true, null, `${property} call`, true);
+				}
+				log("info", dom_str);
+
+				dom_logs.push(dom_str);
+				fs.writeFileSync(path.join(directory, "dom_logs.json"), JSON.stringify(dom_logs, null, "\t"));
+			} catch (e) {
+				log("warn", `Call to lib.logDOM threw an error - args were (${property}, ${write}, ${write_val}, ${func}, ${args})`);
 			}
 
-			let dom_str = `DOM: Code ${write ? "modified" : (func ? "called" : "accessed") } ${property}${func ? "(" + (args ? args_to_string() : "") + ")" : ""}${write_val ? " with value " + write_val : ""}`;
-			if (property === "setTimeout" || property === "setInterval") {
-				logJS(String(args[1]), `${property}_${property === "setTimeout" ? ++number_of_set_timeout_calls : ++number_of_set_interval_calls}_`, "", true, null, `${property} call`, true);
-			}
-			log("info", dom_str);
-
-			dom_logs.push(dom_str);
-			fs.writeFileSync(path.join(directory, "dom_logs.json"), JSON.stringify(dom_logs, null, "\t"));
+			logDom = true;
 		}
 	},
 	logHTML: function(html_str, as) {
@@ -382,9 +396,10 @@ module.exports = {
 		if (JSON.stringify(sessionStorage) !== "{}")  //if not empty
 			fs.writeFileSync(path.join(directory, "sessionStorage.json"), JSON.stringify(sessionStorage, null, "\t"));
 	},
-	// turnOnLogDOM: () => {logDom = true},
-	// turnOffLogDOM: () => {logDom = false},
+	turnOnLogDOM: () => {logDom = true},
+	turnOffLogDOM: () => {logDom = false},
 	toggleLogDOM: () => {logDom = !logDom},
+	domLoggingOn: () => logDom,
 	logIOC,
 	runShellCommand: (command) => {
 		const filename = "WSCRIPT_CODE_" + (++number_of_wscript_code_snippets) + "_" + getUUID();
