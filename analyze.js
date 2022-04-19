@@ -712,6 +712,14 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window) {
         }
     })
 
+    //window.fetch
+    window.fetch = function () {
+        lib.logDOM("window.fetch", false, null, true, arguments);
+        lib.logDOMUrl(arguments[0].toString(), {element: {localName: "window.navigator.fetch"}, args: arguments[1]}, (arguments[1] && arguments[1].method) ? arguments[1].method : "GET")
+        lib.error("Code called window.navigator.fetch() but it's not implemented!");
+        return null;
+    }
+
     window._localStorage = make_log_dom_proxy(window._localStorage, "window.localStorage");
 
     window._sessionStorage = make_log_dom_proxy(window._sessionStorage, "window.sessionStorage");
