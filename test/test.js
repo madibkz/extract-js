@@ -370,6 +370,26 @@ describe("DOM", function() {
 		}, "--limit-dom-log-length")
 	);
 
+	it(
+		"should not log the URL and functions of window.XMLHttpRequest if --dom-network-apis is not there",
+		run_dom_script_and_check_output("no_XHR.js", (stdout) => {
+			assert(stdout.includes(`[error] Code called window.XMLHttpRequest() but it's not enabled!`));
+			let path_to_urls = `${getTestResultsFolder("no_XHR.js")}default/urls.json`;
+			assert(!fs.existsSync(path_to_urls));
+		})
+	);
+	it(
+		"should log the URL and functions of window.XMLHttpRequest if --dom-network-apis is not there",
+		run_dom_script_and_check_output("XHR.js", (stdout) => {
+			assert(stdout.includes(`Code called window.XMLHttpRequest.open(GET, https://example.com/, )`));
+			assert(stdout.includes(`Resource at https://example.com/ was requested from DOM emulation from element window.XMLHttpRequest.`));
+			assert(stdout.includes(`Code called window.XMLHttpRequest.send()`));
+			assert(stdout.includes(`Code modified window.XMLHttpRequest.onload`));
+			let path_to_urls = `${getTestResultsFolder("XHR.js")}default/urls.json`;
+			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://example.com/"));
+		}, "--dom-network-apis")
+	);
+
 
 	//cookies
 	it(

@@ -93,6 +93,11 @@
             "description": "Enable resource loading (loading of externally linked iframes, images, stylesheets, scripts) in the DOM emulation"
         },
         {
+            "name": "dom-network-apis",
+            "type": "Boolean",
+            "description": "Enable XMLHttpRequest, fetch and beacon APIs in the DOM emulation so that network requests can be sent."
+        },
+        {
             "name": "encoding",
             "type": "String",
             "description": "Encoding of the input sample (will be automatically detected by default)"

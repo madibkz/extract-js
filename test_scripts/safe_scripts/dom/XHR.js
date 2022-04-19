@@ -5,9 +5,9 @@ xhr.open('GET', 'https://example.com/');
 xhr.send();
 
 xhr.onload = function() {
-  if (xhr.status !== 200) {
-    console.log('Error: ' + xhr.status);
-    return;
-  }
-  console.log("loaded");
+    if (xhr.status !== 200) {
+        console.log('Error: ' + xhr.status);
+        return;
+    }
+    console.log("loaded");
 };
