@@ -11,6 +11,7 @@ const testResultsFolder = "test_out";
 const runExtractCommand = `node ${extractDir}/run.js --output-dir ${testResultsFolder}`;
 const domScriptsDir = `${testScriptsDir}/dom/`;
 const aggScriptsDir = `${testScriptsDir}/aggregator/`;
+const rewriteScriptsDir = `${testScriptsDir}/rewrite/`;
 //TODO: tests for command line arguments
 //assuming that the test is only run once within this test suite
 let getTestResultsFolder = (nameOfTest) => `${extractDir}/${testResultsFolder}/${nameOfTest}.results/`;
@@ -84,6 +85,22 @@ describe("run.js", function() {
 		exec(`${runExtractCommand} ${folder}/blank.js ${folder}/blank2.js`, done);
 	});
 	//TODO: more run.js tests to do with the other modes
+});
+
+//TODO: code rewriting tests - test function-rewriting, etc
+describe("code rewriting", function() {
+	this.timeout(10000);
+
+	let run_rewrite_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
+		run_script_and_check_output(`${rewriteScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
+
+	it(
+		"should not rewrite NewExpressions where the function is a constructor",
+		run_rewrite_script_and_check_output("function_rewrite_new.js", (stdout) => {
+			assert(stdout.includes(`Script output: "1st one worked"`));
+			assert(stdout.includes(`Script output: "2nd one worked"`));
+		})
+	);
 });
 
 describe("DOM", function() {
@@ -196,7 +213,7 @@ describe("DOM", function() {
 		"should log that window.origin was accessed",
 		run_dom_script_and_check_output("origin.js", (stdout) => {
 			assert(stdout.includes(`accessed window.origin`));
-			assert(stdout.includes(`Script output: "https://example.org"`));
+			assert(stdout.includes(`Script output: "https://example.com"`));
 		})
 	);
 
@@ -323,8 +340,8 @@ describe("DOM", function() {
 	it(
 		"should log in dom_logs.json/stdout when document.cookie is read or a cookie is added",
 		run_dom_script_and_check_output("cookie_read_and_add_test.js", (stdout) => {
-			assert(stdout.includes(`Code called cookieJar.getCookieStringSync(https://example.org/, [object Object], )`));
-			assert(stdout.includes(`Code called cookieJar.setCookieSync(username=garfield;, https://example.org/, [object Object], )`));
+			assert(stdout.includes(`Code called cookieJar.getCookieStringSync(https://example.com/, [object Object], )`));
+			assert(stdout.includes(`Code called cookieJar.setCookieSync(username=garfield;, https://example.com/, [object Object], )`));
 		})
 	);
 	//cookie log file

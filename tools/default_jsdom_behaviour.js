@@ -17,6 +17,7 @@ let dom = new JSDOM(dom_str, {
     runScripts: "dangerously",
     pretendToBeVisual: true,
     virtualConsole,
+    resources: "usable",
 
     beforeParse(window) {
         window.console = console;

@@ -16,7 +16,7 @@ foo.bar(baz) becomes:
 			arguments[0] = rewrite(arguments[0], true);
 			fun = evalUntilPasses;
 		// from https://stackoverflow.com/questions/13610987/javascript-add-extra-argument
-			[].push.call(arguments, "new value");
+			[].push.call(arguments, eval);
 		};
 		return fun.apply(foo, arguments)
 	}
