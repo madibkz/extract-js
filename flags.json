@@ -85,7 +85,12 @@
         {
             "name": "download",
             "type": "Boolean",
-            "description": "Actually download the payloads"
+            "description": "Enable downloading in the ActiveX emulation to actually download the payloads"
+        },
+        {
+            "name": "dom-resource-loading",
+            "type": "Boolean",
+            "description": "Enable resource loading (loading of externally linked iframes, images, stylesheets, scripts) in the DOM emulation"
         },
         {
             "name": "encoding",
