@@ -95,7 +95,7 @@
         {
             "name": "dom-network-apis",
             "type": "Boolean",
-            "description": "Enable XMLHttpRequest, fetch and beacon APIs in the DOM emulation so that network requests can be sent."
+            "description": "Enable XMLHttpRequest and fetch APIs in the DOM emulation so that network requests can be sent."
         },
         {
             "name": "encoding",
