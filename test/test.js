@@ -165,6 +165,33 @@ describe("DOM", function() {
 		})
 	);
 
+	//RESOURCE LOADING TESTS
+	it(
+		"should log the url src for a new script element added to the dom",
+		run_dom_script_and_check_output("create_linked_script.js", (stdout) => {
+			assert(stdout.includes(`Resource at https://code.jquery.com/jquery-3.6.0.slim.min.js was requested from DOM emulation from element script.`));
+			let path_to_urls = `${getTestResultsFolder("create_linked_script.js")}default/urls.json`;
+			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://code.jquery.com/jquery-3.6.0.slim.min.js"));
+		})
+	);
+	it(
+		"should log the url src for a new stylesheet element added to the dom",
+		run_dom_script_and_check_output("create_linked_stylesheet.js", (stdout) => {
+			assert(stdout.includes(`Resource at https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css was requested from DOM emulation from element link.`));
+			let path_to_urls = `${getTestResultsFolder("create_linked_stylesheet.js")}default/urls.json`;
+			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"));
+		})
+	);
+	it(
+		"should log the url src for a new iframe element added to the dom",
+		run_dom_script_and_check_output("create_linked_iframe.js", (stdout) => {
+			assert(stdout.includes(`Resource at https://example.com/ was requested from DOM emulation from element iframe.`));
+			let path_to_urls = `${getTestResultsFolder("create_linked_iframe.js")}default/urls.json`;
+			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://example.com/"));
+		})
+	);
+
+
 	//TODO: REFACTOR: maybe reduce the duplication more in these logging tests
 	//DOM LOGGING TESTS
 	it(
