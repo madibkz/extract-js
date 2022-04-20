@@ -37,8 +37,9 @@ function getDefaultFields() {
         maxTouchPoints: 1, //seems like malware wouldnt use this
         //mediaSession: S$.symbol('navigator.mediaSession', {}), needs MediaSession object //
         onLine: true,
+        pdfViewerEnabled: false,
         //presentation: S$.symbol('navigator.presentation', {}), //presentation object needed
-        userAgent: "Mozilla/5.0 (Windows; MSIE 6.0; Windows NT 6.0)",
+        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",
         webdriver: false,
         //xr: S$.symbol('navigator.xr', {}), //needs XRsystem object
 //NON-STANDARD PROPERTIES:
@@ -55,7 +56,7 @@ function getDefaultFields() {
         oscpu: "Windows NT 6.0",
         platform: "Win64",
         product: "Gecko",
-        prodSub: "20010725",
+        productSub: "20010725",
         vendor: "Google Inc.",
         shareBool: true,
     };

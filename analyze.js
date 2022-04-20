@@ -604,6 +604,18 @@ function make_log_dom_proxy(obj, prefix) {
     });
 }
 
+function make_deep_log_dom_proxy(obj, prefix) {
+    return new Proxy(obj, {
+        get: (t, n) => {
+            let res = log_dom_proxy_get(t, n, prefix);
+            if (typeof res === "object")
+                return make_deep_log_dom_proxy(res, prefix + "." + n)
+            return res;
+        },
+        set: (t, n, v) => log_dom_proxy_set(t, n, v, prefix),
+    });
+}
+
 function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_input = null) {
     //add our sandbox properties
     for (let field in sandbox) {
@@ -734,6 +746,12 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
                     //sendBeacon is not actually implemented in jsdom TODO: make my own sendBeacon
                     return false;
                 }
+            }
+            if (symex_input && (n === "userAgentData" || n === "plugins" || n === "mimeTypes")) {
+                return make_deep_log_dom_proxy(sandbox["navigator"][n], `window.navigator.${n}`);
+            }
+            if (symex_input && symex_input.hasOwnProperty(`navigator.${n}`)) {
+                return symex_input[`navigator.${n}`];
             }
             return log_dom_proxy_get(t, n, "window.navigator");
         },
