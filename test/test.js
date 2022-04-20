@@ -11,6 +11,7 @@ const testResultsFolder = "test_out";
 const runExtractCommand = `node ${extractDir}/run.js --output-dir ${testResultsFolder}`;
 const domScriptsDir = `${testScriptsDir}/dom/`;
 const aggScriptsDir = `${testScriptsDir}/aggregator/`;
+const symexScriptsDir = `${testScriptsDir}/sym-exec/`;
 const rewriteScriptsDir = `${testScriptsDir}/rewrite/`;
 //TODO: tests for command line arguments
 //assuming that the test is only run once within this test suite
@@ -560,7 +561,7 @@ describe("DOM", function() {
 
 describe("aggregator.js", function() {
 	//need a really long timeout for the tests involving symbolic execution mode
-	this.timeout(100000);
+	this.timeout(1000000);
 
 	let run_agg_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
 		run_script_and_check_output(`${aggScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
@@ -582,14 +583,14 @@ describe("aggregator.js", function() {
 		"should create a summary folder if only symex mode has run but it has produced multiple contexts",
 		run_agg_script_and_check_output("symex_mode_unique_contexts.js", (stdout) => {
 			assert(fs.existsSync(`${getTestResultsFolder("symex_mode_unique_contexts.js")}summary`));
-		}, "--sym-exec --no-sym-exec-activex")
+		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
 	);
 
 	it(
 		"should not copy the contexts.json file from symex mode into summary/unique_contexts.json if there are no unique contexts",
 		run_agg_script_and_check_output("symex_mode_no_unique_contexts.js", (stdout) => {
 			assert(!fs.existsSync(`${getTestResultsFolder("symex_mode_no_unique_contexts.js")}summary/unique_contexts.json`));
-		}, "--sym-exec --no-sym-exec-activex")
+		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
 	);
 	it(
 		"should copy the contexts.json file from symex mode into summary/unique_contexts.json if there are unique contexts",
@@ -725,4 +726,22 @@ describe("aggregator.js", function() {
 			}, "--default --multi-exec")
 		);
 	})
+});
+
+describe("sym-exec", function() {
+	this.timeout(1000000);
+
+	let run_symex_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
+		run_script_and_check_output(`${symexScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
+
+
+	//DOM symbolic tracking
+	it(
+		"should symbolically track the specified window's properties and set them appropriately in the specific execution context",
+		run_symex_script_and_check_output("window_property_symex.js", (stdout) => {
+			assert(stdout.includes(`Script output: "Default branch"`));
+			assert(stdout.includes(`Script output: "Symex found the innerHeight branch."`));
+			assert(stdout.includes(`Script output: "Symex found the other branch (test works)."`));
+		}, "--sym-exec --timeout 1000")
+	);
 });
