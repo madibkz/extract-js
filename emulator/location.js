@@ -26,10 +26,15 @@ function getProxyHandler() {
 
 function getDefaultFields() {
     return {
-        href: "https://www.foobar.com/",
         protocol: "https:",
         host: "www.foobar.com",
         hostname: "www.foobar.com",
+        port: "",
+        pathname: "",
+        search: "",
+        hash: "",
+        origin: "",
+        href: "",
     };
 }
 
@@ -40,6 +45,9 @@ function getInnerProxies() {
 
 function getObject() {
     return {
+        toString() {
+            return this.href;
+        }
     };
 }
 

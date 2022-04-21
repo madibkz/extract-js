@@ -643,7 +643,13 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
     window.history = make_log_dom_proxy(og_history, "window.history");
 
     let og_loc = window.location;
-    let loc_proxy = make_log_dom_proxy(og_loc, "window.location");
+    let loc_proxy = new Proxy(og_loc, {
+        get: (t, n) => {
+            if (symex_input && symex_input.hasOwnProperty(`location.${n}`)) return symex_input[`location.${n}`];
+            return log_dom_proxy_get(t, n, "window.location");
+        },
+        set: (t, n, v) => log_dom_proxy_set(t, n, v, "window.location"),
+    });
     delete window.location;
     window.location = loc_proxy;
 
