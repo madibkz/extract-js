@@ -783,4 +783,13 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: "default branch"`));
 		}, "--sym-exec --timeout 1000")
 	);
+	it(
+		"should symbolically track the specified document properties and set it correctly in the jsdom emulation",
+		run_symex_script_and_check_output("document.js", (stdout) => {
+			assert(stdout.includes(`Script output: "document.title branch reached"`));
+			assert(stdout.includes(`Script output: "document.hidden branch reached"`));
+			assert(stdout.includes(`Script output: "document.hasFocus branch reached"`));
+			assert(stdout.includes(`Script output: "default branch reached"`));
+		}, "--sym-exec --timeout 1000")
+	);
 });

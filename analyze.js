@@ -671,6 +671,8 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
                 if (name === "cookie") return target[name];
                 if (name === "location") return loc_proxy;
                 if (typeof name === "symbol") return target[name];
+                if (symex_input && name === "hasFocus" && symex_input["document.hasFocusValue"]) return () => symex_input["document.hasFocusValue"];
+                if (symex_input && symex_input[`document.${name}`]) return symex_input[`document.${name}`];
                 if (typeof target[name] === "function") { //log function calls with arguments
                     return function () {
                         return return_node_proxy_or_value("window.document", target, name, true, arguments);
