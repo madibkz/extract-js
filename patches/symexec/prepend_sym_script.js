@@ -77,6 +77,7 @@ var top = global;
     global.location = buildProxyForEmulatedObject("location.", "./emulator/location.js");
     global.navigator = buildProxyForEmulatedObject("navigator.", "./emulator/navigator/navigator.js");
     global.document = buildProxyForEmulatedObject("document.", "./emulator/document.js")
+    global.screen = buildProxyForEmulatedObject("screen.", "./emulator/screen.js")
     // document.defaultView = global;
     global.clientInformation = navigator;
 

@@ -628,7 +628,15 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
 
     let og_screen = window.screen;
     delete window.screen;
-    window.screen = make_log_dom_proxy(og_screen, "window.screen");
+    window.screen = new Proxy(og_screen, {
+        get: (t, n) => {
+            if (symex_input && symex_input.hasOwnProperty(`screen.${n}`)) {
+                return symex_input[`screen.${n}`];
+            }
+            return log_dom_proxy_get(t, n, "window.screen");
+        },
+        set: (t, n, v) => log_dom_proxy_set(t, n, v, "window.screen"),
+    });
 
     let og_history = window.history;
     delete window.history;
