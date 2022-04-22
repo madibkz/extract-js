@@ -973,8 +973,8 @@ describe("multi-exec", function() {
 		"should skip and log multiple errors in an eval and continue executing the rest of the eval",
 		run_multiexec_script_and_check_output("errors/skiperrorsineval.js", (stdout) => {
 			assert(stdout.includes(`*RESTARTING EVAL CALL AFTER ERROR OCCURRED WITHIN IT*`));
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: undefinedFunction`));
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: anotherUndefined`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedFunction is not defined at )(undefinedFunction)()`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherUndefined is not defined at )(anotherUndefined)()`));
 			assert(stdout.includes(`Script output: 1`));
 			assert(stdout.includes(`Script output: 2`));
 			assert(stdout.includes(`Script output: "end of script reached (test pass)"`));
@@ -983,8 +983,8 @@ describe("multi-exec", function() {
 	it(
 		"should skip and log multiple errors even in nested evals and continue executing the rest of the code",
 		run_multiexec_script_and_check_output("errors/skipnestedevalerror.js", (stdout) => {
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: undefinedFunction`));
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: anotherUndefined`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedFunction is not defined at )(undefinedFunction)()`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherUndefined is not defined at )(anotherUndefined)()`));
 			assert(stdout.includes(`Script output: 1`));
 			assert(stdout.includes(`Script output: 2`));
 			assert(stdout.includes(`Script output: 3`));

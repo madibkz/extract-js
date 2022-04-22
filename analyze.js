@@ -1233,6 +1233,8 @@ function replaceErrorCausingCode(e, code, eval = false, url = "https://example.o
     });
     closestStatement.closestStatement = true;
 
+    let errMsg = e.stack.split("\n")[0] + " at " + code.substring(charNumber < 3 ? charNumber : charNumber - 2, code.length - charNumber < 25 ? code.length : charNumber + 25).replace(/\n/g, "\\n") + "...";
+
     //Refind the statement, then replace it:
     traverse(tree, function (key, val) {
         if (!val) return;
@@ -1248,7 +1250,7 @@ function replaceErrorCausingCode(e, code, eval = false, url = "https://example.o
                     "arguments": [
                         {
                             "type": "Literal",
-                            "value": `SKIPPED ERROR IN ${eval ? "AN EVAL CALL" : "GLOBAL SCOPE"}: ${code.substring(charNumber, code.length - charNumber < 30 ? code.length : charNumber + 30).replace(/\n/g, "\\n")}...`,
+                            "value": `SKIPPED ERROR IN ${eval ? "AN EVAL CALL" : "GLOBAL SCOPE"}: ${errMsg}`,
                         },
                         {
                             "type": "Literal",
