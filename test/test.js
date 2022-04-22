@@ -27,6 +27,31 @@ let run_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =
 let run_test_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
 	run_script_and_check_output(`${testScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
 
+function get_snippets_object(test_script_name, mode = "default")  {
+	let path_to_snippets_json = `${getTestResultsFolder(test_script_name)}${mode}/snippets.json`;
+	assert(fs.existsSync(path_to_snippets_json));
+	return JSON.parse(fs.readFileSync(path_to_snippets_json, "utf8"));
+}
+
+function get_snippets_starting_with(list_of_start_strs, snippets) {
+	let dom_snippets = [];
+	for (let snip in snippets) {
+		list_of_start_strs.forEach((str) => {
+				if (snip.startsWith(str)) dom_snippets.push(snip);
+			}
+		);
+	}
+	return dom_snippets;
+}
+
+function read_snippet_files(test_script_name, list_of_snippet_file_names, mode = "default") {
+	let code_snips = [];
+	for (let i in list_of_snippet_file_names) {
+		code_snips.push(fs.readFileSync(`${getTestResultsFolder(test_script_name)}${mode}/snippets/${list_of_snippet_file_names[i]}`, "utf8"));
+	}
+	return code_snips;
+}
+
 fsextra.emptyDirSync(`${extractDir}/test_out`)
 
 describe("package.json", function() {
@@ -112,30 +137,6 @@ describe("DOM", function() {
 		run_script_and_check_output(`${domScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
 
 	function check_snippets(test_script_name, list_of_start_snippet_strs, list_of_as_values, list_of_snippet_values) {
-		function get_snippets_object(test_script_name)  {
-			let path_to_snippets_json = `${getTestResultsFolder(test_script_name)}default/snippets.json`;
-			assert(fs.existsSync(path_to_snippets_json));
-			return JSON.parse(fs.readFileSync(path_to_snippets_json, "utf8"));
-		}
-
-		function get_snippets_starting_with(list_of_start_strs, snippets) {
-			let dom_snippets = [];
-			for (let snip in snippets) {
-				list_of_start_strs.forEach((str) => {
-						if (snip.startsWith(str)) dom_snippets.push(snip);
-					}
-				);
-			}
-			return dom_snippets;
-		}
-
-		function read_snippet_files(test_script_name, list_of_snippet_file_names) {
-			let code_snips = [];
-			for (let i in list_of_snippet_file_names) {
-				code_snips.push(fs.readFileSync(`${getTestResultsFolder(test_script_name)}default/snippets/${list_of_snippet_file_names[i]}`, "utf8"));
-			}
-			return code_snips;
-		}
 
 		let snippets = get_snippets_object(test_script_name);
 		let snippet_names = get_snippets_starting_with(list_of_start_snippet_strs, snippets);
@@ -981,6 +982,16 @@ describe("multi-exec", function() {
 		}, "--multi-exec")
 	);
 	it(
+		"should log the final instrumented eval code with skipped errors that passed as a snippet",
+		run_multiexec_script_and_check_output("errors/skiperrorsineval.js", (stdout) => {
+			//assumes previous test has run
+			let snippets = get_snippets_object("skiperrorsineval.js", "multi-exec");
+			let snippet_names = get_snippets_starting_with(["2_"], snippets);
+			let code_snips = read_snippet_files("skiperrorsineval.js", [snippet_names.filter((name) => name.includes("INSTRUMENTED"))[0]], "multi-exec");
+			code_snips[0].includes("logMultiexec('SKIPPED ERROR IN AN EVAL CALL");
+		}, "--multi-exec")
+	);
+	it(
 		"should skip and log multiple errors even in nested evals and continue executing the rest of the code",
 		run_multiexec_script_and_check_output("errors/skipnestedevalerror.js", (stdout) => {
 			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedFunction is not defined at )(undefinedFunction)()`));
@@ -990,6 +1001,17 @@ describe("multi-exec", function() {
 			assert(stdout.includes(`Script output: 3`));
 			assert(stdout.includes(`Script output: 4`));
 			assert(stdout.includes(`Script output: "end of script reached (test pass)"`));
+		}, "--multi-exec")
+	);
+	it(
+		"should log the final instrumented eval code with skipped errors that passed as a snippet for nested evals",
+		run_multiexec_script_and_check_output("errors/skipnestedevalerror.js", (stdout) => {
+			//assumes previous test has run
+			let snippets = get_snippets_object("skipnestedevalerror.js", "multi-exec");
+			let snippet_names = get_snippets_starting_with(["2_", "3_"], snippets);
+			let code_snips = read_snippet_files("skipnestedevalerror.js", snippet_names.filter((name) => name.includes("INSTRUMENTED")), "multi-exec");
+			code_snips[0].includes("logMultiexec('SKIPPED ERROR IN AN EVAL CALL");
+			code_snips[1].includes("logMultiexec('SKIPPED ERROR IN AN EVAL CALL");
 		}, "--multi-exec")
 	);
 });

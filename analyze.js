@@ -967,7 +967,7 @@ async function run_in_jsdom_vm(sandbox, code, symex_input = null) {
                 code = replaceErrorCausingCode(e, code, false, url);
 
                 //RESTART LOGGING AND SANDBOX STUFF:
-                restartLoggedState();
+                restartLoggedState(code);
             } else if (sym_exec_enabled) {
                 lib.error(e.stack, true, false);
                 return;
@@ -1001,7 +1001,7 @@ function run_in_vm2(sandbox, code) {
                 code = replaceErrorCausingCode(e, code);
 
                 //RESTART LOGGING AND SANDBOX STUFF:
-                restartLoggedState();
+                restartLoggedState(code);
             } else if (sym_exec_enabled) {
                 lib.error(e.stack, true, false);
                 return;
@@ -1118,6 +1118,9 @@ function make_sandbox(symex_input = null) {
                     //TODO: Maintain correct multiexec_indent
                 }
             } while (codeHadAnError)
+            //log this code as the final instrumented snippet
+            let filename = lib.getLastInstrumentedFilename().split(".")[0];
+            lib.logJS(evalCode, filename, "", false, null, "eval code that passed multi-exec with skipped errors", false);
         },
         ActiveXObject : activex_mock.ActiveXObject,
         alert: (x) => {
@@ -1268,7 +1271,7 @@ function replaceErrorCausingCode(e, code, eval = false, url = "https://example.o
 //After an error has occured in multi-execution, it removes the error causing code and tries again, so restart the
 //stuff that was logged last try to avoid duplication
 
-function restartLoggedState() {
+function restartLoggedState(code) {
     lib.info("*RESTARTING MULTI-EXECUTION AFTER ERROR OCCURRED*");
     //FOR analyze.js
     numberOfExecutedSnippets = 1;
