@@ -1,9 +1,9 @@
 function test(x) {
-  return;
+  return 3;
   if (x == 1) {
     return 5;
   }
-  return 3;
+  return;
 }
 
 //should print undefined
