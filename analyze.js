@@ -484,6 +484,7 @@ cc decoder.c -o decoder
                         return;
                     }
                     switch (val.type) {
+                        case "ForOfStatement":
                         case "ForInStatement":
                             return require("./patches/multiexec/forin.js")(val);
                         default:
