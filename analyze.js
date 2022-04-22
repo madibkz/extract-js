@@ -1114,6 +1114,7 @@ function make_sandbox(symex_input = null) {
                     codeHadAnError = false;
                 } catch (e) {
                     evalCode = replaceErrorCausingCode(e, evalCode, true);
+                    lib.info("*RESTARTING EVAL CALL AFTER ERROR OCCURRED WITHIN IT*");
                     //TODO: Maintain correct multiexec_indent
                 }
             } while (codeHadAnError)
@@ -1207,6 +1208,7 @@ function replaceErrorCausingCode(e, code, eval = false, url = "https://example.o
 
     let tree = acorn.parse(code, {
         allowReturnOutsideFunction: true, // used when rewriting function bodies
+        ecmaVersion: "latest",
     })
 
     let closestStatement = null;
@@ -1265,7 +1267,7 @@ function replaceErrorCausingCode(e, code, eval = false, url = "https://example.o
 //stuff that was logged last try to avoid duplication
 
 function restartLoggedState() {
-    console.log("*RESTARTING MULTI-EXECUTION AFTER ERROR OCCURRED*");
+    lib.info("*RESTARTING MULTI-EXECUTION AFTER ERROR OCCURRED*");
     //FOR analyze.js
     numberOfExecutedSnippets = 1;
     multiexec_indent = "";
