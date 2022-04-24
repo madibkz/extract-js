@@ -2,7 +2,7 @@
 foo(bar, baz) becomes (x => eval == x ? arg => eval(rewrite(arg, true)) : x)(foo)(bar, baz)
 however, if multiexec is on then
  foo(bar, baz) becomes (x => eval == x ?
-    arg => evalUntilPasses(arg, eval)
+    arg => evalUntilPasses(rewrite(arg, true), eval)
  	: x)(foo)(bar, baz) */
 module.exports = (foo, multiexec) => {
 	if (foo["nothis_rewritten"]) {
