@@ -306,6 +306,13 @@ describe("DOM", function() {
 			));
 		})
 	);
+	it(
+		"should log setTimeout and setInterval calls where the function is passed in as a string",
+		run_dom_script_and_check_output("set_timeout_interval_string.js", (stdout) => {
+			assert(stdout.includes(`Code called setTimeout(() => console.log("setTimeout function"), 100, )`));
+			assert(stdout.includes(`Code called setInterval(() => console.log("setInterval function"), 100, )`));
+		})
+	);
 
 	it(
 		"should log when one of window's properties is modified",
@@ -526,6 +533,17 @@ describe("DOM", function() {
 		run_dom_script_and_check_output("set_timeout_interval_snippet_test.js", (stdout) => {
 			check_snippets(
 				"set_timeout_interval_snippet_test.js",
+				["setTimeout_1", "setInterval_1"],
+				["setTimeout call", "setInterval call"],
+				["() => 'some code setTimeout'", "() => 'some code setInterval'"]
+			)
+		})
+	);
+	it(
+		"should log the function/code for setTimeout and setInterval calls in a snippet file when the code is passed as a string",
+		run_dom_script_and_check_output("set_timeout_interval_string_snippet.js", (stdout) => {
+			check_snippets(
+				"set_timeout_interval_string_snippet.js",
 				["setTimeout_1", "setInterval_1"],
 				["setTimeout call", "setInterval call"],
 				["() => 'some code setTimeout'", "() => 'some code setInterval'"]

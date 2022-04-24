@@ -766,7 +766,11 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
             if (method[1]) { //if implemented in jsdom
                 if (argv["multi-exec"] && (method[0] === "setTimeout" || method[0] === "setInterval")) {
                     currentLogMultiexec(`FORCING EXECUTION OF ${method[0]}((code in snippet ${maybe_snippet_name}), ${arguments[1].toString()}).`, 1)
-                    arguments[0]();
+                    if (typeof arguments[0] === "string") {
+                        window.eval(sandbox.rewrite(arguments[0]));
+                    } else {
+                        arguments[0]();
+                    }
                     currentLogMultiexec(`END FORCING EXECUTION OF ${method[0]}((code in snippet ${maybe_snippet_name}), ${arguments[1].toString()}).`, 1)
                 }
                 let res = og_function.apply(window, arguments);
