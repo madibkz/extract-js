@@ -582,10 +582,10 @@ function log_dom_proxy_get(target, name, prefix) {
         }
         if (typeof target[name] === "function") { //log function calls with arguments
             return function () {
-                lib.logDOM(`${prefix}.${name}`, false, null, true, arguments);
+                let maybe_snippet_name = lib.logDOM(`${prefix}.${name}`, false, null, true, arguments);
                 let res = target[name].apply(target, arguments);
                 if (name === "addEventListener" && argv["multi-exec"]) {
-                    force_event_multi_exec(`${prefix}.${name}`, target, arguments[0]);
+                    force_event_multi_exec(`${prefix}.${name} (code in snippet ${maybe_snippet_name})`, target, arguments[0]);
                 }
                 return res;
             }
@@ -604,10 +604,10 @@ function force_event_multi_exec(register_str, target, event_name) {
 
 function log_dom_proxy_set(target, name, val, prefix) {
     if (name in target) {
-        lib.logDOM(`${prefix}.${name}`, true, val);
+        let maybe_snippet_name = lib.logDOM(`${prefix}.${name}`, true, val);
         target[name] = val;
         if (argv["multi-exec"] && name.startsWith("on") && typeof val === "function") {
-            force_event_multi_exec(`${prefix}.${name}`, target, name.substring(2));
+            force_event_multi_exec(`${prefix}.${name} (code in snippet ${maybe_snippet_name})`, target, name.substring(2));
         }
         return true;
     }
@@ -771,7 +771,7 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
                 }
                 let res = og_function.apply(window, arguments);
                 if (argv["multi-exec"] && method[0] === "addEventListener") {
-                    force_event_multi_exec(`window.addEventListener.${arguments[0]}`, window, arguments[0]);
+                    force_event_multi_exec(`window.addEventListener.${arguments[0]} (code in snippet ${maybe_snippet_name})`, window, arguments[0]);
                 }
                 return res;
             }
@@ -842,7 +842,7 @@ function create_node_proxy(node, prefix, node_name, from_func_call = false, args
 }
 
 function return_node_proxy_or_value(prefix_str, t, n, function_ctx, args = null) {
-    lib.logDOM(`${prefix_str}.${n.toString()}`, false, null, function_ctx, args);
+    let maybe_snippet_name = lib.logDOM(`${prefix_str}.${n.toString()}`, false, null, function_ctx, args);
     let result = function_ctx ? t[n].apply(t, args) : t[n];
     let logging_state = lib.domLoggingOn();
     if (logging_state)
@@ -867,7 +867,7 @@ function return_node_proxy_or_value(prefix_str, t, n, function_ctx, args = null)
     if (logging_state)
         lib.turnOnLogDOM();
     if (function_ctx && argv["multi-exec"] && n === "addEventListener") {
-        force_event_multi_exec(`${prefix_str}.${n}.${args[0]}`, t, args[0]);
+        force_event_multi_exec(`${prefix_str}.${n}.${args[0]} (code in snippet ${maybe_snippet_name})`, t, args[0]);
     }
     return result;
 }

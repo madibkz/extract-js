@@ -310,6 +310,8 @@ module.exports = {
 	logJS,
 	logDOMUrl,
 	logDOM: function(property, write = false, write_val = null, func = false, args = null) {
+		let return_snippet_prefix = "";
+
 		function args_to_string() {
 			let str = "";
 			for (let arg of args) {
@@ -356,7 +358,8 @@ module.exports = {
 				}
 			} else if (typeof value === "function" && (found_in.includes("addEventListener") || is_event_prop(found_in))) {
 				//this is an event
-				logJS(value.toString(), `DOM_${++number_of_event_scripts}_`, "", true, null, `JavaScript function found in ${found_in}`);
+				return_snippet_prefix = `DOM_${++number_of_event_scripts}_`;
+				logJS(value.toString(), return_snippet_prefix, "", true, null, `JavaScript function found in ${found_in}`);
 			}
 		}
 
@@ -375,7 +378,6 @@ module.exports = {
 		if (logDom) {
 			logDom = false;
 			//if some JS is logged from the value or arguments, then returns the start of the snippet name so that it can be logged
-			let return_snippet_prefix = "";
 
 			try {
 				if (args) {
