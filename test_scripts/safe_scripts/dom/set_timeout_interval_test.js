@@ -1,2 +1,2 @@
-setTimeout(100, () => console.log("setTimeout function"));
-setInterval(100, () => console.log("setInterval function"));
+setTimeout(() => console.log("setTimeout function"), 100);
+setInterval(() => console.log("setInterval function"), 100);

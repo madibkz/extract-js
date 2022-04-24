@@ -762,8 +762,13 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
     logged_dom_vals.window.methods.forEach((method) => {
         let og_function = window[method[0]];
         window[method[0]] = function () {
-            lib.logDOM(method[0], false, null, true, arguments);
+            let maybe_snippet_name = lib.logDOM(method[0], false, null, true, arguments);
             if (method[1]) { //if implemented in jsdom
+                if (argv["multi-exec"] && (method[0] === "setTimeout" || method[0] === "setInterval")) {
+                    currentLogMultiexec(`FORCING EXECUTION OF ${method[0]}((code in snippet ${maybe_snippet_name}), ${arguments[1].toString()}).`, 1)
+                    arguments[0]();
+                    currentLogMultiexec(`END FORCING EXECUTION OF ${method[0]}((code in snippet ${maybe_snippet_name}), ${arguments[1].toString()}).`, 1)
+                }
                 let res = og_function.apply(window, arguments);
                 if (argv["multi-exec"] && method[0] === "addEventListener") {
                     force_event_multi_exec(`window.addEventListener.${arguments[0]}`, window, arguments[0]);
