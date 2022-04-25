@@ -109,9 +109,9 @@ if (default_enabled || multi_exec_enabled) {
     currentLogMultiexec = sandbox.logMultiexec;
     run_emulation(code, sandbox);
 } else if (sym_exec_enabled) {
-    let sym_exec_script = prepend_users_prepend_code(originalInputScript);
+    let sym_exec_script = rewrite_code_for_symex_script(originalInputScript);
+    sym_exec_script = prepend_users_prepend_code(sym_exec_script);
     sym_exec_script = prepend_sym_exec_script(sym_exec_script);
-    sym_exec_script = rewrite_code_for_symex_script(sym_exec_script);
 
     //write script to temp file
     let tmp_filename = "./tmpsymexscript";
@@ -545,6 +545,22 @@ function rewrite_code_for_symex_script(code) {
             switch (val.type) {
                 case "ThisExpression":
                     return require("./patches/symexec/this.js")(val);
+                case "ExpressionStatement":
+                case "IfStatement":
+                case "SwitchStatement":
+                case "WhileStatement":
+                case "DoWhileStatement":
+                case "FunctionDeclaration":
+                case "VariableDeclaration":
+                    return require("./patches/symexec/trycatchwrap.js")(val);
+                case "ForStatement":
+                    //prevents the trycatch wrapping of the init part of the for loop
+                    val.init ? val.init.symexecthistraversed = true : {};
+                    return require("./patches/symexec/trycatchwrap.js")(val);
+                case "ForInStatement":
+                    //prevents the trycatch wrapping of the init part of the forIn loop
+                    val.left ? val.left.symexecthistraversed = true : {};
+                    return require("./patches/symexec/trycatchwrap.js")(val);
                 default:
                     break;
             }

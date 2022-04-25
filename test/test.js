@@ -1223,4 +1223,12 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: "default branch"`));
 		}, "--sym-exec --timeout 1000")
 	);
+
+	it(
+		"should rewrite the code to be wrapped in try/catch statements so that unimplemented API functions don't stop the symbolic exec",
+		run_symex_script_and_check_output("symex_wrap_trycatch.js", (stdout) => {
+			assert(stdout.includes(`Script output: 1`));
+			assert(stdout.includes(`Script output: 2`));
+		}, "--sym-exec --timeout 1000")
+	);
 });
