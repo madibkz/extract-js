@@ -1231,4 +1231,59 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: 2`));
 		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
 	);
+
+
+	//activex testing
+	it(
+		"should symbolically track the filesystemobject's fileexists property",
+		run_symex_script_and_check_output("activex/filesystemobject.js", (stdout) => {
+			assert(stdout.includes(`Script output: "FILE EXISTS BRANCH"`));
+			assert(stdout.includes(`Script output: "NO FILE EXISTS BRANCH"`));
+			assert(stdout.includes(`Script output: "folder EXISTS BRANCH"`));
+			assert(stdout.includes(`Script output: "NO folder EXISTS BRANCH"`));
+			assert(stdout.includes(`Script output: "BUFFER BRANCH"`));
+			assert(stdout.includes(`Script output: "NO BUFFER BRANCH"`));
+		}, "--sym-exec --no-sym-exec-dom --timeout 1000")
+	);
+	it(
+		"should symbolically track the MSXML2.XMLHTTP's status and response property",
+		run_symex_script_and_check_output("activex/xmlhttp.js", (stdout) => {
+			assert(stdout.includes(`Script output: "first branch"`));
+			assert(stdout.includes(`Script output: "second branch"`));
+		}, "--sym-exec --no-sym-exec-dom --timeout 1000")
+	);
+	it(
+		"should symbolically track the wscript.shell's appdata property",
+		run_symex_script_and_check_output("activex/wscriptshell.js", (stdout) => {
+			assert(stdout.includes(`Script output: "first branch"`));
+			assert(stdout.includes(`Script output: "second branch"`));
+		}, "--sym-exec --no-sym-exec-dom --timeout 1000")
+	);
+	it(
+		"should symbolically track the adodb.stream's properties and buffer",
+		run_symex_script_and_check_output("activex/adodbstream.js", (stdout) => {
+			assert(stdout.includes(`Script output: "Got position right"`));
+			assert(stdout.includes(`Script output: "Got charset right"`));
+			assert(stdout.includes(`Script output: "Got it"`));
+		}, "--sym-exec --no-sym-exec-dom --timeout 1000")
+	);
+	it(
+		"should symbolically track the wscript.proxy's properties",
+		run_symex_script_and_check_output("activex/wscript.js", (stdout) => {
+			assert(stdout.includes(`Script output: "SYMEX WORKS"`));
+			assert(stdout.includes(`Script output: "SYMEX WORKS2"`));
+			assert(stdout.includes(`Script output: "SYMEX WORKS3"`));
+			assert(stdout.includes(`Script output: "SYMEX WORKS4"`));
+			assert(stdout.includes(`Script output: "SYMEX WORKS5"`));
+		}, "--sym-exec --no-sym-exec-dom --timeout 1000")
+	);
+	it(
+		"should symbolically track the wmi's properties",
+		run_symex_script_and_check_output("activex/wmi.js", (stdout) => {
+			assert(stdout.includes(`Script output: "computersystem branch"`));
+			assert(stdout.includes(`Script output: "networkadapterconfiguration branch"`));
+			assert(stdout.includes(`Script output: "operatingsystem branch"`));
+			assert(stdout.includes(`Script output: "processstoptrace branch"`));
+		}, "--sym-exec --no-sym-exec-dom --timeout 1000")
+	);
 });
