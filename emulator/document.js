@@ -5,6 +5,9 @@ function getProxyHandler() {
                 case Symbol.toPrimitive:
                     return () => "[object HTMLDocument]";
                 default:
+                    if (name === "defaultView") {
+                        return global;
+                    }
                     if (name === "toString") {
                         return () => "document";
                     }

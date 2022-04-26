@@ -76,10 +76,10 @@ var top = global;
     //build DOM emulation / symbol tracking
     global.location = buildProxyForEmulatedObject("location.", "./emulator/location.js");
     global.navigator = buildProxyForEmulatedObject("navigator.", "./emulator/navigator/navigator.js");
-    global.document = buildProxyForEmulatedObject("document.", "./emulator/document.js")
+    let doc = buildProxyForEmulatedObject("document.", "./emulator/document.js")
     global.screen = buildProxyForEmulatedObject("screen.", "./emulator/screen.js")
-    // document.defaultView = global;
-    document.location = location;
+    doc.location = location;
+    global.document = doc;
     global.clientInformation = navigator;
 
     //build active x emulation/symbol tracking
