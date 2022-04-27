@@ -1,5 +1,5 @@
-var obj = GetObject();
-var instances = obj.InstancesOf("win32_computersystem");
+let obj = GetObject();
+let instances = obj.InstancesOf("win32_computersystem");
 if (instances[0]["pscomputername"] === "TESTNAME") {
     console.log("computersystem branch");
 }
