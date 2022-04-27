@@ -1164,7 +1164,7 @@ function make_sandbox(symex_input = null) {
         toggleLogDOM: lib.toggleLogDOM,
         logJS: lib.logJS,
         logIOC: lib.logIOC,
-        logMultiexec: (x, indent) => { //TODO: maybe reduce the duplication here
+        logMultiexec: !argv["multi-exec"] ? () => {} : (x, indent) => { //TODO: maybe reduce the duplication here
             if (indent === 0) {
                 (multiexec_indent !== "" && multiexec_indent.length > 1) ?
                     multiexec_indent = multiexec_indent.slice(0, multiexec_indent.length - 2) :
@@ -1183,7 +1183,7 @@ function make_sandbox(symex_input = null) {
                 multiexec_indent += "  ";
             }
         },
-        evalUntilPasses: (evalCode, evalFunc) => { //TODO: only have this function in the sandbox (and other multiexec when multiexec is enabled
+        evalUntilPasses: !argv["multi-exec"] ? () => {} : (evalCode, evalFunc) => {
             let codeHadAnError = true;
             do {
                 try {
