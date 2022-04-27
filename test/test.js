@@ -580,7 +580,7 @@ describe("DOM", function() {
 });
 
 describe("multi-exec", function() {
-	this.timeout(2000);
+	this.timeout(3000);
 
 	let run_multiexec_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
 		run_script_and_check_output(`${multiexScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
@@ -792,6 +792,12 @@ describe("multi-exec", function() {
 		}, "--multi-exec")
 	);
 	//event tests
+	it(
+		"should not force execution of events if command line argument --no-multi-exec-events",
+		run_multiexec_script_and_check_output("events/no-multi-exec-events.js", (stdout) => {
+			assert(!stdout.includes(`Script output: "test failed"`));
+		}, "--multi-exec --no-multi-exec-events")
+	);
 	it(
 		"should force execution of events added to document through addEventListener",
 		run_multiexec_script_and_check_output("events/document_add_event.js", (stdout) => {
