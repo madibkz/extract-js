@@ -1190,6 +1190,7 @@ function make_sandbox(symex_input = null) {
         },
         evalUntilPasses: !argv["multi-exec"] ? () => {} : (evalCode, evalFunc) => {
             let codeHadAnError = true;
+            let multiexec_indent_checkpoint = multiexec_indent;
             do {
                 try {
                     evalFunc(evalCode);
@@ -1199,7 +1200,7 @@ function make_sandbox(symex_input = null) {
                     lib.info("");
                     lib.info("*RESTARTING EVAL CALL AFTER ERROR OCCURRED WITHIN IT*");
                     lib.info("");
-                    //TODO: Maintain correct multiexec_indent
+                    multiexec_indent = multiexec_indent_checkpoint;
                 }
             } while (codeHadAnError)
             //log this code as the final instrumented snippet
