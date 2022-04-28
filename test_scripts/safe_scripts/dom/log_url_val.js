@@ -1,0 +1,1 @@
+window.name = "https://google.com"

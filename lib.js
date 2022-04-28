@@ -8,6 +8,8 @@ const argv = require("./argv.js").run;
 const fsextra = require("fs-extra");
 const vm = require("vm");
 const {list_of_event_attributes} = require("./utils");
+const isURL = require("validator").isURL;
+const isIP = require("validator").isIP;
 
 let directory = path.normalize(process.argv[3]);
 
@@ -158,12 +160,12 @@ function saveUrl(url) {
 }
 
 function logUrl(method, url) {
-	log("info", `${method} ${url}`);
+	log("info", `FOUND URL: ${url} ${method}`);
 	saveUrl(url);
 }
 
-function logDOMUrl(url, options, method = "GET") {
-	log("info", `DOM: Resource at ${url} [${method}] was requested from DOM emulation${options.element ? " from element " + options.element.localName : ""}. Options: ${JSON.stringify(options)}`);
+function logDOMUrl(url, options, method = "GET", requested = true) {
+	log("info", `DOM: Resource at ${url} [${method}] was ${requested ? "requested from" : "found in"} DOM emulation${options.element ? " from element " + options.element.localName : ""}. Options: ${JSON.stringify(options)}`);
 	saveUrl(url);
 }
 
@@ -363,6 +365,14 @@ module.exports = {
 			}
 		}
 
+		function check_for_url(value, found_in = "emulation") {
+			if (typeof value === "string") {
+				if (isURL(value.trim()) || isIP(value.trim())) {
+					logDOMUrl(value.trim(), {element: {localName: property}}, `UNKNOWNMETHOD`, false);
+				}
+			}
+		}
+
 		//this function returns val to be capped in length if the command line argument limit-log-dom-length is on
 		//otherwise it just returns val back
 		function limit_val(val) {
@@ -383,9 +393,11 @@ module.exports = {
 				if (args) {
 					for (let i = 0; i < args.length; i++) {
 						check_for_javascript_code(args[i], `arg [${i}] of call of ${property}(${args_to_string()})`);
+						check_for_url(args[i], `arg [${i}] of call of ${property}(${args_to_string()})`);
 					}
 				} else if (write_val) {
 					check_for_javascript_code(write_val, `write value for ${property}`);
+					check_for_url(write_val, `write value for ${property}`);
 				}
 
 				let dom_str = `DOM: Code ${write ? "modified" : (func ? "called" : "accessed") } ${property}${func ? "(" + (args ? args_to_string() : "") + ")" : ""}${write_val ? " with value " + limit_val(write_val) : ""}`;

@@ -2,7 +2,7 @@
 // go through all declared variables in the script looking for valid JavaScript in the contents
 // eval the javascript so it gets sandboxed
 toggleLogDOM()
-
+console.log("(SEARCHING STRINGS AFTER FINISHED EXECUTION.)");
 const vm = require('vm');
 let number_of_js_str = 0;
 for (varName in this) {
@@ -19,6 +19,11 @@ for (varName in this) {
             }
         }
         catch (err) {}
+        // check that the string is a valid url
+        if (varValue.trim() === "https://example.com") continue; //skip the default URL var that will always be logged
+        if (isURL(varValue.trim()) || isIP(varValue.trim())) {
+            logUrl("UNKNOWNMETHOD", varValue);
+        }
     }
 }
 
