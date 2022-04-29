@@ -213,6 +213,11 @@
             "description": "Specify the document's url and referer attribute for emulation."
         },
         {
+            "name": "user-agent",
+            "type": "String",
+            "description": "Specify the user agent string to be used for navigator.userAgent and for the JSDOM resource loader."
+        },
+        {
             "name": "windows-xp",
             "type": "Boolean",
             "description": "Emulate Windows XP (influences the value of environment variables)"
