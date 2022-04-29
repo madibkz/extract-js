@@ -4,6 +4,7 @@
 toggleLogDOM()
 console.log("(SEARCHING STRINGS AFTER FINISHED EXECUTION.)");
 const vm = require('vm');
+const {isURL, isIP} = require("validator");
 let number_of_js_str = 0;
 for (varName in this) {
     varValue = this[varName]
@@ -23,7 +24,15 @@ for (varName in this) {
         if (varValue.trim() === "https://example.com") continue; //skip the default URL var that will always be logged
         if (isURL(varValue.trim()) || isIP(varValue.trim())) {
             logUrl("UNKNOWNMETHOD", varValue, "FOUND IN URL SEARCH AT THE END IN A VARIABLE CALLED: " + varName);
+            continue;
         }
+        //https://stackoverflow.com/questions/3809401/what-is-a-good-regular-expression-to-match-a-url
+        let matched = varValue.match(/(https?:\/\/)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g)
+        matched ? matched.forEach(u => {
+            if (isURL(u) || isIP(u)) {
+                logUrl(u, `UNKNOWNMETHOD`, "FOUND IN URL SEARCH AT THE END IN A VARIABLE CALLED: " + varName);
+            }
+        }) : null;
     }
 }
 
