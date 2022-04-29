@@ -93,13 +93,13 @@
 			originalSource = originalSource.toString();
 			source = rewrite("(" + originalSource + ")");
 		} else if (typeof originalSource === "string") {
-			source = `/* Function arguments: ${JSON.stringify(args)} */\n` + rewrite(originalSource);
+			source = `/* Function arguments: ${JSON.stringify(args)} */\n` + rewrite("eval(`" + originalSource.replace(/`/gi, "\\`") + "`);");
 		} else {
 			// Wtf JS
 			// For some reason, IIFEs result in a call to Function.
 			return new _OriginalFunction(...args, source);
 		}
-		logJS(source);
+		logJS(source, "function_constructor_", "", true, null, "JS found in a function constructor call");
 		return new _OriginalFunction(...args, source);
 	}
 	Function.toString = () => _OriginalFunction.toString()
