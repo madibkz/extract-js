@@ -128,6 +128,12 @@ describe("code rewriting", function() {
 			assert(stdout.includes(`Script output: "2nd one worked"`));
 		})
 	);
+	it(
+		"should find and log any string literals which are urls/ips",
+		run_rewrite_script_and_check_output("url_in_literal.js", (stdout) => {
+			assert(stdout.includes(`FOUND URL: https://google.com | METHOD: UNKNOWN | INFO: FOUND IN STRING LITERAL WHILE TRAVERSING THE TREE PRE-EMULATION (START CHAR: 10 END CHAR: 30)`));
+		})
+	);
 });
 
 //tests that don't really have a concrete category
@@ -137,8 +143,8 @@ describe("other-category", function() {
 	it(
 		"should find and log any strings containing URLs/IPs",
 		run_test_script_and_check_output("find_urls_ips.js", (stdout) => {
-			assert(stdout.includes(`FOUND URL: https://atest.com/?query=parameter UNKNOWNMETHOD`));
-			assert(stdout.includes(`FOUND URL: 123.123.213.4:2999 UNKNOWNMETHOD`));
+			assert(stdout.includes(`FOUND URL: https://atest.com/?query=parameter | METHOD: UNKNOWNMETHOD | INFO: FOUND IN URL SEARCH AT THE END IN A VARIABLE CALLED: something1`));
+			assert(stdout.includes(`FOUND URL: 123.123.213.4:2999 | METHOD: UNKNOWNMETHOD | INFO: FOUND IN URL SEARCH AT THE END IN A VARIABLE CALLED: something2`));
 		})
 	);
 });
@@ -405,8 +411,6 @@ describe("DOM", function() {
 		"should not log the URL and functions of window.XMLHttpRequest if --dom-network-apis is not there",
 		run_dom_script_and_check_output("no_XHR.js", (stdout) => {
 			assert(stdout.includes(`[error] Code called window.XMLHttpRequest() but it's not enabled!`));
-			let path_to_urls = `${getTestResultsFolder("no_XHR.js")}default/urls.json`;
-			assert(!fs.existsSync(path_to_urls));
 		})
 	);
 	it(
