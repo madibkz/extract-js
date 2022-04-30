@@ -4,7 +4,6 @@
 toggleLogDOM()
 console.log("(SEARCHING STRINGS AFTER FINISHED EXECUTION.)");
 const vm = require('vm');
-const {isURL, isIP} = require("validator");
 let number_of_js_str = 0;
 for (varName in this) {
     varValue = this[varName]

@@ -398,7 +398,7 @@ cc decoder.c -o decoder
                 hoist(tree);
             }
 
-            if (!argv["no-function-rewrite"]) {
+            if (!argv["no-function-rewrite"] && argv["vm2"]) {
                 lib.verbose("    Rewriting functions (use --no-function-rewrite to skip)...", false);
                 traverse(tree, function(key, val) {
                     //skips any constructor function calls because otherwise the new keyword won't work
@@ -428,7 +428,7 @@ cc decoder.c -o decoder
                 });
             }
 
-            if (!argv["no-eval-rewrite"]) {
+            if (!argv["no-eval-rewrite"] && argv["vm2"]) {
                 lib.verbose("    Rewriting eval calls (use --no-eval-rewrite to skip)...", false);
                 traverse(tree, function(key, val) {
                     if (!val) return;
@@ -878,6 +878,23 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
         enumerable: true,
         configurable: false
     });
+
+    let real_eval = window.eval;
+    Object.defineProperty(window, "eval", {
+        get: function ()  {
+            return (code) => {
+                lib.info("ENTERING EVAL");
+                if (argv["multi-exec"]) {
+                    sandbox.evalUntilPasses(sandbox.rewrite(code, true), real_eval);
+                } else {
+                    real_eval(sandbox.rewrite(code, true));
+                }
+                lib.info("EXITING EVAL");
+            }
+        },
+        enumerable: true,
+        configurable: false,
+    });
 }
 
 function create_node_proxy(node, prefix, node_name, from_func_call = false, args = null, index_str = null) {
@@ -1012,6 +1029,7 @@ async function run_in_jsdom_vm(sandbox, code, symex_input = null) {
                 // proxy: "",
                 // strictSSL: false,
                 // userAgent: "",
+                //TODO: make default userAgent the normal average useragent
                 ...((!sym_exec_enabled && argv["user-agent"]) && {userAgent: argv["user-agent"]}),
                 ...((sym_exec_enabled && symex_input && symex_input["navigator.userAgent"]) && {userAgent: symex_input["navigator.userAgent"]})
             });

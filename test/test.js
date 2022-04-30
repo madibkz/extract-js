@@ -322,22 +322,8 @@ describe("DOM", function() {
 	it(
 		"should log setTimeout and setInterval calls",
 		run_dom_script_and_check_output("set_timeout_interval_test.js", (stdout) => {
-			assert(stdout.includes(
-`[info] DOM: Code called setTimeout(() => (fun => {
-    return function () {
-        if (fun == eval)
-            arguments[0] = rewrite(arguments[0], true);
-        return fun.apply(console, arguments);
-    };
-})(console.log)('setTimeout function'), 100, )
-[info] DOM: Code called setInterval(() => (fun => {
-    return function () {
-        if (fun == eval)
-            arguments[0] = rewrite(arguments[0], true);
-        return fun.apply(console, arguments);
-    };
-})(console.log)('setInterval function'), 100, )`
-			));
+			assert(stdout.includes(`DOM: Code called setTimeout(() => console.log('setTimeout function'), 100, )`));
+			assert(stdout.includes(`DOM: Code called setInterval(() => console.log('setInterval function'), 100, )`));
 		})
 	);
 	it(
@@ -895,8 +881,8 @@ describe("multi-exec", function() {
 		"should force new setTimeout calls immediately, skipping over errors that are thrown",
 		run_multiexec_script_and_check_output("events/setTimeout_error.js", (stdout) => {
 			assert(stdout.includes(`FORCING EXECUTION OF setTimeout((code in snippet setTimeout_1_), 1000000)`));
-			assert(stdout.includes(`SKIPPED ERROR IN GLOBAL SCOPE: ReferenceError: undefinedthing is not defined at )(undefinedthing)`));
-			assert(stdout.includes(`SKIPPED ERROR IN GLOBAL SCOPE: ReferenceError: anotherundefinedthing is not defined at )(anotherundefinedthing)`));
+			assert(stdout.includes(`SKIPPED ERROR IN GLOBAL SCOPE: ReferenceError: undefinedthing is not defined at g(undefinedthing);`));
+			assert(stdout.includes(`SKIPPED ERROR IN GLOBAL SCOPE: ReferenceError: anotherundefinedthing is not defined at g(anotherundefinedthing)`));
 			assert(stdout.includes(`Script output: "test passed"`));
 			assert(stdout.includes(`END FORCING EXECUTION OF setTimeout((code in snippet setTimeout_1_), 1000000)`));
 		}, "--multi-exec")
@@ -905,8 +891,8 @@ describe("multi-exec", function() {
 		"should force new setTimeout calls immediately with the code passed as a string, skipping over errors that are thrown",
 		run_multiexec_script_and_check_output("events/setTimeout_string_error.js", (stdout) => {
 			assert(stdout.includes(`FORCING EXECUTION OF setTimeout((code in snippet setTimeout_1_), 1000000)`));
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedthing is not defined at )(undefinedthing)`));
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherundefinedthing is not defined at )(anotherundefinedthing)`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedthing is not defined at (undefinedthing);`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherundefinedthing is not defined at g(anotherundefinedthing)`));
 			assert(stdout.includes(`Script output: "test passed"`));
 			assert(stdout.includes(`END FORCING EXECUTION OF setTimeout((code in snippet setTimeout_1_), 1000000)`));
 		}, "--multi-exec")
@@ -923,8 +909,8 @@ describe("multi-exec", function() {
 		"should force new setInterval calls immediately, skipping over errors that are thrown",
 		run_multiexec_script_and_check_output("events/setInterval_error.js", (stdout) => {
 			assert(stdout.includes(`FORCING EXECUTION OF setInterval((code in snippet setInterval_1_), 1000)`));
-			assert(stdout.includes(`SKIPPED ERROR IN GLOBAL SCOPE: ReferenceError: undefinedthing is not defined at )(undefinedthing)`));
-			assert(stdout.includes(`SKIPPED ERROR IN GLOBAL SCOPE: ReferenceError: anotherundefinedthing is not defined at )(anotherundefinedthing)`));
+			assert(stdout.includes(`SKIPPED ERROR IN GLOBAL SCOPE: ReferenceError: undefinedthing is not defined at g(undefinedthing)`));
+			assert(stdout.includes(`SKIPPED ERROR IN GLOBAL SCOPE: ReferenceError: anotherundefinedthing is not defined at g(anotherundefinedthing)`));
 			assert(stdout.includes(`Script output: "test passed"`));
 			assert(stdout.includes(`END FORCING EXECUTION OF setInterval((code in snippet setInterval_1_), 1000)`));
 		}, "--multi-exec")
@@ -933,8 +919,8 @@ describe("multi-exec", function() {
 		"should force new setInterval calls immediately with the code passed as a string, skipping over errors that are thrown",
 		run_multiexec_script_and_check_output("events/setInterval_string_error.js", (stdout) => {
 			assert(stdout.includes(`FORCING EXECUTION OF setInterval((code in snippet setInterval_1_), 1000000)`));
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedthing is not defined at )(undefinedthing)`));
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherundefinedthing is not defined at )(anotherundefinedthing)`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedthing is not defined at (undefinedthing);\\nconsole`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherundefinedthing is not defined at g(anotherundefinedthing)`));
 			assert(stdout.includes(`Script output: "test passed"`));
 			assert(stdout.includes(`END FORCING EXECUTION OF setInterval((code in snippet setInterval_1_), 1000000)`));
 		}, "--multi-exec")
@@ -970,8 +956,8 @@ describe("multi-exec", function() {
 		"should skip and log multiple errors in an eval and continue executing the rest of the eval",
 		run_multiexec_script_and_check_output("errors/skiperrorsineval.js", (stdout) => {
 			assert(stdout.includes(`*RESTARTING EVAL CALL AFTER ERROR OCCURRED WITHIN IT*`));
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedFunction is not defined at )(undefinedFunction)()`));
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherUndefined is not defined at )(anotherUndefined)()`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedFunction is not defined at ;\\nundefinedFunction();\\ncons`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherUndefined is not defined at ;\\nanotherUndefined();\\nconso`));
 			assert(stdout.includes(`Script output: 1`));
 			assert(stdout.includes(`Script output: 2`));
 			assert(stdout.includes(`Script output: "end of script reached (test pass)"`));
@@ -990,8 +976,8 @@ describe("multi-exec", function() {
 	it(
 		"should skip and log multiple errors even in nested evals and continue executing the rest of the code",
 		run_multiexec_script_and_check_output("errors/skipnestedevalerror.js", (stdout) => {
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedFunction is not defined at )(undefinedFunction)()`));
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherUndefined is not defined at )(anotherUndefined)()`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedFunction is not defined at ;\\nundefinedFunction();\\ncons`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherUndefined is not defined at ;\\nanotherUndefined();\\nconso`));
 			assert(stdout.includes(`Script output: 1`));
 			assert(stdout.includes(`Script output: 2`));
 			assert(stdout.includes(`Script output: 3`));
