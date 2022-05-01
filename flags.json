@@ -18,6 +18,11 @@
             "description": "Show the license and quit"
         },
         {
+            "name": "html",
+            "type": "Boolean",
+            "description": "Use this flag to analyze .html files instead of standalone .js files. Turn on dom-resource-loading to load externally linked scripts/iframes/etc. If you know the url of the html you should set it with --url."
+        },
+        {
             "name": "no-summary",
             "type": "Boolean",
             "description": "Turn off the summary of extracted information which runs after all analysis is finished."

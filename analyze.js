@@ -1029,9 +1029,10 @@ async function run_in_jsdom_vm(sandbox, code, symex_input = null) {
                 // proxy: "",
                 // strictSSL: false,
                 // userAgent: "",
-                //TODO: make default userAgent the normal average useragent
                 ...((!sym_exec_enabled && argv["user-agent"]) && {userAgent: argv["user-agent"]}),
-                ...((sym_exec_enabled && symex_input && symex_input["navigator.userAgent"]) && {userAgent: symex_input["navigator.userAgent"]})
+                ...((sym_exec_enabled && symex_input && symex_input["navigator.userAgent"]) && {userAgent: symex_input["navigator.userAgent"]}),
+                //the default userAgent if neither of the above pass
+                ...((!(!sym_exec_enabled && argv["user-agent"]) && !(sym_exec_enabled && symex_input && symex_input["navigator.userAgent"])) && {userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"}),
             });
 
             let dom_str = `<html><head></head><body><script>${initialLocalStorage}${initialSessionStorage}${one_cookie}${multiple_cookies}${code}</script></body></html>`;
