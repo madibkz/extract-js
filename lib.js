@@ -33,10 +33,10 @@ let number_of_html_snippets = 0;
 
 let logDom = false;
 
-const logSnippet = function(filename, logContent, content, deobfuscate = false) {
+const logSnippet = function(filename, logContent, content, deobfuscate = false, js_beautify = true) {
 	snippets[filename] = logContent;
 	let save_path = path.join(directory + "/snippets/", filename);
-	fs.writeFileSync(save_path, require("js-beautify").js(content));
+	fs.writeFileSync(save_path, js_beautify ? require("js-beautify").js(content) : content);
 	if (deobfuscate) {
 		//write a deobfuscated version of the JS snippet
 		child_process.exec(`./illuminatejs/deobfuscate_file.js ${save_path}`);
@@ -154,6 +154,7 @@ function logIOC(type, value, description) {
 }
 
 function saveUrl(url, method = "UNKNOWN", info_str = "UNKNOWN") {
+	if (url === "https://example.com/") return;
 	latestUrl = url;
 	let info = `METHOD: ${method}. INFO: ${info_str}`
 
@@ -194,15 +195,37 @@ function logJS(code, prefix = "", suffix = "", id = true, rewrite = null, as = "
 	return code; // Helps with tail call optimization
 }
 
-function log_if_unique_snippet(str, log_func, filter_func = () => true) {
+function log_if_unique_snippet(str, log_func, filter_func = () => true, known_scripts = null) {
 	let unique = true;
 	str = str.replace(/\s/g, "");
 	for (let s of Object.getOwnPropertyNames(snippets).filter(filter_func)) {
 		let snip = fs.readFileSync(path.join(directory, `/snippets/${s}`), "utf8");
 		if (snip.replace(/\s/g, "") === str) unique = false;
 	}
-	if (unique)
+	if (known_scripts !== null) {
+		known_scripts.forEach(s => {
+			if (s.toString().replace(/\s/g, "") === str) unique = false;
+		})
+	}
+	if (unique) {
+		//this string keeps getting logged and I don't know where else to put it
+		if (str === `() => {
+    fireAnEvent("load", window, undefined, {}, true);
+    if (!window._document) {
+        return; // window might've been closed already
+    }
+
+    const documentImpl = idlUtils.implForWrapper(window._document);
+    if (!documentImpl._pageShowingFlag) {
+        documentImpl._pageShowingFlag = true;
+        fireAPageTransitionEvent("pageshow", window, false);
+    }
+}
+`.replace(/\s/g, "")) {
+			return;
+		}
 		log_func();
+	}
 }
 
 module.exports = {
@@ -328,11 +351,7 @@ module.exports = {
 		function args_to_string() {
 			let str = "";
 			for (let arg of args) {
-				// if (arg.nodeType) {
-				// 	str += arg.toString() + ", ";
-				// } else {
-					str += limit_val(arg) + ", ";
-				// }
+				str += limit_val(arg) + ", ";
 			}
 			return str;
 		}
@@ -348,13 +367,6 @@ module.exports = {
 			function is_event_prop(found) {
 				let found_split = found.split(".");
 				let prop = found_split[found_split.length - 1];
-
-				// for (let e of list_of_event_attributes) {
-				// 	if (prop.startsWith(e)) {
-				// 		return true;
-				// 	}
-				// }
-				// return false;
 
 				//technically each event starts with on so this is less computationally expensive however slightly less accurate
 				return prop.startsWith("on");
@@ -372,7 +384,7 @@ module.exports = {
 			} else if (typeof value === "function" && (found_in.includes("addEventListener") || is_event_prop(found_in))) {
 				//this is an event
 				return_snippet_prefix = `DOM_${++number_of_event_scripts}_`;
-				logJS(value.toString(), return_snippet_prefix, "", true, null, `JavaScript function found in ${found_in}`);
+				logJS(value.toString(), return_snippet_prefix, "", true, null, `JavaScript function found in ${found_in}`, true);
 			}
 		}
 
@@ -407,6 +419,23 @@ module.exports = {
 		if (logDom) {
 			logDom = false;
 			//if some JS is logged from the value or arguments, then returns the start of the snippet name so that it can be logged
+
+			if (property === "window.document.addEventListener" && args[0] === "load" && args[1].toString().replace(/\s/g, "") === `() => {
+    fireAnEvent("load", window, undefined, {}, true);
+    if (!window._document) {
+        return; // window might've been closed already
+    }
+
+    const documentImpl = idlUtils.implForWrapper(window._document);
+    if (!documentImpl._pageShowingFlag) {
+        documentImpl._pageShowingFlag = true;
+        fireAPageTransitionEvent("pageshow", window, false);
+    }
+}
+`.replace(/\s/g, "")) {
+				logDom = true;
+				return;
+			}
 
 			try {
 				if (args) {
@@ -444,7 +473,7 @@ module.exports = {
 	logHTML: function(html_str, as) {
 		log_if_unique_snippet(
 			html_str,
-			() => logSnippet(`HTML_${++number_of_html_snippets === 1 ? "1_initial" : number_of_html_snippets}_${uuid.v4()}.txt`, {as}, html_str),
+			() => logSnippet(`HTML_${++number_of_html_snippets === 1 ? "1_initial" : number_of_html_snippets}_${uuid.v4()}.txt`, {as}, html_str, false, false),
 			(s) => s.includes("HTML")
 		)
 	},
@@ -474,13 +503,15 @@ module.exports = {
 			throw new Error("If you can read this, re-run extract.js with the --no-shell-error flag.");
 		process.send("no-expect-shell-error");
 	},
-	checkThatScriptHasBeenLogged: (script_str) => {
+	checkThatScriptHasBeenLogged: (script_str, list_of_known_scripts) => {
 		log_if_unique_snippet(
 			script_str,
 			() => {
 				log("info", "Found an extra script in window.documents.script. Saved as snippet.");
 				logJS(script_str, `DOM_${++number_of_jsdom_scripts}_`, "", true, null, "JavaScript found in window.document.scripts", true);
-			}
+			},
+			(x) => true,
+			list_of_known_scripts
 		);
 	},
 	getLastInstrumentedFilename: () => instrumented_filenames_stack.pop(),
