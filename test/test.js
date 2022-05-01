@@ -621,6 +621,19 @@ describe("html", function() {
 		}, "--html")
 	);
 	it(
+		"should log and rewrite javascript within on<something> attributes",
+		run_html_script_and_check_output("attribute.html", (stdout) => {
+			let snippets = get_snippets_object("attribute.html", "default");
+			let snippet_names = get_snippets_starting_with(["1_"], snippets);
+			let code_snips = read_snippet_files(
+				"attribute.html",
+				[snippet_names[0]],
+				"default"
+			);
+			assert(code_snips[0] === "console.log('found the attribute code');");
+		}, "--html")
+	);
+	it(
 		"should download and run externally linked scripts within a html file when --dom-resource-loading is on",
 		run_html_script_and_check_output("external_linked_js.html", (stdout) => {
 			assert(stdout.includes(`Resource at https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js [GET] was requested from DOM emulation`));
