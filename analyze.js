@@ -309,7 +309,8 @@ function instrument_html(code) {
             if (att.nodeName.startsWith("on") && att.nodeValue.trim() !== "") { //script attribute like onclick
                 let old_js = att.nodeValue;
                 listOfKnownScripts.push(old_js);
-                elem.setAttribute(att.nodeName, rewrite(att.nodeValue));
+                if (!argv["multi-exec"])
+                    elem.setAttribute(att.nodeName, rewrite(att.nodeValue));
                 lib.logJS(
                     old_js,
                     `${numberOfExecutedSnippets++}_input_attribute_script`,
@@ -1343,6 +1344,7 @@ function make_sandbox(symex_input = null) {
         // turnOnLogDOM: lib.turnOnLogDOM,
         // turnOffLogDOM: lib.turnOffLogDOM,
         toggleLogDOM: lib.toggleLogDOM,
+        logInfo: lib.info,
         logJS: lib.logJS,
         logIOC: lib.logIOC,
         logUrl: lib.logUrl,
@@ -1366,6 +1368,7 @@ function make_sandbox(symex_input = null) {
                 multiexec_indent += "  ";
             }
         },
+        htmlAndMulti: argv["multi-exec"] && html_mode,
         evalUntilPasses: !argv["multi-exec"] ? () => {} : (evalCode, evalFunc) => {
             let codeHadAnError = true;
             let multiexec_indent_checkpoint = multiexec_indent;
