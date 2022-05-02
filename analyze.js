@@ -233,6 +233,22 @@ function get_symex_code_from_html(code) {
     for (let s = 0; s < scripts.length; s++) {
         if (scripts[s].innerHTML.trim() !== "") {
             symex_code += "\n" + scripts[s].innerHTML.trim();
+        } else {
+            if (isURL(scripts[s].src)) {
+                lib.logUrl("GET", scripts[s].src, "EXTERNALLY LINKED SCRIPT FOUND IN HTML SCRIPT TAG");
+                //download the script if the command line argument is there
+                if (argv["download-external-scripts"]) {
+                    lib.info("Attempting to download external script " + scripts[s].src + " for symbolic execution");
+                    try {
+                        //then add this to the symex_code
+                        let res = require('sync-request')('GET', scripts[s].src);
+                        symex_code += "\n//external script from " + scripts[s].src + "\n" + res.getBody().toString();
+                        lib.info("Attempt succeeded to download external script " + scripts[s].src + " for symbolic execution");
+                    } catch (e) {
+                        lib.error("Error occurred trying to download external script " + scripts[s].src + " for symbolic execution");
+                    }
+                }
+            }
         }
     }
 
