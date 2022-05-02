@@ -1392,6 +1392,38 @@ describe("sym-exec", function() {
 	);
 });
 
+describe("multi-exec html", function() {
+	this.timeout(2000000);
+
+	it(
+		"should rewrite the internal scripts to be multi-exec and still work like normal",
+		run_html_script_and_check_output("multi-exec/basic_multi-exec.html", (stdout) => {
+			assert(stdout.includes(`"first branch"`));
+			assert(stdout.includes(`"second branch"`));
+			assert(stdout.includes(`"third branch"`));
+			assert(stdout.includes(`"fourth branch"`));
+		}, "--html --multi-exec")
+	);
+	it(
+		"should skip errors in the global scope like it does in non-html mode due to wrapping them in eval",
+		run_html_script_and_check_output("multi-exec/global_error.html", (stdout) => {
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedthing is not defined at (undefinedthing);`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherundefinedthing is not defined at (anotherundefinedthing);`));
+			assert(stdout.includes(`Script output: "backtick strings should work"`));
+			assert(stdout.includes(`Script output: "reached end script"`));
+		}, "--html --multi-exec")
+	);
+	it(
+		"should skip errors that are from evals like it does in non-html mode",
+		run_html_script_and_check_output("multi-exec/eval_error.html", (stdout) => {
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedthing is not defined at (undefinedthing);`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherundefinedthing is not defined at (anotherundefinedthing);`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: dothisthing is not defined at ;\\ndothisthing();`));
+			assert(stdout.includes(`Script output: "reached end script"`));
+		}, "--html --multi-exec")
+	);
+});
+
 describe("symbolic html", function() {
 	this.timeout(2000000);
 
