@@ -33,11 +33,10 @@ class LoggingResourceLoader extends jsdom.ResourceLoader {
         if (argv["multi-exec"]) {
             let res = super.fetch(url, options);
             return res.then(val => {
-                try { //if val is javascript, then we rewrite it and wrap it with eval
+                try { //if val is javascript, then we wrap it with eval
                     const script = new vm.Script(val.toString());
                     listOfKnownScripts.push(val.toString());
-                    let rewrite_val = wrap_code_with_eval(rewrite(val.toString()));
-                    const script2 = new vm.Script(rewrite_val);
+                    let rewrite_val = wrap_code_with_eval(val.toString());
                     listOfKnownScripts.push(rewrite_val);
                     lib.logJS(val.toString(), `${numberOfExecutedSnippets++}_input_script_`, "", true, rewrite_val, `external script downloaded from ${url}`, true);
                     return Buffer.from(rewrite_val);
@@ -570,7 +569,7 @@ cc decoder.c -o decoder
                 });
             }
 
-            if (!argv["no-catch-rewrite"]) { // JScript quirk
+            if (!argv["no-catch-rewrite"] && !argv["multi-exec"]) { // JScript quirk
                 lib.verbose("    Rewriting try/catch statements (use --no-catch-rewrite to skip)...", false);
                 traverse(tree, function(key, val) {
                     if (!val) return;
@@ -1378,6 +1377,7 @@ function make_sandbox(symex_input = null) {
                     codeHadAnError = false;
                 } catch (e) {
                     evalCode = replaceErrorCausingCode(e, evalCode, true);
+                    if (evalCode === "ERROR PARSING ERROR") return;
                     lib.info("");
                     lib.info("*RESTARTING EVAL CALL AFTER ERROR OCCURRED WITHIN IT*");
                     lib.info("");
@@ -1461,8 +1461,14 @@ function replaceErrorCausingCode(e, code, eval = false, url = "https://example.o
             regexpResults = lineRegexp.exec(line_info);
         }
     }
-    let lineNumber = parseInt(regexpResults[1]);
-    let colNumber = parseInt(regexpResults[2]);
+    let lineNumber, colNumber;
+    try {
+        lineNumber = parseInt(regexpResults[1]);
+        colNumber = parseInt(regexpResults[2]);
+    } catch (err) {
+        lib.error("Couldn't skip error in eval in multi-exec mode (skipping the whole eval instead)");
+        return "ERROR PARSING ERROR";
+    }
     let charNumber = 0;
 
     let l = 1;
