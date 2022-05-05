@@ -150,7 +150,7 @@ const getUUID = uuid.v4;
 function logIOC(type, value, description) {
 	log("info", "IOC: " + description);
 	IOC.push({type, value, description});
-	fs.writeFileSync(path.join(directory, "IOC.json"), JSON.stringify(IOC, null, "\t"));
+	fs.writeFileSync(path.join(directory, "activex_IOC.json"), JSON.stringify(IOC, null, "\t"));
 }
 
 function saveUrl(url, method = "UNKNOWN", info_str = "UNKNOWN") {

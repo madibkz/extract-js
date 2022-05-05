@@ -63,7 +63,7 @@ function summarize(results_dir, file_copying = true) {
     //write the json files
     write_if_not_empty(uniq_snippets, "unique_snippets.json");
     write_if_not_empty(uniq_resources, "unique_resources.json");
-    write_if_not_empty(uniq_iocs, "unique_IOCs.json");
+    write_if_not_empty(uniq_iocs, "unique_activex_IOCs.json");
     write_if_not_empty(uniq_urls, "unique_urls.json");
     write_if_not_empty(uniq_active_urls, "unique_active_urls.json");
     write_if_not_empty(uniq_cookies, "unique_cookies.json");
@@ -160,8 +160,8 @@ function extract_from_exec(path) {
     }
 
     //iocs - []
-    if (fs.existsSync(path + "/IOC.json")) {
-        let iocs = JSON.parse(fs.readFileSync(path + "/IOC.json", "utf8"));
+    if (fs.existsSync(path + "/activex_IOC.json")) {
+        let iocs = JSON.parse(fs.readFileSync(path + "/activex_IOC.json", "utf8"));
         for (let i = 0; i < iocs.length; i++) {
             //for each ioc:
             //for all unique iocs:
