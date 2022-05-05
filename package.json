@@ -20,7 +20,8 @@
     "walk-sync": "^0.3.2",
     "js-beautify": "^1.14.0",
     "fs-extra": "10.0.0",
-    "validator": "^13.7.0"
+    "validator": "^13.7.0",
+    "canvas": "^2.9.1"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",

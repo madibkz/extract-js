@@ -306,7 +306,10 @@ module.exports = {
 		return files[filename];
 	},
 	logUrl,
+	//when used for DOM resource loading, resourceName is "", and emulatedPath is the url
 	logResource: function(resourceName, emulatedPath, content) {
+		const calledFromDOMResourceLoading = resourceName === "";
+		resourceName = calledFromDOMResourceLoading ? uuid.v4() : resourceName;
 		const filePath = path.join(directory + "resources/", resourceName);
 		fs.writeFileSync(filePath, content);
 		log("info", `Saved ${filePath} (${content.length} bytes)`);
@@ -315,11 +318,12 @@ module.exports = {
 		filetype = filetype.replace(`${filePath}: `, "").replace("\n", "");
 		log("info", `${filePath} has been detected as ${filetype}.`);
 
+		let latestResourceUrl = calledFromDOMResourceLoading ? emulatedPath : latestUrl;
 		if (/executable/.test(filetype)) {
-			log("info", `Active URL detected: ${latestUrl}`);
+			log("info", `Active URL detected: ${latestResourceUrl}`);
 			// Log active url
-			if (activeUrls.indexOf(latestUrl) === -1)
-				activeUrls.push(latestUrl);
+			if (activeUrls.indexOf(latestResourceUrl) === -1)
+				activeUrls.push(latestResourceUrl);
 			fs.writeFileSync(path.join(directory, "active_urls.json"), JSON.stringify(activeUrls, null, "\t"));
 		}
 
@@ -333,13 +337,13 @@ module.exports = {
 		const resource = {
 			path: emulatedPath,
 			type: filetype,
-			latestUrl,
+			latestUrl: latestResourceUrl,
 			md5,
 			sha1,
 			sha256
 		};
 		resources[resourceName] = resource;
-		logIOC("NewResource", resource, "The script created a resource.");
+		if (!calledFromDOMResourceLoading) logIOC("NewResource", resource, "The script created a resource.");
 		fs.writeFileSync(path.join(directory, "resources.json"), JSON.stringify(resources, null, "\t"));
 	},
 	logSnippet,

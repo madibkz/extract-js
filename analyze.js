@@ -30,23 +30,34 @@ let listOfKnownScripts = [];
 class LoggingResourceLoader extends jsdom.ResourceLoader {
     fetch(url, options) {
         lib.logDOMUrl(url, options);
-        if (argv["multi-exec"]) {
-            let res = super.fetch(url, options);
-            return res.then(val => {
+
+        let prom = super.fetch(url, options).then(val => {
+            lib.logResource("", url, val);
+
+            if (argv["multi-exec"]) {
                 try { //if val is javascript, then we wrap it with eval
                     const script = new vm.Script(val.toString());
                     listOfKnownScripts.push(val.toString());
                     let rewrite_val = wrap_code_with_eval(val.toString());
                     listOfKnownScripts.push(rewrite_val);
-                    lib.logJS(val.toString(), `${numberOfExecutedSnippets++}_input_script_`, "", true, rewrite_val, `external script downloaded from ${url}`, true);
+                    lib.logJS(
+                        val.toString(),
+                        `${numberOfExecutedSnippets++}_input_script_`,
+                        "",
+                        true,
+                        rewrite_val,
+                        `external script downloaded from ${url}`,
+                        true
+                    );
                     return Buffer.from(rewrite_val);
                 } catch (e) { //not javascript
                     return val;
                 }
-            });
-        }
-
-        return super.fetch(url, options);
+            }
+            return val;
+        });
+        prom.abort = () => {}; //when the jsdom emulation closes, this lets the downloads still resolve
+        return prom;
     }
 }
 
