@@ -29,7 +29,7 @@ for (varName in this) {
         let matched = varValue.match(/(https?:\/\/)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g)
         matched ? matched.forEach(u => {
             if (isURL(u) || isIP(u)) {
-                logUrl(u, `UNKNOWNMETHOD`, "FOUND IN URL SEARCH AT THE END IN A VARIABLE CALLED: " + varName);
+                logUrl(`UNKNOWNMETHOD`, u, "FOUND IN URL SEARCH AT THE END IN A VARIABLE CALLED: " + varName);
             }
         }) : null;
     }

@@ -93,7 +93,7 @@
 			originalSource = originalSource.toString();
 			source = rewrite("(" + originalSource + ")");
 		} else if (typeof originalSource === "string") {
-			source = `/* Function arguments: ${JSON.stringify(args)} */\n` + rewrite("eval(`" + originalSource.replace(/`/gi, "\\`") + "`);");
+			source = `/* Function arguments: ${JSON.stringify(args)} */\n` + rewrite(originalSource.replace(/`/gi, "\\`"));
 		} else {
 			// Wtf JS
 			// For some reason, IIFEs result in a call to Function.
