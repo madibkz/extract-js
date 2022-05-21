@@ -417,7 +417,7 @@ describe("DOM", function() {
 	it(
 		"should not log the URL and functions of window.XMLHttpRequest if --dom-network-apis is not there",
 		run_dom_script_and_check_output("no_XHR.js", (stdout) => {
-			assert(stdout.includes(`[info] Code called window.XMLHttpRequest() but it's not enabled!`));
+			assert(stdout.includes(`[info] Code called window.XMLHttpRequest.open but it's not enabled!`));
 		})
 	);
 	it(

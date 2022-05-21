@@ -34,7 +34,7 @@ class LoggingResourceLoader extends jsdom.ResourceLoader {
         let prom = super.fetch(url, options).then(val => {
             lib.logResource("", url, val);
 
-            if (argv["multi-exec"]) {
+            if (multi_exec_enabled) {
                 try { //if val is javascript, then we wrap it with eval
                     const script = new vm.Script(val.toString());
                     listOfKnownScripts.push(val.toString());
@@ -294,7 +294,7 @@ function instrument_html(code) {
             let old_js = scripts[s].innerHTML;
             listOfKnownScripts.push(old_js);
             scripts[s].innerHTML = rewrite(scripts[s].innerHTML);
-            if (argv["multi-exec"])  //wrap scripts into an eval for multi-exec error skipping
+            if (multi_exec_enabled)  //wrap scripts into an eval for multi-exec error skipping
                 scripts[s].innerHTML = wrap_code_with_eval(scripts[s].innerHTML);
             lib.logJS(
                 old_js,
@@ -319,7 +319,7 @@ function instrument_html(code) {
             if (att.nodeName.startsWith("on") && att.nodeValue.trim() !== "") { //script attribute like onclick
                 let old_js = att.nodeValue;
                 listOfKnownScripts.push(old_js);
-                if (!argv["multi-exec"])
+                if (!multi_exec_enabled)
                     elem.setAttribute(att.nodeName, rewrite(att.nodeValue));
                 lib.logJS(
                     old_js,
@@ -580,7 +580,7 @@ cc decoder.c -o decoder
                 });
             }
 
-            if (!argv["no-catch-rewrite"] && !argv["multi-exec"]) { // JScript quirk
+            if (!argv["no-catch-rewrite"] && !multi_exec_enabled) { // JScript quirk
                 lib.verbose("    Rewriting try/catch statements (use --no-catch-rewrite to skip)...", false);
                 traverse(tree, function(key, val) {
                     if (!val) return;
@@ -791,7 +791,7 @@ function log_dom_proxy_get(target, name, prefix) {
             return function () {
                 let maybe_snippet_name = lib.logDOM(`${prefix}.${name}`, false, null, true, arguments);
                 let res = target[name].apply(target, arguments);
-                if (name === "addEventListener" && argv["multi-exec"]) {
+                if (name === "addEventListener" && multi_exec_enabled) {
                     force_event_multi_exec(`${prefix}.${name} (code in snippet ${maybe_snippet_name})`, target, arguments[0]);
                 }
                 return res;
@@ -815,7 +815,7 @@ function log_dom_proxy_set(target, name, val, prefix) {
     if (name in target) {
         let maybe_snippet_name = lib.logDOM(`${prefix}.${name}`, true, val);
         target[name] = val;
-        if (argv["multi-exec"] && name.startsWith("on") && typeof val === "function") {
+        if (multi_exec_enabled && name.startsWith("on") && typeof val === "function") {
             force_event_multi_exec(`${prefix}.${name} (code in snippet ${maybe_snippet_name})`, target, name.substring(2));
         }
         return true;
@@ -891,14 +891,24 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
                         lib.logDOM(`window.XMLHttpRequest.${n}`, false, null, true, arguments);
                         lib.logDOMUrl(arguments[1], {element: {localName: "window.XMLHttpRequest"}, as: "from xmlhttprequest.open"});
                         if (!argv["dom-network-apis"]) {
-                            lib.info("Code called window.XMLHttpRequest() but it's not enabled!");
+                            lib.info(`Code called window.XMLHttpRequest.${n} but it's not enabled!`);
+                            return null;
+                        }
+                        return t[n].apply(t, arguments);
+                    }
+                } else if (typeof t[n] === "function") {
+                    return function () {
+                        lib.logDOM(`window.XMLHttpRequest.${n}`, false, null, true, arguments);
+                        if (!argv["dom-network-apis"]) {
+                            lib.info(`Code called window.XMLHttpRequest.${n} but it's not enabled!`);
                             return null;
                         }
                         return t[n].apply(t, arguments);
                     }
                 }
+                lib.logDOM(`window.XMLHttpRequest.${n}`, false, null, false);
                 if (!argv["dom-network-apis"]) {
-                    lib.info("Code called window.XMLHttpRequest() but it's not enabled!");
+                    lib.info(`Code accessed window.XMLHttpRequest.${n} but it's not enabled!`);
                     return null;
                 }
                 return log_dom_proxy_get(t, n, "window.XMLHttpRequest");
@@ -955,7 +965,7 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
             attributes.set = function (val) {
                 if (val !== window[`__${prop[0]}`]) {
                     window[`__${prop[0]}`] = val;
-                    if (argv["multi-exec"] && prop[0].startsWith("on") && typeof val === "function") {
+                    if (multi_exec_enabled && prop[0].startsWith("on") && typeof val === "function") {
                         window.addEventListener(prop[0].substring(2), val);
                         return true;
                     }
@@ -975,7 +985,7 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
         window[method[0]] = function () {
             let maybe_snippet_name = lib.logDOM(method[0], false, null, true, arguments);
             if (method[1]) { //if implemented in jsdom
-                if (argv["multi-exec"] && (method[0] === "setTimeout" || method[0] === "setInterval")) {
+                if (multi_exec_enabled && (method[0] === "setTimeout" || method[0] === "setInterval")) {
                     currentLogMultiexec(`FORCING EXECUTION OF ${method[0]}((code in snippet ${maybe_snippet_name}), ${arguments[1].toString()}).`, 1)
                     if (typeof arguments[0] === "string") {
                         sandbox.evalUntilPasses(sandbox.rewrite(arguments[0]), window.eval);
@@ -985,7 +995,7 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
                     currentLogMultiexec(`END FORCING EXECUTION OF ${method[0]}((code in snippet ${maybe_snippet_name}), ${arguments[1].toString()}).`, 1)
                 }
                 let res = og_function.apply(window, arguments);
-                if (argv["multi-exec"] && method[0] === "addEventListener") {
+                if (multi_exec_enabled && method[0] === "addEventListener") {
                     force_event_multi_exec(`window.addEventListener.${arguments[0]} (code in snippet ${maybe_snippet_name})`, window, arguments[0]);
                 }
                 return res;
@@ -1040,7 +1050,7 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
         get: function ()  {
             return (code) => {
                 lib.info("ENTERING EVAL");
-                if (argv["multi-exec"]) {
+                if (multi_exec_enabled) {
                     return sandbox.evalUntilPasses(sandbox.rewrite(code, true), real_eval);
                 } else {
                     return real_eval(sandbox.rewrite(code, true));
@@ -1099,7 +1109,7 @@ function return_node_proxy_or_value(prefix_str, t, n, function_ctx, args = null)
     }
     if (logging_state)
         lib.turnOnLogDOM();
-    if (function_ctx && argv["multi-exec"] && n === "addEventListener") {
+    if (function_ctx && multi_exec_enabled && n === "addEventListener") {
         if (!(maybe_snippet_name === undefined && `${prefix_str}.${n}.${args[0]}` === "window.document.addEventListener.load"))
             force_event_multi_exec(`${prefix_str}.${n}.${args[0]} (code in snippet ${maybe_snippet_name})`, t, args[0]);
     }
@@ -1195,18 +1205,7 @@ async function run_in_jsdom_vm(sandbox, code, symex_input = null) {
             let setup_str = `${initialLocalStorage}${initialSessionStorage}${one_cookie}${multiple_cookies}`;
             listOfKnownScripts.push(setup_str);
             if (!html_mode) {
-                dom_str = `<html><head></head><body><script>${setup_str}${code}</script>
-<form action="/submit.php">
-  <label for="username">Username:</label><br>
-  <input type="text" id="username" name="username" value="fakename"><br>
-  <label for="password">Password:</label><br>
-  <input type="text" id="password" name="password" value="fakepassword"><br>
-  <label for="credit-card">Credit card:</label><br>
-  <input type="text" id="credit-card" name="credit-card" value="credit-card"><br>
-  <input type="submit" value="Submit">
-</form>
-<button type="button">Fakebutton</button>
-</body></html>`;
+                dom_str = `<html><head></head><body><form action="/submit.php"><label for="username">Username:</label><br><input type="text" id="username" name="username" value="fakename"><br><label for="password">Password:</label><br><input type="text" id="password" name="password" value="fakepassword"><br><label for="credit-card">Credit card:</label><br><input type="text" id="credit-card" name="credit-card" value="credit-card"><br><input type="submit" value="Submit"></form><button type="button">Fakebutton</button><script>${setup_str}${code}</script></body></html>`;
                 lib.logHTML(dom_str, "the initial HTML set for the jsdom emulation");
             } else {
                 //add the setup_str as a script in <head>
@@ -1384,7 +1383,7 @@ function make_sandbox(symex_input = null) {
         logJS: lib.logJS,
         logIOC: lib.logIOC,
         logUrl: lib.logUrl,
-        logMultiexec: !argv["multi-exec"] ? () => {} : (x, indent) => { //TODO: maybe reduce the duplication here
+        logMultiexec: !multi_exec_enabled ? () => {} : (x, indent) => { //TODO: maybe reduce the duplication here
             x = x.replace(/\n/gi, "\\n"); //remove newlines
             if (indent === 0) {
                 (multiexec_indent !== "" && multiexec_indent.length > 1) ?
@@ -1404,8 +1403,8 @@ function make_sandbox(symex_input = null) {
                 multiexec_indent += "  ";
             }
         },
-        htmlAndMulti: argv["multi-exec"] && html_mode,
-        evalUntilPasses: !argv["multi-exec"] ? () => {} : (evalCode, evalFunc) => {
+        htmlAndMulti: multi_exec_enabled && html_mode,
+        evalUntilPasses: !multi_exec_enabled ? () => {} : (evalCode, evalFunc) => {
             let codeHadAnError = true;
             let multiexec_indent_checkpoint = multiexec_indent;
             let ret_val;
