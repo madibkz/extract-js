@@ -703,7 +703,7 @@ function rewrite_code_for_symex_script(code) {
         function recursively_set_field(obj, field, value) {
             obj[field] = value;
             for (let i of Object.keys(obj))
-                if (typeof obj[i] === "object")
+                if (obj[i] !== null && typeof obj[i] === "object")
                     recursively_set_field(obj[i], field, value);
         }
 
