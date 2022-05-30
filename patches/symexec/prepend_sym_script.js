@@ -78,18 +78,12 @@ if (dom_symbolize) {
 
     if (dom_symbolize) {
         //build DOM emulation / symbol tracking
-        global.location = S$.symbol("location.href", "");
-        global.__loc_syms = {
-            protocol: S$.symbol("location.protocol", ""),
-            host: S$.symbol("location.host", ""),
-            hostname: S$.symbol("location.hostname", ""),
-            port: S$.symbol("location.port", ""),
-            pathname: S$.symbol("location.pathname", ""),
-            search: S$.symbol("location.search", ""),
-            hash: S$.symbol("location.hash", ""),
-            origin: S$.symbol("location.origin", ""),
-            href: global.location,
-        };
+        const location_object = false;
+        if (location_object) {
+            global.location = buildProxyForEmulatedObject("location.", "./emulator/location.js");
+        } else {
+            global.location = S$.symbol("location.href", "");
+        }
         global.navigator = buildProxyForEmulatedObject("navigator.", "./emulator/navigator/navigator.js");
         let doc = buildProxyForEmulatedObject("document.", "./emulator/document.js")
         global.screen = buildProxyForEmulatedObject("screen.", "./emulator/screen.js")

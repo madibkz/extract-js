@@ -5,6 +5,7 @@ function getProxyHandler() {
                 case Symbol.toPrimitive:
                     return () => "[object Location]";
                 default:
+                    if (name === "href") return target._href;
                     if (name in target) {
                         return target[name];
                     }
@@ -34,7 +35,7 @@ function getDefaultFields() {
         search: "",
         hash: "",
         origin: "",
-        href: "",
+        _href: "",
     };
 }
 
@@ -46,7 +47,7 @@ function getInnerProxies() {
 function getObject() {
     return {
         toString() {
-            return this.href;
+            return this._href;
         }
     };
 }
