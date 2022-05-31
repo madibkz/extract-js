@@ -1,11 +1,12 @@
 function traverse(obj, func) {
-    const keys = Object.keys(obj);
+    let keys = Object.keys(obj);
     for (let i = 0; i < keys.length; i++) {
         const key = keys[i];
         const replacement = func.apply(this, [key, obj[key]]);
         if (replacement) {
             if (Array.isArray(replacement) && Array.isArray(obj)) {
                 obj.splice(key, 1, ...replacement);
+                keys = Object.keys(obj);
             } else {
                 obj[key] = replacement;
             }
