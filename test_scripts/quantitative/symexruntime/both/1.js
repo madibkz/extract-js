@@ -1,0 +1,2 @@
+if (navigator.userAgent == "something") {
+}
