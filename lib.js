@@ -11,6 +11,11 @@ const {list_of_event_attributes} = require("./utils");
 const isURL = require("validator").isURL;
 const isIP = require("validator").isIP;
 
+const mode = process.argv[4];
+const default_enabled = mode === "default";
+const multi_exec_enabled = mode === "multi-exec";
+const sym_exec_enabled = mode === "sym-exec";
+
 let directory = path.normalize(process.argv[3]);
 
 let urls = [];
@@ -141,6 +146,17 @@ function log(tag, text, toFile = true, toStdout = (path.normalize(process.argv[5
 		console.log(message);
 	if (toFile || argv.loglevel === "debug")
 		fs.appendFileSync(path.join(directory, "analysis.log"), message + "\n");
+	if ((multi_exec_enabled) && (toFile || argv.loglevel === "debug"))
+		fs.appendFileSync(path.join(directory, "multi_analysis.log"), message + "\n");
+}
+
+//(logMultiexec)
+function logME(text, toFile = true, toStdout = argv["testing"]) {
+	const message = `[m-ex] ${text}`;
+	if (toStdout || argv.loglevel === "debug") // Debug level always writes to stdout and file
+		console.log(message);
+	if ((multi_exec_enabled) && (toFile || argv.loglevel === "debug"))
+		fs.appendFileSync(path.join(directory, "multi_analysis.log"), message + "\n");
 }
 
 function hash(algo, string) {
@@ -242,6 +258,7 @@ module.exports = {
 	info: log.bind(null, "info"),
 	warning: log.bind(null, "warn"),
 	error: log.bind(null, "error"),
+	logME,
 
 	proxify: (actualObject, objectName = "<unnamed>") => {
 		/* Creating a Proxy is a common operation, because they normalize property names
