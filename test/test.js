@@ -1112,6 +1112,13 @@ describe("multi-exec", function() {
 			assert(stdout.includes(`Script output: "test passed"`));
 		}, "--multi-exec --multi-exec-only-eval")
 	);
+
+	it(
+		"should find and log url that was in logMultiexec call",
+		run_multiexec_script_and_check_output("urlinreturn.js", (stdout) => {
+			assert(stdout.includes(`[info] FOUND URL: https://www.google.com | METHOD: UNKNOWNMETHOD | INFO: FOUND IN logMultiexec CALL`));
+		}, "--multi-exec")
+	);
 });
 
 describe("multi-exec html", function() {
