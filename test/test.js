@@ -1030,28 +1030,27 @@ describe("multi-exec", function() {
 		"should skip and log an error-causing line and continue executing the rest of the code",
 		run_multiexec_script_and_check_output("errors/skiponerror.js", (stdout) => {
 			assert(stdout.includes(`Script output: "start of script"`));
-			assert(stdout.includes(`SKIPPED ERROR`));
+			assert(stdout.includes(`ReferenceError`));
 			assert(stdout.includes(`Script output: "end of script (TEST PASS)"`));
 		}, "--multi-exec")
 	);
 	it(
 		"should skip and log multiple error-causing lines and continue executing the rest of the code",
 		run_multiexec_script_and_check_output("errors/skipmultipleerrors.js", (stdout) => {
-			assert(stdout.includes(`SKIPPED ERROR`));
+			assert(stdout.includes(`ReferenceError`));
 			assert(stdout.includes(`Script output: "end of script reached (test pass)"`));
 		}, "--multi-exec")
 	);
 	it(
 		"should skip and log an error caused by an eval and continue executing the rest of the code",
 		run_multiexec_script_and_check_output("errors/skipevalerror.js", (stdout) => {
-			assert(stdout.includes(`SKIPPED ERROR`));
+			assert(stdout.includes(`ReferenceError`));
 			assert(stdout.includes(`Script output: "end of script reached (test pass)"`));
 		}, "--multi-exec")
 	);
 	it(
 		"should skip and log multiple errors in an eval and continue executing the rest of the eval",
 		run_multiexec_script_and_check_output("errors/skiperrorsineval.js", (stdout) => {
-			assert(stdout.includes(`SKIPPED ERROR`));
 			assert(stdout.includes(`ReferenceError: undefinedFunction is not defined`));
 			assert(stdout.includes(`ReferenceError: anotherUndefined is not defined`));
 			assert(stdout.includes(`Script output: 1`));
@@ -1099,11 +1098,19 @@ describe("multi-exec", function() {
 		}, "--multi-exec")
 	);
 
+	//command line flags
 	it(
 		"should not rewrite code within function declarations with the --no-multi-exec-function flag",
 		run_multiexec_script_and_check_output("functions/nofunction.js", (stdout) => {
 			assert(stdout.includes(`Script output: "test passed"`));
 		}, "--multi-exec --no-multi-exec-function")
+	);
+	it(
+		"should only rewrite eval code with --multi-exec-only-eval",
+		run_multiexec_script_and_check_output("onlyeval.js", (stdout) => {
+			assert(!stdout.includes(`Script output: "test failed"`));
+			assert(stdout.includes(`Script output: "test passed"`));
+		}, "--multi-exec --multi-exec-only-eval")
 	);
 });
 

@@ -36,7 +36,7 @@ class LoggingResourceLoader extends jsdom.ResourceLoader {
             lib.logResource("", url, val);
 
             if (multi_exec_enabled) {
-                try { //if val is javascript, then we wrap it with eval
+                try { //if val is javascript, then we rewrite
                     const script = new vm.Script(val.toString());
                     listOfKnownScripts.push(val.toString());
                     let rewrite_val = rewrite(val.toString());
@@ -422,7 +422,7 @@ function rewrite_wrap_try_catch(tree, multi_exec = true) {
     });
 }
 
-function rewrite(code) {
+function rewrite(code, for_eval = false) {
     if (code.match("@cc_on")) {
         lib.debug("Code uses conditional compilation");
         if (!argv["no-cc_on-rewrite"]) {
@@ -659,7 +659,7 @@ cc decoder.c -o decoder
                 });
             }
 
-            if (multi_exec_enabled) {
+            if (multi_exec_enabled && !(argv["multi-exec-only-eval"] && !for_eval)) {
                 lib.verbose("    Rewriting code to force multiexecution [because of --multiexec]", false);
                 traverse(tree, function(key, val) {
                     if (!val) return;
@@ -1035,7 +1035,7 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
                 if (multi_exec_enabled && (method[0] === "setTimeout" || method[0] === "setInterval")) {
                     lib.info(`FORCING EXECUTION OF ${method[0]}((code in snippet ${maybe_snippet_name}), ${arguments[1].toString()}).`);
                     if (typeof arguments[0] === "string") {
-                        sandbox.evalUntilPasses(sandbox.rewrite(arguments[0]), real_eval);
+                        sandbox.evalUntilPasses(sandbox.rewrite(arguments[0], false, true), real_eval);
                     } else {
                         arguments[0]();
                     }
@@ -1121,7 +1121,7 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
             return (code) => {
                 lib.info("ENTERING EVAL");
                 if (multi_exec_enabled) {
-                    return sandbox.evalUntilPasses(sandbox.rewrite(code, true), real_eval);
+                    return sandbox.evalUntilPasses(sandbox.rewrite(code, true, true), real_eval);
                 } else {
                     return real_eval(sandbox.rewrite(code, true));
                 }
@@ -1523,8 +1523,8 @@ function make_sandbox(symex_input = null) {
         origin: symex_input ? symex_input["origin"] : "https://default-origin.com",
         window: {},
         parse: (x) => {},
-        rewrite: (code, log = false) => {
-            const ret = rewrite(code);
+        rewrite: (code, log = false, for_eval = false) => {
+            const ret = rewrite(code, for_eval);
             if (log) lib.logJS(code, `${++numberOfExecutedSnippets}_`, "", true, ret, "eval'd JS", true);
             return ret;
         },
