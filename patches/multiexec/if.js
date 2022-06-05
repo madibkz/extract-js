@@ -7,6 +7,7 @@ turns:
     }
 =>
     logMultiexec("if (expression)");
+    expression
     consequent statement
     logMultiexec("else");
     alternate
@@ -41,6 +42,10 @@ module.exports = (args) => {
                     ],
                     "optional": false
                 }
+            },
+            {
+                type: "ExpressionStatement",
+                expression: args.test,
             },
             args.consequent,
         ].concat(args.alternate ? [
