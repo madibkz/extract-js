@@ -93,6 +93,11 @@
             "description": "Do not rewrite function declarations in multi-execution mode (run functions normally)."
         },
         {
+            "name": "no-multi-exec-condexp",
+            "type": "Boolean",
+            "description": "Do not rewrite conditonal expression statements (boolexp ? dothis() : nodothis();) in multi-execution."
+        },
+        {
             "name": "multi-exec-only-eval",
             "type": "Boolean",
             "description": "Only apply multi-execution rewriting to code passed into eval."

@@ -737,6 +737,13 @@ describe("multi-exec", function() {
 		}, "--multi-exec")
 	);
 	it(
+		"should run both sides of a conditional expression statement",
+		run_multiexec_script_and_check_output("condexp.js", (stdout) => {
+			assert(stdout.includes(`f called`));
+			assert(stdout.includes(`g called`));
+		}, "--multi-exec")
+	);
+	it(
 		"should skip and log switch statements",
 		run_multiexec_script_and_check_output("switch_test.js", (stdout) => {
 			assert(stdout.includes(`switch (x)`));
@@ -1126,6 +1133,13 @@ describe("multi-exec", function() {
 			assert(!stdout.includes(`Script output: "test failed"`));
 			assert(stdout.includes(`Script output: "test passed"`));
 		}, "--multi-exec --multi-exec-only-eval")
+	);
+	it(
+		"should not run conditional expression statement with --no-multi-exec-condexp",
+		run_multiexec_script_and_check_output("condexp.js", (stdout) => {
+			assert(!stdout.includes(`f called`));
+			assert(stdout.includes(`g called`));
+		}, "--multi-exec --no-multi-exec-condexp")
 	);
 
 	it(

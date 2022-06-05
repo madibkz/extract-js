@@ -670,6 +670,11 @@ cc decoder.c -o decoder
                                 return val;
                             }
                             break;
+                        case "ExpressionStatement":
+                            if (val.expression.type === "ConditionalExpression" && !argv["no-multi-exec-condexp"]) {
+                                return require("./patches/multiexec/condexp.js")(val);
+                            }
+                            break;
                         case "BreakStatement":
                             return require("./patches/multiexec/break.js")(val);
                         case "ContinueStatement":
