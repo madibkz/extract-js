@@ -1135,6 +1135,14 @@ describe("multi-exec", function() {
 		}, "--multi-exec --multi-exec-only-eval")
 	);
 	it(
+		"should not rewrite eval code with --multi-exec-no-eval",
+		run_multiexec_script_and_check_output("noeval.js", (stdout) => {
+			assert(!stdout.includes(`Script output: "test failed"`));
+			assert(stdout.includes(`Script output: "test passed 1/2"`));
+			assert(stdout.includes(`Script output: "test passed 2/2"`));
+		}, "--multi-exec --multi-exec-no-eval")
+	);
+	it(
 		"should not run conditional expression statement with --no-multi-exec-condexp",
 		run_multiexec_script_and_check_output("condexp.js", (stdout) => {
 			assert(!stdout.includes(`f called`));
