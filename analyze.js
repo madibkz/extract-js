@@ -144,7 +144,9 @@ if (default_enabled || multi_exec_enabled) {
     currentLogMultiexec = sandbox.logMultiexec;
     run_emulation(code, sandbox);
 } else if (sym_exec_enabled) {
-    let sym_exec_script = rewrite_code_for_symex_script(originalInputScript);
+    let sym_exec_script = originalInputScript;
+    if (!argv["no-sym-exec-rewrite"])
+        sym_exec_script = rewrite_code_for_symex_script(originalInputScript);
     sym_exec_script = prepend_users_prepend_code(sym_exec_script);
     sym_exec_script = prepend_sym_exec_script(sym_exec_script);
 

@@ -1464,6 +1464,14 @@ describe("sym-exec", function() {
 		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
 	);
 
+	it(
+		"should not rewrite the code before symbolic execution with --no-sym-exec-rewrite",
+		run_symex_script_and_check_output("symex_unimplemented.js", (stdout) => {
+			assert(stdout.includes(`got here`));
+			assert(!stdout.includes(`got here2`));
+		}, "--sym-exec --no-sym-exec-activex --no-sym-exec-rewrite --timeout 1000")
+	);
+
 
 	//activex testing
 	it(

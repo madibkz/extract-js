@@ -73,6 +73,11 @@
             "description": "Disable symbolically tracking ActiveX buffers such as XMLHTTP's response body or TextStream's buffer. (With this enabled, only non-buffer variables are symbolically tracked in ActiveX objects.)"
         },
         {
+            "name": "no-sym-exec-rewrite",
+            "type": "Boolean",
+            "description": "Disable rewriting of the input code before symbolic execution. This can help with javascript-obfuscator's self-defending code feature. However, this will mean that unimplemented APIs will cause crashes and reduce code coverage."
+        },
+        {
             "name": "multi-exec",
             "type": "Boolean",
             "description": "Run a multi-execution analysis: Cover all of the code by forcing execution of the multiple control paths. Since execution is out of order, there may be errors but potentially new information can be extracted."
