@@ -376,6 +376,15 @@ function rewrite_wrap_try_catch(tree, multi_exec = true) {
             case "WhileStatement":
             case "DoWhileStatement":
                 return require(path_to_patches + "trycatchwrap.js")(val);
+            case "ForStatement":
+                //prevents the trycatch wrapping of the init part of the for loop
+                val.init ? val.init.trycatchtraversed = true : {};
+                return require(path_to_patches + "trycatchwrap.js")(val);
+            case "ForOfStatement":
+            case "ForInStatement":
+                //prevents the trycatch wrapping of the init part of the forIn loop
+                val.left ? val.left.trycatchtraversed = true : {};
+                return require(path_to_patches + "trycatchwrap.js")(val);
             case "VariableDeclaration":
                 if (val.trycatchtraversed) return val;
                 if (val.kind === "const") {
@@ -409,15 +418,6 @@ function rewrite_wrap_try_catch(tree, multi_exec = true) {
                     val,
                     ...assignments
                 ];
-            case "ForStatement":
-                //prevents the trycatch wrapping of the init part of the for loop
-                val.init ? val.init.trycatchtraversed = true : {};
-                return require(path_to_patches + "trycatchwrap.js")(val);
-            case "ForOfStatement":
-            case "ForInStatement":
-                //prevents the trycatch wrapping of the init part of the forIn loop
-                val.left ? val.left.trycatchtraversed = true : {};
-                return require(path_to_patches + "trycatchwrap.js")(val);
             default:
                 break;
         }
@@ -687,19 +687,12 @@ cc decoder.c -o decoder
                             return require("./patches/multiexec/switch.js")(val);
                         case "TryStatement":
                             return require("./patches/multiexec/try.js")(val);
-                        default:
-                            break;
-                    }
-                    if (argv["no-multi-exec-loop"]) {
-                        return;
-                    }
-                    switch (val.type) {
                         case "WhileStatement":
-                            return require("./patches/multiexec/while.js")(val);
+                            return require("./patches/multiexec/while.js")(val, !argv["no-multi-exec-loop"], argv["multi-exec-loop-limit"] ? argv["multi-exec-loop-limit"] : 0);
                         case "DoWhileStatement":
-                            return require("./patches/multiexec/dowhile.js")(val);
+                            return require("./patches/multiexec/dowhile.js")(val, argv["multi-exec-loop-limit"] ? argv["multi-exec-loop-limit"] : 0);
                         case "ForStatement":
-                            return require("./patches/multiexec/for.js")(val);
+                            return require("./patches/multiexec/for.js")(val, !argv["no-multi-exec-loop"], argv["multi-exec-loop-limit"] ? argv["multi-exec-loop-limit"] : 0);
                         default:
                             break;
                     }
