@@ -22,9 +22,10 @@ function summarize(results_dir, file_copying = true) {
     let default_exists = fs.existsSync(results_dir + "/default");
     let symex_exists = fs.existsSync(results_dir + "/sym-exec");
     let multi_exists = fs.existsSync(results_dir + "/multi-exec");
+    let multi_brute_exists = fs.existsSync(results_dir + "/multi-exec/0");
 
     //if only one folder exists
-    if (default_exists + symex_exists + multi_exists <= 1 && !symex_exists) return;
+    if (default_exists + symex_exists + multi_exists <= 1 && !symex_exists && !multi_brute_exists) return;
 
     console.log("(AGGREGATOR) Summarizing extracted information across ran modes for " + results_dir);
 
@@ -34,7 +35,12 @@ function summarize(results_dir, file_copying = true) {
         extract_from_exec(results_dir + "/default");
     }
 
-    if (multi_exists) {
+    if (multi_brute_exists) {
+        const number_of_multi_exec = fs.readdirSync(results_dir + "/multi-exec").length;
+        for (let i = 0; i < number_of_multi_exec; i++) {
+            extract_from_exec(results_dir + "/multi-exec/" + i);
+        }
+    } else if (multi_exists) {
         extract_from_exec(results_dir + "/multi-exec");
     }
 
