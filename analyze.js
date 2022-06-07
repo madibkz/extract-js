@@ -704,7 +704,7 @@ cc decoder.c -o decoder
                         case "FunctionDeclaration":
                             if (argv["no-multi-exec-function"])
                                 return val;
-                            return require("./patches/multiexec/function.js")(val);
+                            return require("./patches/multiexec/function.js")(val, argv["multi-exec-function-limit"] ? argv["multi-exec-function-limit"] : 0);
                         default:
                             break;
                     }
@@ -1458,7 +1458,7 @@ function make_sandbox(symex_input = null) {
             //https://stackoverflow.com/questions/3809401/what-is-a-good-regular-expression-to-match-a-url
             let matched = x.match(/(https?:\/\/)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g)
             matched ? matched.forEach(u => {
-                if (isURL(u) || isIP(u)) {
+                if ((isURL(u) || isIP(u)) && (!u.startsWith("https://example.com"))) {
                     lib.logUrl("UNKNOWNMETHOD", u, `FOUND IN logMultiexec CALL WITH VALUE: ${x}`);
                 }
             }) : null;
@@ -1549,6 +1549,7 @@ function make_sandbox(symex_input = null) {
         require, //require is required for some of the ActiveX stuff to work - TODO: change this,
         isURL: require("validator").isURL,
         isIP: require("validator").isIP,
+        __functioncount: 0,
     };
 }
 
