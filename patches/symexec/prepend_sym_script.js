@@ -91,6 +91,19 @@ if (dom_symbolize) {
         global.document = doc;
         global.clientInformation = navigator;
     }
+    const date_symbolize = true;
+
+    if (date_symbolize) {
+        let date_str = (new Date()).toString();
+        Date.prototype.toString = () => date_str;
+        let year = S$.symbol("date.year", 0);
+        Date.prototype.getYear = () => year;
+        Date.prototype.getFullYear = () => year;
+        let time = S$.symbol("date.time", 0);
+        Date.prototype.getTime = () => time;
+        let now = S$.symbol("date.now", 0);
+        Date.now = () => now;
+    }
 
     //build active x emulation/symbol tracking
     let wmi = require("./emulator/WMI");

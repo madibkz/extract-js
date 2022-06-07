@@ -1425,6 +1425,21 @@ describe("sym-exec", function() {
 	let run_symex_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
 		run_script_and_check_output(`${symexScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
 
+	it(
+		"should symbolically track the specified date properties",
+		run_symex_script_and_check_output("date_test.js", (stdout) => {
+			assert(stdout.includes(`Script output: "Found first date"`));
+			assert(stdout.includes(`Script output: "Found second date"`));
+			assert(stdout.includes(`Script output: "Found third date"`));
+			assert(stdout.includes(`Script output: "Found fourth date"`));
+		}, "--sym-exec --no-sym-exec-activex --no-sym-exec-dom --timeout 1000")
+	);
+	it(
+		"should not symbolically track the specified date properties with --no-sym-exec-date",
+		run_symex_script_and_check_output("date_test.js", (stdout) => {
+			assert(!stdout.includes(`Script output: "Found first date"`));
+		}, "--sym-exec --no-sym-exec-activex --no-sym-exec-dom --no-sym-exec-date --timeout 1000")
+	);
 
 	//DOM symbolic tracking
 	it(

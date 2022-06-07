@@ -58,6 +58,11 @@
             "description": "By default, symbolic execution tracks location as a string symbol \"location.href\". This option instead tracks location as a object (with .href, .protocol, etc) but disables correct tracking for when location is used like a string in the code."
         },
         {
+            "name": "no-sym-exec-date",
+            "type": "Boolean",
+            "description": "Disable symbolic tracking of date values during symbolic execution mode."
+        },
+        {
             "name": "no-sym-exec-dom",
             "type": "Boolean",
             "description": "Disable symbolic tracking of DOM API values during symbolic execution mode (so there's only ActiveX symbols being tracked)."

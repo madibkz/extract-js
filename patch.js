@@ -8,13 +8,16 @@
 
 	let fullYearGetter = Date.prototype.getFullYear;
 	Date.prototype.getFullYear = function() {
-		console.log("Warning: the script tried to read the current date.");
-		console.log("If it doesn't work correctly (eg. fails to decrypt a string,");
-		console.log("try editing patch.js with a different year.");
+		if (/*date.year print start*/true/*date.year print end*/) {
+			console.log("Warning: the script tried to read the current date.");
+			console.log("If it doesn't work correctly (eg. fails to decrypt a string,");
+			console.log("try editing patch.js with a different year.");
+		}
 
 		// return 2017;
-		return fullYearGetter.call(this);
+		return /*date.year start*/fullYearGetter.call(this)/*date.year end*/;
 	};
+	Date.prototype.getTime = /*date.time start*/Date.prototype.getTime/*date.time end*/;
 	Date.prototype.getYear = function() {
 		return this.getFullYear();
 	};
@@ -60,7 +63,7 @@
 			}
 		});
 	}
-	Date.now = () => legacyDate.now() + _globalTimeOffset;
+	Date.now = () => /*date.now start*/legacyDate.now() + _globalTimeOffset/*date.now end*/;
 	Date.length = 7;
 	Date.parse = legacyDate.parse;
 	Date.UTC = legacyDate.UTC;
