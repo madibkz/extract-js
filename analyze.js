@@ -9,10 +9,10 @@ const {VM} = require("vm2");
 //const {NodeVM} = require('vm2');
 const child_process = require("child_process");
 const argv = require("./argv.js").run;
-const jsdom = require("jsdom").JSDOM;
-const dom = new jsdom(`<html><head></head><body></body></html>`);
+const jsdom = require("jsdom");
+const JSDOM = jsdom.JSDOM;
 const traverse = require("./utils.js").traverse
-const traverseFully = require("./utils.js").traverseFully
+const logged_dom_vals = require("./logged_dom_values");
 
 const filename = process.argv[2];
 const directory = process.argv[3];
@@ -20,6 +20,7 @@ const mode = process.argv[4];
 const default_enabled = mode === "default";
 const multi_exec_enabled = mode === "multi-exec";
 const sym_exec_enabled = mode === "sym-exec";
+const dont_set_in_jsdom_from_sandbox = ["setInterval", "setTimeout", "alert", "JSON", /*"console",*/ "location", "navigator", "document", "origin", "self", "window"];
 
 // JScriptMemberFunctionStatement plugin registration
 require("./patches/prototype-plugin.js")(acorn.Parser);
@@ -96,7 +97,7 @@ let multiexec_indent = "";
 
 if (default_enabled || multi_exec_enabled) {
     const sandbox = make_sandbox();
-    run_in_vm(code, sandbox);
+    run_emulation(code, sandbox);
 } else if (sym_exec_enabled) {
     let sym_exec_script = prepend_users_prepend_code(originalInputScript);
     sym_exec_script = prepend_sym_exec_script(sym_exec_script);
@@ -159,7 +160,8 @@ if (default_enabled || multi_exec_enabled) {
 
         //Run sandbox for this input combination
         const sandbox = make_sandbox(input);
-        run_in_vm(code, sandbox);
+        //pass true to make them run in vm2 rather than jsdom for now
+        run_emulation(code, sandbox, true);
     }
 }
 
@@ -521,7 +523,6 @@ function rewrite_code_for_symex_script(code) {
             return;
         }
 
-        lib.verbose("    Rewriting code to force multiexecution [because of --multiexec]", false);
         traverse(tree, function(key, val) {
             if (!val) return;
             switch (val.type) {
@@ -544,47 +545,353 @@ function rewrite_code_for_symex_script(code) {
     return code;
 }
 
-function run_in_vm(code, sandbox) {
-    if (argv["dangerous-vm"]) {
-        lib.verbose("Analyzing with native vm module (dangerous!)");
-        const vm = require("vm");
-        vm.runInNewContext(code, sandbox, {
-            displayErrors: true,
-            // lineOffset: -fs.readFileSync(path.join(__dirname, "patch.js"), "utf8").split("\n").length,
-            filename: "sample.js",
-        });
-    } else {
-        lib.debug("Analyzing with vm2 v" + require("vm2/package.json").version);
+function sandbox_object_is_default(path_to_obj, instance) {
+    let obj = require(path_to_obj);
+    let obj_default_fields = obj.getDefaultFields();
 
-        // Fake cscript.exe style ReferenceError messages.
-        // Fake up Object.toString not being defined in cscript.exe.
-        //code = "Object.prototype.toString = undefined;\n\n" + code;
+    for (let f in obj_default_fields)
+        if (instance[f] !== obj_default_fields[f])
+            return false;
 
-        let codeHadAnError = multi_exec_enabled;
-        do {
-            try {
-                const vm = new VM({
-                    timeout: (argv.timeout || 10) * 1000,
-                    sandbox,
-                });
+    return true;
+}
 
-                vm.run(code);
-                codeHadAnError = false;
-            } catch (e) {
-                if (multi_exec_enabled) {
-                    code = replaceErrorCausingCode(e, code);
-
-                    //RESTART LOGGING AND SANDBOX STUFF:
-                    restartLoggedState();
-                } else if (sym_exec_enabled) {
-                    lib.error(e.stack, true, false);
-                    return;
-                } else {
-                    lib.error(e.stack, true, false);
-                    throw e;
-                }
+function log_dom_proxy_get(target, name, prefix) {
+    if (name in target) {
+        if (typeof name === "symbol") return target[name];
+        if (name === "toString" || name === "valueOf") {
+            lib.logDOM(`${prefix}.${name}`);
+            return target[name];
+        }
+        if (typeof target[name] === "function") { //log function calls with arguments
+            return function () {
+                lib.logDOM(`${prefix}.${name}`, false, null, true, arguments);
+                return target[name].apply(target, arguments);
             }
-        } while (codeHadAnError)
+        }
+        lib.logDOM(`${prefix}.${name}`);
+        return target[name];
+    }
+    return undefined;
+}
+
+function log_dom_proxy_set(target, name, val, prefix) {
+    if (name in target) {
+        lib.logDOM(`${prefix}.${name}`, true, val);
+        target[name] = val;
+        return true;
+    }
+    return false;
+}
+
+function make_log_dom_proxy(obj, prefix) {
+    return new Proxy(obj, {
+        get: (t, n) => log_dom_proxy_get(t, n, prefix),
+        set: (t, n, v) => log_dom_proxy_set(t, n, v, prefix),
+    });
+}
+
+function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window) {
+    //add our sandbox properties
+    for (let field in sandbox) {
+        if (sandbox.hasOwnProperty(field) && !dont_set_from_sandbox.includes(field)) {
+            window[field] = sandbox[field];
+        }
+    }
+    //this boolean is what we use to check that the emulation has reached the end
+    window.emulationFinished = false;
+
+    let og_screen = window.screen;
+    delete window.screen;
+    window.screen = make_log_dom_proxy(og_screen, "window.screen");
+
+    window.history = make_log_dom_proxy(window.history, "window.history");
+
+    let og_loc = window.location;
+    let loc_proxy = make_log_dom_proxy(og_loc, "window.location");
+    delete window.location;
+    window.location = loc_proxy;
+
+    window._document = new Proxy(window._document, {
+        get: (target, name) => {
+            if (name in target) {
+                if (name === "cookie") return target[name];
+                if (name === "location") return loc_proxy;
+                if (typeof name === "symbol") return target[name];
+                if (typeof target[name] === "function") { //log function calls with arguments
+                    return function () {
+                        return return_node_proxy_or_value("window.document", target, name, true, arguments);
+                    }
+                }
+                return return_node_proxy_or_value("window.document", target, name, false);
+            }
+            return undefined;
+        },
+        set: function (target, name, val) {
+            if (name === "cookie") {
+                target[name] = val;
+                return true;
+            }
+            if (name === "location") {
+                og_loc = val;
+                return true;
+            }
+            return log_dom_proxy_set(target, name, val, "window.document");
+        },
+    });
+
+    //Add logging to the window's members
+    logged_dom_vals.window.properties.forEach((prop) => {
+        let real_val = window[prop[0]];
+        let attributes = {
+            get: function () {
+                lib.logDOM(`window.${prop[0]}`);
+                return prop[1] ? real_val : window[`__${prop[0]}`];
+            },
+            enumerable: true,
+            configurable: !prop[1]
+        };
+        if (!prop[1]) {
+            window[`__${prop[0]}`] = real_val;
+            attributes.set = function (val) {
+                lib.logDOM(`window.${prop[0]}`, true, val);
+                window[`__${prop[0]}`] = val;
+            };
+        }
+        Object.defineProperty(window, prop[0], attributes);
+    })
+
+    //window method logging
+    logged_dom_vals.window.methods.forEach((method) => {
+        let og_function = window[method[0]];
+        window[method[0]] = function () {
+            lib.logDOM(method[0], false, null, true, arguments);
+            if (method[1])  //if implemented in jsdom
+                return og_function.apply(window, arguments);
+        }
+    })
+
+    window._localStorage = make_log_dom_proxy(window._localStorage, "window.localStorage");
+
+    window._sessionStorage = make_log_dom_proxy(window._sessionStorage, "window.sessionStorage");
+
+    let nav_proxy = make_log_dom_proxy(window.navigator, "window.navigator");
+    Object.defineProperty(window, "navigator", {
+        get: function () {
+            return nav_proxy;
+        },
+        enumerable: true,
+        configurable: false
+    })
+}
+
+function create_node_proxy(node, prefix, node_name, from_func_call = false, args = null, index_str = null) {
+    const args_str = args === null ? "" : Array.from(args).map(a => String(a)).join(", ");
+    const prefix_str = `${prefix}.${node_name.toString()}${from_func_call ? "(" + args_str + ")" : ""}${index_str ? index_str : ""}`;
+
+    return new Proxy(node, {
+        get: (t, n) => {
+            if (n in t) {
+                if (typeof n === "symbol") return t[n];
+                if (typeof t[n] === "function") {
+                    return function () {
+                        return return_node_proxy_or_value(prefix_str, t, n, true, arguments);
+                    }
+                }
+                return return_node_proxy_or_value(prefix_str, t, n, false);
+            }
+            return undefined;
+        },
+        set: function (t, n, v) {
+            if (n in t) {
+                if (typeof n === "symbol") return t[n];
+                lib.logDOM(`${prefix_str}.${n.toString()}`, true, v);
+                t[n] = v;
+                return true;
+            }
+            return false;
+        },
+    });
+}
+
+function return_node_proxy_or_value(prefix_str, t, n, function_ctx, args = null) {
+    lib.logDOM(`${prefix_str}.${n.toString()}`, false, null, function_ctx, args);
+    let result = function_ctx ? t[n].apply(t, args) : t[n];
+    if (typeof result !== "undefined") {
+        if (result.nodeType)
+            return create_node_proxy(result, prefix_str, n, function_ctx, args);
+        if (result.toString().includes("HTMLCollection") || result.toString().includes("NodeList")) {
+            let new_list = [];
+            for (let i = 0; i < result.length; i++) {
+                new_list.push(create_node_proxy(result[i], prefix_str, n, function_ctx, args, `[${i}]`));
+            }
+            return new_list;
+        }
+    }
+    return result;
+}
+
+async function run_in_jsdom_vm(sandbox, code) {
+    lib.debug("Analyzing with jsdom");
+
+    let url = "https://example.org/";
+    if (argv["url"]) {
+        url = argv["url"];
+    } else if (!sandbox_object_is_default("./emulator/location.js", sandbox.location)) {
+        //construct a url from location to set as the url in the jsdom emulation
+        // if (require("./emulator/location.js").getDefaultFields().href !== sandbox.location.href)  {
+        //     url = sandbox.location.href;
+        // } else {
+        //     url = sandbox.location.url;
+        // }
+    }
+
+    function try_to_set_from_file(file_arg, set_func) {
+        if (argv[file_arg]) {
+            try {
+                set_func();
+            } catch (e) {
+                lib.error(`Error setting values for ${file_arg} from ${argv[file_arg]}`);
+            }
+        }
+    }
+
+    let one_cookie = argv.cookie ? "document.cookie = \"" + argv.cookie + "\";" : "";
+
+    let multiple_cookies = "";
+    try_to_set_from_file("cookie-file", () => {multiple_cookies = fs.readFileSync(argv["cookie-file"], "utf8").split("\n").map((c) => `document.cookie = \"${c}\";`).join("\n");})
+
+    let set_storage = (file_arg, name) => {
+        let storageJSON = JSON.parse(fs.readFileSync(argv[file_arg], "utf8"));
+        let storage_str = "";
+        for (let prop in storageJSON)
+            storage_str += `${name}.setItem(\`${prop}\`, \`${storageJSON[prop]}\`);\n`;
+        return storage_str;
+    };
+
+    let initialLocalStorage = "";
+    try_to_set_from_file("local-storage-file", () => initialLocalStorage = set_storage("local-storage-file", "localStorage"));
+
+    let initialSessionStorage = "";
+    try_to_set_from_file("session-storage-file", () => initialSessionStorage = set_storage("session-storage-file", "sessionStorage"));
+
+    let codeHadAnError = multi_exec_enabled;
+    do {
+        try {
+            const virtualConsole = new jsdom.VirtualConsole();
+            virtualConsole.sendTo(lib, {omitJSDOMErrors: true});
+            virtualConsole.on("jsdomError", (e) => {
+                if (e.detail) {
+                    throw e.detail
+                } else {
+                    throw e
+                }
+            });
+
+            let cookie_jar = new jsdom.CookieJar();
+            let cookie_jar_log_funcs = ["setCookie", "setCookieSync", "getCookies", "getCookiesSync", "getCookieString", "getCookieStringSync", "getSetCookieStrings", "getSetCookieStringsSync", "removeAllCookies", "removeAllCookiesSync"];
+            const cookieJar = new Proxy(cookie_jar, {
+                get: (target, name) => {
+                    if (name in target) {
+                        if (typeof target[name] === "function" && cookie_jar_log_funcs.includes(name)) {
+                            return function () {
+                                lib.logDOM(`cookieJar.${name}`, false, null, true, arguments);
+                                return target[name].apply(target, arguments);
+                            }
+                        }
+                        return target[name];
+                    }
+                    return undefined;
+                },
+                set: (t, n, v) => log_dom_proxy_set(t, n, v, "cookieJar"),
+            });
+
+            let dom_str = `<html><head></head><body></body><script>${initialLocalStorage}${initialSessionStorage}${one_cookie}${multiple_cookies}${code}</script></html>`;
+
+            //Keep in mind this runs asynchronous
+            let dom = new JSDOM(dom_str, {
+                url: url,
+                referrer: url,
+                contentType: "text/html",
+                includeNodeLocations: true,
+                virtualConsole,
+                runScripts: "dangerously",
+                pretendToBeVisual: true,
+                cookieJar,
+
+                //Setting up the global context of the emulation
+                beforeParse(window) {
+                    instrument_jsdom_global(sandbox, dont_set_in_jsdom_from_sandbox, window);
+                }
+            });
+
+            //https://stackoverflow.com/questions/14226803/wait-5-seconds-before-executing-next-line
+            while (!dom.window.emulationFinished) //poll until emulation of main code has finished
+                await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](100);
+
+            lib.logBrowserStorage(dom.window.localStorage, dom.window.sessionStorage);
+
+            dom.window.close();
+
+            lib.logCookies(cookie_jar);
+
+            codeHadAnError = false;
+        } catch (e) {
+            if (multi_exec_enabled) {
+                code = replaceErrorCausingCode(e, code, false, url);
+
+                //RESTART LOGGING AND SANDBOX STUFF:
+                restartLoggedState();
+            } else if (sym_exec_enabled) {
+                lib.error(e.stack, true, false);
+                return;
+            } else {
+                lib.error(e.stack, true, false);
+                throw e;
+            }
+        }
+    } while (codeHadAnError)
+}
+
+function run_in_vm2(sandbox, code) {
+    lib.debug("Analyzing with vm2 v" + require("vm2/package.json").version);
+
+    // Fake cscript.exe style ReferenceError messages.
+    // Fake up Object.toString not being defined in cscript.exe.
+    //code = "Object.prototype.toString = undefined;\n\n" + code;
+
+    let codeHadAnError = multi_exec_enabled;
+    do {
+        try {
+            const vm = new VM({
+                timeout: (argv.timeout || 10) * 1000,
+                sandbox,
+            });
+
+            vm.run(code);
+            codeHadAnError = false;
+        } catch (e) {
+            if (multi_exec_enabled) {
+                code = replaceErrorCausingCode(e, code);
+
+                //RESTART LOGGING AND SANDBOX STUFF:
+                restartLoggedState();
+            } else if (sym_exec_enabled) {
+                lib.error(e.stack, true, false);
+                return;
+            } else {
+                lib.error(e.stack, true, false);
+                throw e;
+            }
+        }
+    } while (codeHadAnError)
+}
+
+async function run_emulation(code, sandbox, sym_ex_vm2_flag = false) {
+    if (argv["vm2"] || sym_ex_vm2_flag) {
+        run_in_vm2(sandbox, code);
+    } else { //jsdom default emulation context
+        await run_in_jsdom_vm(sandbox, code);
     }
 }
 
@@ -649,9 +956,12 @@ function make_sandbox(symex_input = null) {
             }
         },
         //Blob : Blob,
+        // turnOnLogDOM: lib.turnOnLogDOM,
+        // turnOffLogDOM: lib.turnOffLogDOM,
+        toggleLogDOM: lib.toggleLogDOM,
         logJS: lib.logJS,
         logIOC: lib.logIOC,
-        logMultiexec: (x, indent) => {
+        logMultiexec: (x, indent) => { //TODO: maybe reduce the duplication here
             if (indent === 0) {
                 (multiexec_indent !== "" && multiexec_indent.length > 1) ?
                     multiexec_indent = multiexec_indent.slice(0, multiexec_indent.length - 2) :
@@ -683,7 +993,6 @@ function make_sandbox(symex_input = null) {
             } while (codeHadAnError)
         },
         ActiveXObject : activex_mock.ActiveXObject,
-        dom,
         alert: (x) => {
         },
         InstallProduct: (x) => {
@@ -700,8 +1009,8 @@ function make_sandbox(symex_input = null) {
         navigator: buildProxyForEmulatedObject(symex_input, "navigator.", "./emulator/navigator/navigator.js"),
         document: buildProxyForEmulatedObject(symex_input, "document.", "./emulator/document.js"),
         origin: symex_input ? symex_input["origin"] : "https://default-origin.com",
-        parse: (x) => {
-        },
+        window: {},
+        parse: (x) => {},
         rewrite: (code, log = false) => {
             const ret = rewrite(code);
             if (log) lib.logJS(code, `${++numberOfExecutedSnippets}_`, "", true, ret, "eval'd JS", true);
@@ -720,7 +1029,7 @@ function make_sandbox(symex_input = null) {
     };
 }
 
-function replaceErrorCausingCode(e, code, eval = false) {
+function replaceErrorCausingCode(e, code, eval = false, url = "https://example.org/") {
     /* The following code finds the enclosing statement of the error, and replaces it with a logging
     function in the code so that the code can be run again
 
@@ -732,8 +1041,20 @@ function replaceErrorCausingCode(e, code, eval = false) {
     * */
 
     //NodeJS doesn't have error.lineNumber, so instead I have to use RegEx to find it from the stack message
-    let lineRegexp = eval ? new RegExp(/<anonymous>:(\d+):(\d+)/gm) : new RegExp(/at vm.js:(\d+):(\d+)/gm);
-    let regexpResults = lineRegexp.exec(e.stack);
+    var lineRegexp, regexpResults;
+    if (argv["vm2"]) {
+        lineRegexp = eval ? new RegExp(/<anonymous>:(\d+):(\d+)/gm) : new RegExp(/at vm.js:(\d+):(\d+)/gm);
+        regexpResults = lineRegexp.exec(e.stack);
+    } else { //assume running in jsdom
+        if (eval) {
+            lineRegexp = new RegExp(/<anonymous>:(\d+):(\d+)/gm);
+            regexpResults = lineRegexp.exec(e.stack);
+        } else {
+            lineRegexp = new RegExp(/:(\d+):(\d+)/gm);
+            let line_info = e.stack.split("\n")[1].trim().substring(3 + url.length);
+            regexpResults = lineRegexp.exec(line_info);
+        }
+    }
     let lineNumber = parseInt(regexpResults[1]);
     let colNumber = parseInt(regexpResults[2]);
     let charNumber = 0;
@@ -743,7 +1064,7 @@ function replaceErrorCausingCode(e, code, eval = false) {
         if (code.charAt(charNumber) === "\n") {
             l++;
         }
-        if (l == lineNumber) {
+        if (l === lineNumber) {
             //found char number
             charNumber += colNumber;
             break;

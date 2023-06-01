@@ -12,11 +12,7 @@ if (navigator.userAgent.includes("Opera")) {
   console.log("CHROME BRANCH REACHED");
 }
 
-if (navigator.canShare()) {
-  console.log("IT CAN SHARE");
-}
 
-
-console.log(navigator.userAgentData.mobile);
-console.log(navigator.userAgentData.toJSON());
+//console.log(navigator.userAgentData.mobile);
+//console.log(navigator.userAgentData.toJSON());
 //navigator.userAgentData.getHighEntropyValues(["architecture", "platformVersion"]).then(console.log);

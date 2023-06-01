@@ -72,7 +72,19 @@ Array.prototype.functionalSplit = function(f) {
 const args = process.argv.slice(2);
 args.push(`--timeout=${timeout}`);
 
-const [targets, options] = args.functionalSplit(fs.existsSync);
+let [targets, options] = args.functionalSplit(fs.existsSync);
+
+function set_proper_path_for_arg(arg) {
+	//file options are detected as target files, so delete it from targets so it's not analyzed
+	if (argv[arg]) {
+		options.push(`--${arg}=${argv[arg]}`);
+		targets.splice(targets.indexOf(argv[arg]), 1);
+	}
+}
+
+set_proper_path_for_arg("cookie-file");
+set_proper_path_for_arg("session-storage-file");
+set_proper_path_for_arg("local-storage-file");
 
 // Array of {filepath, filename}
 const tasks = [];
@@ -135,7 +147,7 @@ tasks.forEach(({filepath, filename}) => {
 	} else if (!default_flag && !multi_flag && !sym_flag) {
 		q.push(cb => analyze(results_dir, filepath, filename, cb, "default"))
 	} else {
-		let log_to_stdout = (default_flag + multi_flag + sym_flag) === 1;
+		let log_to_stdout = ((default_flag?1:0) + (multi_flag?1:0) + (sym_flag?1:0)) === 1;
 		if (default_flag) {
 			q.push(cb => analyze(results_dir, filepath, filename, cb, "default", log_to_stdout));
 		}

@@ -183,14 +183,39 @@
             "description": "[experimental] Use the specified proxy for downloads. This is not relevant if the --download flag is not present."
         },
         {
+            "name": "url",
+            "type": "String",
+            "description": "Specify the document's url and referer attribute for emulation."
+        },
+        {
             "name": "windows-xp",
             "type": "Boolean",
             "description": "Emulate Windows XP (influences the value of environment variables)"
         },
         {
-            "name": "dangerous-vm",
+            "name": "vm2",
             "type": "Boolean",
-            "description": "Use the `vm` module, rather than `vm2`. This sandbox can be broken, so **don't use this** unless you're 100% sure of what you're doing. Helps with debugging by giving correct stack traces."
+            "description": "Analyzes the JavaScript in a vm2 virtual machine instance rather than the default jsdom. This means there is little to no DOM analysis but there is still activex analysis."
+        },
+        {
+            "name": "cookie",
+            "type": "String",
+            "description": "Pass in a string to set document.cookie to one initial cookie value."
+        },
+        {
+            "name": "cookie-file",
+            "type": "String",
+            "description": "Pass in a path to a file consisting of cookie strings separated by newlines to set multiple initial document.cookie values."
+        },
+        {
+            "name": "session-storage-file",
+            "type": "String",
+            "description": "Pass in a path to a file consisting of a json to set initial sessionStorage values."
+        },
+        {
+            "name": "local-storage-file",
+            "type": "String",
+            "description": "Pass in a path to a file consisting of a json to set initial localStorage values."
         }
     ],
     "export": [
