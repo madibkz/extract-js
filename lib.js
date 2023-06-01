@@ -41,12 +41,13 @@ function new_symex_log_context(count, input) {
 
 	if (count > 0) {
 		//reset directory to normal directory
-		directory = directory.substring(0, directory.lastIndexOf("/"));
+		//gets second last index of https://stackoverflow.com/questions/25331030/js-get-second-to-last-index-of
+		directory = directory.substring(0, directory.lastIndexOf('/', directory.lastIndexOf('/')-1));
 	} else {
 		directory += "/executions";
 		fs.mkdirSync(directory);
 	}
-	directory += `/${count}`;
+	directory += `/${count}/`;
 	fs.mkdirSync(directory);
 	fs.mkdirSync(directory + "/resources");
 	fs.mkdirSync(directory + "/snippets");

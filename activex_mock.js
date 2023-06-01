@@ -104,13 +104,14 @@ function ActiveXObject(name) {
         case "adodb.stream":
             return require("./emulator/ADODBStream")();
         case "adodb.recordset":
-            return require("./emulator/ADODBRecordSet")();
+            return require("./emulator/ADODBRecordSet")(); //TODO
         case "adodb.connection":
-            return require("./emulator/ADODBConnection")();
+            //return require("./emulator/ADODBConnection")();
+            lib.error("Script tried to use ADODBConnection which is not implemented")
         case "scriptcontrol":
             return require("./emulator/ScriptControl");
         case "scripting.filesystemobject":
-            return require("./emulator/FileSystemObject");
+            return require("./emulator/FileSystemObject"); //TODO
         case "scripting.dictionary":
             return require("./emulator/Dictionary");
         case "shell.application":
@@ -118,7 +119,7 @@ function ActiveXObject(name) {
         case "wscript.network":
             return require("./emulator/WScriptNetwork");
         case "wscript.shell":
-            return require("./emulator/WScriptShell");
+            return require("./emulator/WScriptShell"); //TODO
         case "wbemscripting.swbemlocator":
             return require("./emulator/WBEMScriptingSWBEMLocator");
         case "msscriptcontrol.scriptcontrol":
