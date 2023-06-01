@@ -463,6 +463,9 @@ module.exports = {
 				if (property === "setTimeout" || property === "setInterval") {
 					return_snippet_prefix = `${property}_${property === "setTimeout" ? ++number_of_set_timeout_calls : ++number_of_set_interval_calls}_`;
 					logJS(String(args[0]), return_snippet_prefix, "", true, String(args[0]), `${property} call`, true);
+				} else if (property === "atob") {
+					//get atob result and log it as a resource
+					this.logResource("", "from atob", atob(args[0]));
 				}
 				log("info", dom_str);
 

@@ -22,6 +22,8 @@ function getProxyHandler() {
                     return () => {
                         return true;
                     }
+                case "length":
+                    return 1;
                 default:
                     if (name in target) {
                         return target[name];

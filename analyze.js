@@ -712,6 +712,9 @@ function rewrite_code_for_symex_script(code) {
             if (val.type === "AssignmentExpression") {
                 recursively_set_field(val.left, "symexeclocfield", true);
             }
+            if (val.type === "UpdateExpression") {
+                recursively_set_field(val.argument, "symexeclocfield", true);
+            }
             if (val.type === "MemberExpression" && !val.symexeclocfield) {
                 return require("./patches/symexec/locationfield.js")(val);
             }
@@ -874,6 +877,10 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
         get: (t, n) => {
             if (n == Symbol.toPrimitive && symex_input && symex_input.hasOwnProperty(`location.href`)) return () => symex_input[`location.href`];
             if (symex_input && symex_input.hasOwnProperty(`location.${n}`)) return symex_input[`location.${n}`];
+            if (typeof n === "string" && n === "replace") {
+              lib.logDOM("window.location.replace", false, null, false);
+              return () => null;
+            }
             return log_dom_proxy_get(t, n, "window.location");
         },
         set: (t, n, v) => log_dom_proxy_set(t, n, v, "window.location"),
@@ -1040,6 +1047,29 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
     Object.defineProperty(window, "navigator", {
         get: function () {
             return nav_proxy;
+        },
+        enumerable: true,
+        configurable: false
+    });
+
+    Object.defineProperty(window.URL, "createObjectURL", {
+        get: function () {
+            return function() {
+              lib.logDOM(`window.URL.createObjectURL`, false, null, true, arguments);
+              console.log(JSON.stringify(arguments));
+              return null;
+            }
+        },
+        enumerable: true,
+        configurable: false
+    });
+    Object.defineProperty(window.URL, "revokeObjectURL", {
+        get: function () {
+            return function() {
+                lib.logDOM(`window.URL.revokeObjectURL`, false, null, true, arguments);
+                console.log(JSON.stringify(arguments));
+                return null;
+            }
         },
         enumerable: true,
         configurable: false
