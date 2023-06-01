@@ -520,7 +520,6 @@ function rewrite_code_for_symex_script(code) {
             return;
         }
 
-        lib.verbose("    Rewriting code to force multiexecution [because of --multiexec]", false);
         traverse(tree, function(key, val) {
             if (!val) return;
             switch (val.type) {
@@ -542,7 +541,7 @@ function rewrite_code_for_symex_script(code) {
 
     return code;
 }
-//TODO: think about the ramifications of making this async
+
 async function run_in_vm(code, sandbox) {
     if (argv["vm2"]) {
         lib.debug("Analyzing with vm2 v" + require("vm2/package.json").version);
@@ -589,20 +588,20 @@ async function run_in_vm(code, sandbox) {
         let delete_in_sandbox = ["setInterval", "setTimeout", "alert", "JSON", /*"console",*/ "location", "navigator", "document", "origin", "self", "window"];
         delete_in_sandbox.forEach(field => delete sandbox[field]);
 
-        let url = "https://example.org/";
+        let url = argv["url"] ? argv["url"] : "https://example.org/";
 
         let codeHadAnError = multi_exec_enabled;
         do {
             try {
                 const virtualConsole = new jsdom.VirtualConsole();
                 virtualConsole.sendTo(lib, { omitJSDOMErrors: true });
-                virtualConsole.on("jsdomError", (e) => {throw e.detail}); //TODO: what happens when error occurs in default mode? what happens when non-jsdom error occurs?
+                virtualConsole.on("jsdomError", (e) => {throw e.detail});
 
                 let dom_str = `<html><head></head><body></body><script>${code}</script></html>`;
 
                 //Keep in mind this runs asynchronous
-                let dom = new JSDOM(dom_str, { //TODO: do I need to HTML special char escape code?
-                    url: url, //TODO: add command line arg to change url and referrer for default/multi
+                let dom = new JSDOM(dom_str, {
+                    url: url,
                     referrer: url,
                     contentType: "text/html",
                     includeNodeLocations: true,
