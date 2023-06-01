@@ -29,21 +29,13 @@ module.exports = (args) => ({
             "expression": {
                 "type": "CallExpression",
                 "callee": {
-                    "type": "MemberExpression",
-                    "object": {
-                        "type": "Identifier",
-                        "name": "console"
-                    },
-                    "property": {
-                        "type": "Identifier",
-                        "name": "log"
-                    },
-                    "computed": false
+                    "type": "Identifier",
+                    "name": "logMultiexec"
                 },
                 "arguments": [
                     {
                         "type": "Literal",
-                        "value": `switch (${escodegen.generate(args.discriminant)})`,
+                        "value": `Entering switch (${escodegen.generate(args.discriminant)})`,
                     }
                 ]
             }
@@ -57,16 +49,8 @@ module.exports = (args) => ({
                     "expression": {
                         "type": "CallExpression",
                         "callee": {
-                            "type": "MemberExpression",
-                            "object": {
-                                "type": "Identifier",
-                                "name": "console"
-                            },
-                            "property": {
-                                "type": "Identifier",
-                                "name": "log"
-                            },
-                            "computed": false
+                            "type": "Identifier",
+                            "name": "logMultiexec"
                         },
                         "arguments": [
                             {
@@ -79,5 +63,20 @@ module.exports = (args) => ({
             ].concat(switchcase.consequent)
         }
     }),
-    )
+    ).concat({
+        "type": "ExpressionStatement",
+        "expression": {
+            "type": "CallExpression",
+            "callee": {
+                "type": "Identifier",
+                "name": "logMultiexec"
+            },
+            "arguments": [
+                {
+                    "type": "Literal",
+                    "value": `Exited switch (${escodegen.generate(args.discriminant)})`,
+                }
+            ]
+        }
+    })
 });

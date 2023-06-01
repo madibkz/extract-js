@@ -327,13 +327,13 @@ cc decoder.c -o decoder
                 });
             }
 
-            console.log("rewritten tree is: ", tree)
-            console.log(JSON.stringify(tree));
+            // console.log("rewritten tree is: ", tree)
+            // console.log(JSON.stringify(tree));
 
             // console.log(JSON.stringify(tree, null, "\t"));
             code = escodegen.generate(tree);
 
-            console.log("rewritten code is: ", code)
+            // console.log("rewritten code is: ", code)
 
             // The modifications may have resulted in more concatenations, eg. "a" + ("foo", "b") + "c" -> "a" + "b" + "c"
             if (argv["dumb-concat-simplify"]) {
@@ -487,6 +487,7 @@ const sandbox = {
     //Blob : Blob,
     logJS: lib.logJS,
     logIOC: lib.logIOC,
+    logMultiexec: (x) => lib.info("MULTI-EXEC: " + x),
     functionReturnSet: [],
     functionReturnStack: [],
     ActiveXObject,
