@@ -1,2 +1,2 @@
-setTimeout(100, () => "some code setTimeout");
-setInterval(100, () => "some code setInterval");
+setTimeout(() => "some code setTimeout", 100);
+setInterval(() => "some code setInterval", 100);

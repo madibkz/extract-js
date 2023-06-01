@@ -374,6 +374,8 @@ module.exports = {
 
 		if (logDom) {
 			logDom = false;
+			//if some JS is logged from the value or arguments, then returns the start of the snippet name so that it can be logged
+			let return_snippet_prefix = "";
 
 			try {
 				if (args) {
@@ -391,7 +393,8 @@ module.exports = {
 				}
 				latestDomStr = dom_str;
 				if (property === "setTimeout" || property === "setInterval") {
-					logJS(String(args[1]), `${property}_${property === "setTimeout" ? ++number_of_set_timeout_calls : ++number_of_set_interval_calls}_`, "", true, null, `${property} call`, true);
+					return_snippet_prefix = `${property}_${property === "setTimeout" ? ++number_of_set_timeout_calls : ++number_of_set_interval_calls}_`;
+					logJS(String(args[0]), return_snippet_prefix, "", true, null, `${property} call`, true);
 				}
 				log("info", dom_str);
 
@@ -402,6 +405,7 @@ module.exports = {
 			}
 
 			logDom = true;
+			return return_snippet_prefix;
 		}
 	},
 	logHTML: function(html_str, as) {
