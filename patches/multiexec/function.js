@@ -115,6 +115,7 @@ module.exports = (args) => {
                                     "type": "Literal",
                                     "value": `EXITED FUNCTION ${args.id.name}(`,
                                 },
+                                //TODO: make it so if the argument string is too long, it truncates it
                                 "operator": "+",
                                 "right": {
                                     "type": "CallExpression",
