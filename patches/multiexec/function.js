@@ -46,7 +46,7 @@ module.exports = (args) => {
                             "type": "BinaryExpression",
                             "left": {
                                 "type": "Literal",
-                                "value": `Entered function ${args.id.name}(`,
+                                "value": `${args.id.name}(`,
                             },
                             "operator": "+",
                             "right": {
@@ -76,7 +76,7 @@ module.exports = (args) => {
                         "operator": "+",
                         "right": {
                             "type": "Literal",
-                            "value": ")",
+                            "value": ") GOT CALLED:",
                         }
                     },
                     {
@@ -113,7 +113,7 @@ module.exports = (args) => {
                                 "type": "BinaryExpression",
                                 "left": {
                                     "type": "Literal",
-                                    "value": `Exited function ${args.id.name}(`,
+                                    "value": `EXITED FUNCTION ${args.id.name}(`,
                                 },
                                 "operator": "+",
                                 "right": {
@@ -143,7 +143,7 @@ module.exports = (args) => {
                             "operator": "+",
                             "right": {
                                 "type": "Literal",
-                                "value": ") with no return value",
+                                "value": ") WITH NO RETURN VALUE",
                             }
                         },
                         {
@@ -196,7 +196,7 @@ module.exports = (args) => {
                                                     "type": "BinaryExpression",
                                                     "left": {
                                                         "type": "Literal",
-                                                        "value": `Exited function ${args.id.name}(`,
+                                                        "value": `EXITED FUNCTION ${args.id.name}(`,
                                                     },
                                                     "operator": "+",
                                                     "right": {
@@ -228,7 +228,7 @@ module.exports = (args) => {
                                                     "type": "BinaryExpression",
                                                     "left": {
                                                         "type": "Literal",
-                                                        "value": `) with return value `,
+                                                        "value": `) WITH RETURN VALUE: `,
                                                     },
                                                     "operator": "+",
                                                     "right": {
@@ -276,7 +276,7 @@ module.exports = (args) => {
                                                 "type": "BinaryExpression",
                                                 "left": {
                                                     "type": "Literal",
-                                                    "value": `Exited function ${args.id.name}(`,
+                                                    "value": `EXITED FUNCTION ${args.id.name}(`,
                                                 },
                                                 "operator": "+",
                                                 "right": {
@@ -306,7 +306,7 @@ module.exports = (args) => {
                                             "operator": "+",
                                             "right": {
                                                 "type": "Literal",
-                                                "value": ") with no return value",
+                                                "value": ") WITH NO RETURN VALUE",
                                             }
                                         },
                                         {
@@ -332,13 +332,21 @@ module.exports = (args) => {
                             },
                             "arguments": val.argument ? [
                                     {
+                                        "type": "BinaryExpression",
+                                        "left": {
                                             "type": "BinaryExpression",
                                             "left": {
                                                 "type": "Literal",
-                                                "value": `Skipped return ${escodegen.generate(val.argument)} with value: `,
+                                                "value": `return ${escodegen.generate(val.argument)} (SKIPPED WITH VALUE: `,
                                             },
                                             "operator": "+",
                                             "right": val.argument
+                                        },
+                                        "operator": "+",
+                                        "right": {
+                                            "type": "Literal",
+                                            "value": ")",
+                                        }
                                     },
                                     {
                                         "type": "Literal",
@@ -348,7 +356,7 @@ module.exports = (args) => {
                             [
                                 {
                                     "type": "Literal",
-                                    "value": `Skipped return`,
+                                    "value": `return (SKIPPED)`,
                                 },
                                 {
                                     "type": "Literal",

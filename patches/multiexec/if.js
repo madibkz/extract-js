@@ -69,7 +69,7 @@ module.exports = (args) => ({
             "arguments": [
                 {
                     "type": "Literal",
-                    "value": "} (end if)",
+                    "value": "} (END IF)",
                 },
                 {
                     "type": "Literal",

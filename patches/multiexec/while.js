@@ -30,7 +30,7 @@ module.exports = (args) => {
                         "arguments": [
                             {
                                 "type": "Literal",
-                                "value": `while (${escodegen.generate(args.test)}) { (forced execution of while body)`,
+                                "value": `while (${escodegen.generate(args.test)}) { (FORCED EXECUTION OF WHILE BODY)`,
                             },
                             {
                                 "type": "Literal",
@@ -51,7 +51,7 @@ module.exports = (args) => {
                         "arguments": [
                             {
                                 "type": "Literal",
-                                "value": `} (end of forced execution of body of while (${escodegen.generate(args.test)}))`,
+                                "value": `} (EXITED FORCED EXECUTION OF BODY OF while (${escodegen.generate(args.test)}))`,
                             },
                             {
                                 "type": "Literal",
@@ -60,7 +60,47 @@ module.exports = (args) => {
                         ]
                     }
                 },
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "CallExpression",
+                        "callee": {
+                            "type": "Identifier",
+                            "name": "logMultiexec"
+                        },
+                        "arguments": [
+                            {
+                                "type": "Literal",
+                                "value": `while (${escodegen.generate(args.test)}) {`,
+                            },
+                            {
+                                "type": "Literal",
+                                "value": 2
+                            }
+                        ]
+                    }
+                },
                 args,
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "CallExpression",
+                        "callee": {
+                            "type": "Identifier",
+                            "name": "logMultiexec"
+                        },
+                        "arguments": [
+                            {
+                                "type": "Literal",
+                                "value": `} (EXITED while (${escodegen.generate(args.test)}))`,
+                            },
+                            {
+                                "type": "Literal",
+                                "value": 0
+                            }
+                        ]
+                    }
+                },
             ],
         };
     }

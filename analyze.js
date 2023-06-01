@@ -309,6 +309,8 @@ cc decoder.c -o decoder
                             return require("./patches/multiexec/try.js")(val);
                         case "WhileStatement":
                             return require("./patches/multiexec/while.js")(val);
+                        case "DoWhileStatement":
+                            return require("./patches/multiexec/dowhile.js")(val);
                         case "ForStatement":
                             return require("./patches/multiexec/for.js")(val);
                         default:

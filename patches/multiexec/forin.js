@@ -42,7 +42,7 @@ module.exports = (args) => {
                                     "arguments": [
                                         {
                                             "type": "Literal",
-                                            "value": `Attempting to force execution of body of for (${escodegen.generate(args.left)} in ${escodegen.generate(args.right)})`,
+                                            "value": `for (${escodegen.generate(args.left)} in ${escodegen.generate(args.right)}) (ATTEMPTING TO FORCE EXECUTION OF BODY)`,
                                         },
                                         {
                                             "type": "Literal",
@@ -64,7 +64,7 @@ module.exports = (args) => {
                                     "arguments": [
                                         {
                                             "type": "Literal",
-                                            "value": `Attempt to force execution of for (${escodegen.generate(args.left)} in ${escodegen.generate(args.right)}) succeeded`,
+                                            "value": `} (ATTEMPT TO FORCE EXECUTION OF for (${escodegen.generate(args.left)} in ${escodegen.generate(args.right)}) SUCCEEDED)`,
                                         },
                                         {
                                             "type": "Literal",
@@ -96,7 +96,7 @@ module.exports = (args) => {
                                         "arguments": [
                                             {
                                                 "type": "Literal",
-                                                "value": `Attempt to force execution of for (${escodegen.generate(args.left)} in ${escodegen.generate(args.right)}) failed`,
+                                                "value": `} (ATTEMPT TO FORCE EXECUTION OF for (${escodegen.generate(args.left)} in ${escodegen.generate(args.right)}) FAILED)`,
                                             },
                                             {
                                                 "type": "Literal",
@@ -111,7 +111,47 @@ module.exports = (args) => {
                     },
                     "finalizer": null
                 },
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "CallExpression",
+                        "callee": {
+                            "type": "Identifier",
+                            "name": "logMultiexec"
+                        },
+                        "arguments": [
+                            {
+                                "type": "Literal",
+                                "value": `for (${escodegen.generate(args.left)} in ${escodegen.generate(args.right)}) {`,
+                            },
+                            {
+                                "type": "Literal",
+                                "value": 2
+                            }
+                        ]
+                    }
+                },
                 args,
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "CallExpression",
+                        "callee": {
+                            "type": "Identifier",
+                            "name": "logMultiexec"
+                        },
+                        "arguments": [
+                            {
+                                "type": "Literal",
+                                "value": `} (EXITED for (${escodegen.generate(args.left)} in ${escodegen.generate(args.right)}))`,
+                            },
+                            {
+                                "type": "Literal",
+                                "value": 0
+                            }
+                        ]
+                    }
+                },
             ],
         };
     }

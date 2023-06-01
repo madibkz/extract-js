@@ -35,7 +35,7 @@ module.exports = (args) => ({
                 "arguments": [
                     {
                         "type": "Literal",
-                        "value": `Entering switch (${escodegen.generate(args.discriminant)})`,
+                        "value": `switch (${escodegen.generate(args.discriminant)}) {`,
                     },
                     {
                         "type": "Literal",
@@ -101,7 +101,7 @@ module.exports = (args) => ({
             "arguments": [
                 {
                     "type": "Literal",
-                    "value": `Exited switch (${escodegen.generate(args.discriminant)})`,
+                    "value": `} (EXITED switch (${escodegen.generate(args.discriminant)}))`,
                 },
                 {
                     "type": "Literal",

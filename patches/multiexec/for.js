@@ -31,7 +31,7 @@ module.exports = (args) => {
                         "arguments": [
                             {
                                 "type": "Literal",
-                                "value": `for (${args.init ? escodegen.generate(args.init) : ""}; ${args.test ? escodegen.generate(args.test) : ""}; ${args.update ? escodegen.generate(args.update) : ""};) { (forced execution of for body)`,
+                                "value": `for (${args.init ? escodegen.generate(args.init) : ""}; ${args.test ? escodegen.generate(args.test) : ""}; ${args.update ? escodegen.generate(args.update) : ""};) { (FORCED EXECUTION OF FOR BODY)`,
                             },
                             {
                                 "type": "Literal",
@@ -57,7 +57,7 @@ module.exports = (args) => {
                         "arguments": [
                             {
                                 "type": "Literal",
-                                "value": `} (end of forced execution of body of for (${args.init ? escodegen.generate(args.init) : ""}; ${args.test ? escodegen.generate(args.test) : ""}; ${args.update ? escodegen.generate(args.update) : ""};))`,
+                                "value": `} (EXITED FORCED EXECUTION OF BODY OF for (${args.init ? escodegen.generate(args.init) : ""}; ${args.test ? escodegen.generate(args.test) : ""}; ${args.update ? escodegen.generate(args.update) : ""};))`,
                             },
                             {
                                 "type": "Literal",
@@ -77,7 +77,7 @@ module.exports = (args) => {
                         "arguments": [
                             {
                                 "type": "Literal",
-                                "value": `Entering for (${args.init ? escodegen.generate(args.init) : ""}; ${args.test ? escodegen.generate(args.test) : ""}; ${args.update ? escodegen.generate(args.update) : ""};)`,
+                                "value": `for (${args.init ? escodegen.generate(args.init) : ""}; ${args.test ? escodegen.generate(args.test) : ""}; ${args.update ? escodegen.generate(args.update) : ""};)`,
                             },
                             {
                                 "type": "Literal",
@@ -98,7 +98,7 @@ module.exports = (args) => {
                         "arguments": [
                             {
                                 "type": "Literal",
-                                "value": `Exited for (${args.init ? escodegen.generate(args.init) : ""}; ${args.test ? escodegen.generate(args.test) : ""}; ${args.update ? escodegen.generate(args.update) : ""};)`,
+                                "value": `} (EXITED for (${args.init ? escodegen.generate(args.init) : ""}; ${args.test ? escodegen.generate(args.test) : ""}; ${args.update ? escodegen.generate(args.update) : ""};))`,
                             },
                             {
                                 "type": "Literal",
