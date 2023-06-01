@@ -307,6 +307,8 @@ cc decoder.c -o decoder
                             return require("./patches/multiexec/try.js")(val);
                         case "WhileStatement":
                             return require("./patches/multiexec/while.js")(val);
+                        case "ForStatement":
+                            return require("./patches/multiexec/for.js")(val);
                         default:
                             break;
                     }
@@ -315,6 +317,8 @@ cc decoder.c -o decoder
                 traverse(tree, function(key, val) {
                     if (!val) return;
                     switch (val.type) {
+                        case "ForInStatement":
+                            return require("./patches/multiexec/forin.js")(val);
                         case "FunctionDeclaration":
                             return require("./patches/multiexec/function.js")(val);
                         default:
