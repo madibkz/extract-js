@@ -25,7 +25,24 @@ global.location = new Proxy({
     },
 })
 
+//navigator
+global.navigator = (() => {
+    let navigatorJS = require("./emulator/navigator.js");
+    let navigatorObject = navigatorJS.getNavigatorObject();
+    let navigatorHandler = navigatorJS.getNavigatorProxyHandler();
+    let navigatorDefaultFields = navigatorJS.getNavigatorDefaultFields();
+
+    for (let field in navigatorDefaultFields) {
+        if (navigatorDefaultFields.hasOwnProperty(field)) {
+            navigatorObject[field] = S$.symbol(`navigator.${field.toString()}`, navigatorDefaultFields[field]);
+        }
+    }
+
+    return new Proxy(navigatorObject, navigatorHandler);
+})();
+
 //active x
 // let wscript_proxy = makeWscriptProxy();
 // let WScript = wscript_proxy;
 // let WSH = wscript_proxy;
+
