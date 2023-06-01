@@ -146,6 +146,11 @@
             "name": "dangerous-vm",
             "type": "Boolean",
             "description": "Use the `vm` module, rather than `vm2`. This sandbox can be broken, so **don't use this** unless you're 100% sure of what you're doing. Helps with debugging by giving correct stack traces."
+        },
+        {
+            "name": "multi-exec",
+            "type": "Boolean",
+            "description": "In addition to the default execution path, cover all of the code by forcing execution of the multiple control paths. Since execution is out of order, there may be errors but potentially new information can be extracted."
         }
     ],
     "export": [
