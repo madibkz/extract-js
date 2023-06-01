@@ -43,6 +43,11 @@
             "description": "Run a symbolic execution analysis: This runs the script under dynamic symbolic execution to find different sandbox contexts which trigger different behaviours."
         },
         {
+            "name": "no-sym-exec-dom",
+            "type": "Boolean",
+            "description": "Disable symbolic tracking of DOM API values during symbolic execution mode (so there's only ActiveX symbols being tracked)."
+        },
+        {
             "name": "no-sym-exec-activex",
             "type": "Boolean",
             "description": "Disable symbolic execution of ActiveX emulated objects when running symbolic execution mode which speeds up symbolic execution. (With this enabled, ActiveX uses their default properties.)"

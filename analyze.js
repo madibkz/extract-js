@@ -197,6 +197,9 @@ function is_default_sym_exec_value(o) {
 function prepend_sym_exec_script(sym_exec_script) {
     let prepend_sym_script = fs.readFileSync("./patches/symexec/prepend_sym_script.js", "utf-8");
 
+    if (argv["no-sym-exec-dom"])
+        prepend_sym_script = prepend_sym_script.replace(/const dom_symbolize = true/, "const dom_symbolize = false");
+
     if (argv["no-sym-exec-activex"])
         prepend_sym_script = prepend_sym_script.replace(/let activex_symbolize = true/, "let activex_symbolize = false");
 

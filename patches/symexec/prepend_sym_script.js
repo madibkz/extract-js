@@ -3,27 +3,30 @@ var S$ = require('S$'); //TODO: wrap this in an anonymous function maybe?
 var window = global;
 var self = global;
 
-//window symbolic tracking properties
-global.origin = S$.symbol("origin", "");
-global.closed = S$.symbol("closed", false);
-global.devicePixelRatio = S$.symbol("devicePixelRatio", 0);
-global.fullScreen = S$.symbol("fullScreen", false);
-global.innerHeight = S$.symbol("innerHeight", 0);
-global.innerWidth = S$.symbol("innerWidth", 0);
-global.name = S$.symbol("name", "");
-var opener = global;
-global.outerHeight = S$.symbol("outerHeight", 0);
-global.outerWidth = S$.symbol("outerWidth", 0);
-global.pageXOffset = S$.symbol("pageXOffset", 0);
-global.pageYOffset = S$.symbol("pageYOffset", 0);
-var parent = global;
-global.screenX = S$.symbol("screenX", 0);
-global.screenY = S$.symbol("screenY", 0);
-global.screenLeft = S$.symbol("screenLeft", 0);
-global.screenTop = S$.symbol("screenTop", 0);
-global.status = S$.symbol("status", "");
-var top = global;
+const dom_symbolize = true;
 
+if (dom_symbolize) {
+    //window symbolic tracking properties
+    global.origin = S$.symbol("origin", "");
+    global.closed = S$.symbol("closed", false);
+    global.devicePixelRatio = S$.symbol("devicePixelRatio", 0);
+    global.fullScreen = S$.symbol("fullScreen", false);
+    global.innerHeight = S$.symbol("innerHeight", 0);
+    global.innerWidth = S$.symbol("innerWidth", 0);
+    global.name = S$.symbol("name", "");
+    var opener = global;
+    global.outerHeight = S$.symbol("outerHeight", 0);
+    global.outerWidth = S$.symbol("outerWidth", 0);
+    global.pageXOffset = S$.symbol("pageXOffset", 0);
+    global.pageYOffset = S$.symbol("pageYOffset", 0);
+    var parent = global;
+    global.screenX = S$.symbol("screenX", 0);
+    global.screenY = S$.symbol("screenY", 0);
+    global.screenLeft = S$.symbol("screenLeft", 0);
+    global.screenTop = S$.symbol("screenTop", 0);
+    global.status = S$.symbol("status", "");
+    var top = global;
+}
 
 (() => {
     let buildProxyForEmulatedObject = (symex_prefix, file_path) => {
@@ -73,14 +76,16 @@ var top = global;
         throw new Error("(SYM-EXEC MODE): Error in prepend_sym_script.js: cannot find type of object " + o);
     }
 
-    //build DOM emulation / symbol tracking
-    global.location = buildProxyForEmulatedObject("location.", "./emulator/location.js");
-    global.navigator = buildProxyForEmulatedObject("navigator.", "./emulator/navigator/navigator.js");
-    let doc = buildProxyForEmulatedObject("document.", "./emulator/document.js")
-    global.screen = buildProxyForEmulatedObject("screen.", "./emulator/screen.js")
-    doc.location = location;
-    global.document = doc;
-    global.clientInformation = navigator;
+    if (dom_symbolize) {
+        //build DOM emulation / symbol tracking
+        global.location = buildProxyForEmulatedObject("location.", "./emulator/location.js");
+        global.navigator = buildProxyForEmulatedObject("navigator.", "./emulator/navigator/navigator.js");
+        let doc = buildProxyForEmulatedObject("document.", "./emulator/document.js")
+        global.screen = buildProxyForEmulatedObject("screen.", "./emulator/screen.js")
+        doc.location = location;
+        global.document = doc;
+        global.clientInformation = navigator;
+    }
 
     //build active x emulation/symbol tracking
     let wmi = require("./emulator/WMI");
