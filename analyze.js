@@ -1168,6 +1168,7 @@ function make_sandbox(symex_input = null) {
         logJS: lib.logJS,
         logIOC: lib.logIOC,
         logMultiexec: !argv["multi-exec"] ? () => {} : (x, indent) => { //TODO: maybe reduce the duplication here
+            x = x.replace(/\n/gi, "\\n"); //remove newlines
             if (indent === 0) {
                 (multiexec_indent !== "" && multiexec_indent.length > 1) ?
                     multiexec_indent = multiexec_indent.slice(0, multiexec_indent.length - 2) :
