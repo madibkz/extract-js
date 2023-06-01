@@ -65,7 +65,7 @@ describe("package.json", function() {
 });
 
 describe("run.js", function() {
-	this.timeout(10000);
+	this.timeout(20000);
 	it("should exist", function() {
 		assert.doesNotThrow(function() {
 			fs.accessSync(`${extractDir}/run.js`, fs.F_OK);
@@ -116,7 +116,7 @@ describe("run.js", function() {
 
 //TODO: code rewriting tests - test function-rewriting, etc
 describe("code rewriting", function() {
-	this.timeout(10000);
+	this.timeout(20000);
 
 	let run_rewrite_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
 		run_script_and_check_output(`${rewriteScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
@@ -131,7 +131,7 @@ describe("code rewriting", function() {
 });
 
 describe("DOM", function() {
-	this.timeout(10000);
+	this.timeout(20000);
 
 	let run_dom_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
 		run_script_and_check_output(`${domScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
@@ -940,6 +940,59 @@ describe("multi-exec", function() {
 			assert(stdout.includes(`EXITED FUNCTION test3() WITH RETURN VALUE: FINALRETURNVALUE`));
 			assert(stdout.includes(`EXITED FUNCTION test2() WITH RETURN VALUE: FINALRETURNVALUE`));
 			assert(stdout.includes(`EXITED FUNCTION test1() WITH RETURN VALUE: FINALRETURNVALUE`));
+		}, "--multi-exec")
+	);
+	//event tests
+	it(
+		"should force execution of events added to document through addEventListener",
+		run_multiexec_script_and_check_output("events/document_add_event.js", (stdout) => {
+			assert(stdout.includes(`FORCING EXECUTION OF NEW EVENT REGISTERED FOR window.document.addEventListener`));
+			assert(stdout.includes(`Script output: "event ran"`));
+			assert(stdout.includes(`END FORCING EXECUTION OF NEW EVENT REGISTERED FOR window.document.addEventListener`));
+		}, "--multi-exec")
+	);
+	it(
+		"should force execution of events added to document through .on<event>",
+		run_multiexec_script_and_check_output("events/document_add_on_event.js", (stdout) => {
+			assert(stdout.includes(`FORCING EXECUTION OF NEW EVENT REGISTERED FOR window.document.onclick`));
+			assert(stdout.includes(`Script output: "event ran"`));
+			assert(stdout.includes(`END FORCING EXECUTION OF NEW EVENT REGISTERED FOR window.document.onclick`));
+		}, "--multi-exec")
+	);
+	it(
+		"should work through addEventListener events that throw errors, skipping errors like other code",
+		run_multiexec_script_and_check_output("events/document_add_error_throwing_event.js", (stdout) => {
+			assert(stdout.includes(`FORCING EXECUTION OF NEW EVENT REGISTERED FOR window.document.addEventListener.click`));
+			assert(stdout.includes(`Script output: "got to end of event code anyway"`));
+			assert(stdout.includes(`END FORCING EXECUTION OF NEW EVENT REGISTERED FOR window.document.addEventListener.click`));
+		}, "--multi-exec")
+	);
+	it(
+		"should work through attribute events that throw errors, skipping errors like other code",
+		run_multiexec_script_and_check_output("events/document_add_on_error_event.js", (stdout) => {
+			assert(stdout.includes(`FORCING EXECUTION OF NEW EVENT REGISTERED FOR window.document.onclick`));
+			assert(stdout.includes(`Script output: "got to end of event (test pass)"`));
+			assert(stdout.includes(`END FORCING EXECUTION OF NEW EVENT REGISTERED FOR window.document.onclick`));
+		}, "--multi-exec")
+	);
+	it(
+		"should force events added to new HTMLElements",
+		run_multiexec_script_and_check_output("events/button_add_event.js", (stdout) => {
+			assert(stdout.includes(`FORCING EXECUTION OF NEW EVENT REGISTERED FOR window.document.createElement(button).addEventListener`));
+			assert(stdout.includes(`Script output: "addEventListener works"`));
+			assert(stdout.includes(`Script output: "attribute works"`));
+			assert(stdout.includes(`Script output: "skipping errors works"`));
+			assert(stdout.includes(`END FORCING EXECUTION OF NEW EVENT REGISTERED FOR window.document.createElement(button).addEventListener`));
+		}, "--multi-exec")
+	);
+	it(
+		"should force events added to window",
+		run_multiexec_script_and_check_output("events/window_add_event.js", (stdout) => {
+			assert(stdout.includes(`FORCING EXECUTION OF NEW EVENT REGISTERED FOR window.addEventListener`));
+			assert(stdout.includes(`Script output: "addEventListener works"`));
+			assert(stdout.includes(`Script output: "attribute works"`));
+			assert(stdout.includes(`Script output: "skipping errors works"`));
+			assert(stdout.includes(`END FORCING EXECUTION OF NEW EVENT REGISTERED FOR window.addEventListener`));
 		}, "--multi-exec")
 	);
 

@@ -99,11 +99,14 @@ Array.prototype.Count = function() {
 // which can be kinda messy with Proxies
 require("util").inspect.defaultOptions.customInspect = false;
 
+//used for multi-exec vars
 let multiexec_indent = "";
-
+let currentLogMultiexec = () => {throw new Error("currentLogMultiexec isn't set to the current logMultiexec function of sandbox!")};
+let currentWindowEventClass = null;
 
 if (default_enabled || multi_exec_enabled) {
     const sandbox = make_sandbox();
+    currentLogMultiexec = sandbox.logMultiexec;
     run_emulation(code, sandbox);
 } else if (sym_exec_enabled) {
     let sym_exec_script = prepend_users_prepend_code(originalInputScript);
@@ -580,7 +583,11 @@ function log_dom_proxy_get(target, name, prefix) {
         if (typeof target[name] === "function") { //log function calls with arguments
             return function () {
                 lib.logDOM(`${prefix}.${name}`, false, null, true, arguments);
-                return target[name].apply(target, arguments);
+                let res = target[name].apply(target, arguments);
+                if (name === "addEventListener" && argv["multi-exec"]) {
+                    force_event_multi_exec(`${prefix}.${name}`, target, arguments[0]);
+                }
+                return res;
             }
         }
         lib.logDOM(`${prefix}.${name}`);
@@ -589,10 +596,19 @@ function log_dom_proxy_get(target, name, prefix) {
     return undefined;
 }
 
+function force_event_multi_exec(register_str, target, event_name) {
+    currentLogMultiexec(`FORCING EXECUTION OF NEW EVENT REGISTERED FOR ${register_str}.`, 1)
+    target.dispatchEvent(new currentWindowEventClass(event_name));
+    currentLogMultiexec(`END FORCING EXECUTION OF NEW EVENT REGISTERED FOR ${register_str}.`, 1)
+}
+
 function log_dom_proxy_set(target, name, val, prefix) {
     if (name in target) {
         lib.logDOM(`${prefix}.${name}`, true, val);
         target[name] = val;
+        if (argv["multi-exec"] && name.startsWith("on") && typeof val === "function") {
+            force_event_multi_exec(`${prefix}.${name}`, target, name.substring(2));
+        }
         return true;
     }
     return false;
@@ -618,6 +634,7 @@ function make_deep_log_dom_proxy(obj, prefix) {
 }
 
 function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_input = null) {
+    currentWindowEventClass = window.Event;
     //add our sandbox properties
     for (let field in sandbox) {
         if (sandbox.hasOwnProperty(field) && !dont_set_from_sandbox.includes(field)) {
@@ -722,11 +739,20 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
             configurable: false
         };
         if (!prop[1]) {
+            //TODO: make __prop hidden
             window[`__${prop[0]}`] = real_val;
             attributes.set = function (val) {
-                if (val !== window[`__${prop[0]}`])
+                if (val !== window[`__${prop[0]}`]) {
+                    window[`__${prop[0]}`] = val;
+                    if (argv["multi-exec"] && prop[0].startsWith("on") && typeof val === "function") {
+                        window.addEventListener(prop[0].substring(2), val);
+                        return true;
+                    }
                     lib.logDOM(`window.${prop[0]}`, true, val);
-                window[`__${prop[0]}`] = val;
+                } else {
+                    window[`__${prop[0]}`] = val;
+                }
+                return true;
             };
         }
         Object.defineProperty(window, prop[0], attributes);
@@ -737,8 +763,13 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
         let og_function = window[method[0]];
         window[method[0]] = function () {
             lib.logDOM(method[0], false, null, true, arguments);
-            if (method[1])  //if implemented in jsdom
-                return og_function.apply(window, arguments);
+            if (method[1]) { //if implemented in jsdom
+                let res = og_function.apply(window, arguments);
+                if (argv["multi-exec"] && method[0] === "addEventListener") {
+                    force_event_multi_exec(`window.addEventListener.${arguments[0]}`, window, arguments[0]);
+                }
+                return res;
+            }
         }
     })
 
@@ -801,15 +832,7 @@ function create_node_proxy(node, prefix, node_name, from_func_call = false, args
             }
             return undefined;
         },
-        set: function (t, n, v) {
-            if (n in t) {
-                if (typeof n === "symbol") return t[n];
-                lib.logDOM(`${prefix_str}.${n.toString()}`, true, v);
-                t[n] = v;
-                return true;
-            }
-            return false;
-        },
+        set: (t, n, v) => log_dom_proxy_set(t, n, v, prefix_str),
     });
 }
 
@@ -838,6 +861,9 @@ function return_node_proxy_or_value(prefix_str, t, n, function_ctx, args = null)
     }
     if (logging_state)
         lib.turnOnLogDOM();
+    if (function_ctx && argv["multi-exec"] && n === "addEventListener") {
+        force_event_multi_exec(`${prefix_str}.${n}.${args[0]}`, t, args[0]);
+    }
     return result;
 }
 
@@ -1114,7 +1140,9 @@ function make_sandbox(symex_input = null) {
                     codeHadAnError = false;
                 } catch (e) {
                     evalCode = replaceErrorCausingCode(e, evalCode, true);
+                    lib.info("");
                     lib.info("*RESTARTING EVAL CALL AFTER ERROR OCCURRED WITHIN IT*");
+                    lib.info("");
                     //TODO: Maintain correct multiexec_indent
                 }
             } while (codeHadAnError)
@@ -1272,7 +1300,9 @@ function replaceErrorCausingCode(e, code, eval = false, url = "https://example.o
 //stuff that was logged last try to avoid duplication
 
 function restartLoggedState(code) {
+    lib.info("");
     lib.info("*RESTARTING MULTI-EXECUTION AFTER ERROR OCCURRED*");
+    lib.info("");
     //FOR analyze.js
     numberOfExecutedSnippets = 1;
     multiexec_indent = "";
