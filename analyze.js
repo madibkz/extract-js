@@ -1484,6 +1484,10 @@ function replaceErrorCausingCode(e, code, eval = false, url = "https://example.o
        5. Use escodegen to turn the AST back to code
     * */
 
+    if (e.stack && e.stack.includes("If you can read this, re-run extract.js with the --no-shell-error flag.")) {
+        throw new Error("If you can read this, re-run extract.js with the --no-shell-error flag.");
+    }
+
     //NodeJS doesn't have error.lineNumber, so instead I have to use RegEx to find it from the stack message
     var lineRegexp, regexpResults;
     if (argv["vm2"]) {

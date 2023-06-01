@@ -102,6 +102,8 @@ function restartState() {
 	number_of_html_snippets = 0;
 
 	//delete any written files
+	fsextra.emptyDirSync(directory + "/resources");
+	fsextra.emptyDirSync(directory + "/snippets");
 	fsextra.emptyDirSync(directory);
 	fs.mkdirSync(directory + "/resources");
 	fs.mkdirSync(directory + "/snippets");
