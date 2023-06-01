@@ -208,6 +208,15 @@ describe("DOM", function() {
 		})
 	);
 	it(
+		"should log and download as a resource the image added to the dom",
+		run_dom_script_and_check_output("create_linked_image.js", (stdout) => {
+			assert(stdout.includes(`Resource at https://snipstock.com/assets/cdn/png/b867b18ad35e2c000a81a89b192f85f1.png [GET] was requested from DOM emulation from element img.`));
+			let path_to_res = `${getTestResultsFolder("create_linked_image.js")}default/resources.json`;
+			assert(fs.readFileSync(path_to_res, "utf8").includes("https://snipstock.com/assets/cdn/png/b867b18ad35e2c000a81a89b192f85f1.png"));
+			assert(fs.readFileSync(path_to_res, "utf8").includes("PNG"));
+		}, "--dom-resource-loading")
+	);
+	it(
 		"should log the url src for a new script element added to the dom",
 		run_dom_script_and_check_output("create_linked_script.js", (stdout) => {
 			assert(stdout.includes(`Resource at https://code.jquery.com/jquery-3.6.0.slim.min.js [GET] was requested from DOM emulation from element script.`));
@@ -1078,6 +1087,62 @@ describe("multi-exec", function() {
 	);
 });
 
+describe("multi-exec html", function() {
+	this.timeout(2000000);
+
+	it(
+		"should rewrite the internal scripts to be multi-exec and still work like normal",
+		run_html_script_and_check_output("multi-exec/basic_multi-exec.html", (stdout) => {
+			assert(stdout.includes(`"first branch"`));
+			assert(stdout.includes(`"second branch"`));
+			assert(stdout.includes(`"third branch"`));
+			assert(stdout.includes(`"fourth branch"`));
+		}, "--html --multi-exec")
+	);
+	it(
+		"should skip errors in the global scope like it does in non-html mode due to wrapping them in eval",
+		run_html_script_and_check_output("multi-exec/global_error.html", (stdout) => {
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedthing is not defined at (undefinedthing);`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherundefinedthing is not defined at (anotherundefinedthing);`));
+			assert(stdout.includes(`Script output: "backtick strings should work"`));
+			assert(stdout.includes(`Script output: "reached end script"`));
+		}, "--html --multi-exec")
+	);
+	it(
+		"should skip errors that are from evals like it does in non-html mode",
+		run_html_script_and_check_output("multi-exec/eval_error.html", (stdout) => {
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedthing is not defined at (undefinedthing);`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherundefinedthing is not defined at (anotherundefinedthing);`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: dothisthing is not defined at ;\\ndothisthing();`));
+			assert(stdout.includes(`Script output: "reached end script"`));
+		}, "--html --multi-exec")
+	);
+	it(
+		"should download, rewrite and run an external linked basic script if --dom-resource-loading is on",
+		run_html_script_and_check_output("multi-exec/external_linked_basic.html", (stdout) => {
+			assert(stdout.includes(`Script output: "script was loaded and ran."`));
+		}, "--html --multi-exec --dom-resource-loading")
+	);
+	it(
+		"should skip global errors in an external linked script if --dom-resource-loading is on",
+		run_html_script_and_check_output("multi-exec/external_linked_global_error.html", (stdout) => {
+			assert(stdout.includes(`Script output: "reached end of script despite error"`));
+		}, "--html --multi-exec --dom-resource-loading")
+	);
+	it(
+		"should skip eval errors in an external linked script if --dom-resource-loading is on",
+		run_html_script_and_check_output("multi-exec/external_linked_eval_error.html", (stdout) => {
+			assert(stdout.includes(`Script output: "reached end"`));
+		}, "--html --multi-exec --dom-resource-loading")
+	);
+	it(
+		"should force execution of html attributes at the end of emulation",
+		run_html_script_and_check_output("multi-exec/attribute_code.html", (stdout) => {
+			assert(stdout.includes(`Script output: "forced execution of body onclick test pass"`));
+		}, "--html --multi-exec --dom-resource-loading")
+	);
+});
+
 describe("aggregator.js", function() {
 	//need a really long timeout for the tests involving symbolic execution mode
 	this.timeout(1000000);
@@ -1392,61 +1457,6 @@ describe("sym-exec", function() {
 	);
 });
 
-describe("multi-exec html", function() {
-	this.timeout(2000000);
-
-	it(
-		"should rewrite the internal scripts to be multi-exec and still work like normal",
-		run_html_script_and_check_output("multi-exec/basic_multi-exec.html", (stdout) => {
-			assert(stdout.includes(`"first branch"`));
-			assert(stdout.includes(`"second branch"`));
-			assert(stdout.includes(`"third branch"`));
-			assert(stdout.includes(`"fourth branch"`));
-		}, "--html --multi-exec")
-	);
-	it(
-		"should skip errors in the global scope like it does in non-html mode due to wrapping them in eval",
-		run_html_script_and_check_output("multi-exec/global_error.html", (stdout) => {
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedthing is not defined at (undefinedthing);`));
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherundefinedthing is not defined at (anotherundefinedthing);`));
-			assert(stdout.includes(`Script output: "backtick strings should work"`));
-			assert(stdout.includes(`Script output: "reached end script"`));
-		}, "--html --multi-exec")
-	);
-	it(
-		"should skip errors that are from evals like it does in non-html mode",
-		run_html_script_and_check_output("multi-exec/eval_error.html", (stdout) => {
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: undefinedthing is not defined at (undefinedthing);`));
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: anotherundefinedthing is not defined at (anotherundefinedthing);`));
-			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: ReferenceError: dothisthing is not defined at ;\\ndothisthing();`));
-			assert(stdout.includes(`Script output: "reached end script"`));
-		}, "--html --multi-exec")
-	);
-	it(
-		"should download, rewrite and run an external linked basic script if --dom-resource-loading is on",
-		run_html_script_and_check_output("multi-exec/external_linked_basic.html", (stdout) => {
-			assert(stdout.includes(`Script output: "script was loaded and ran."`));
-		}, "--html --multi-exec --dom-resource-loading")
-	);
-	it(
-		"should skip global errors in an external linked script if --dom-resource-loading is on",
-		run_html_script_and_check_output("multi-exec/external_linked_global_error.html", (stdout) => {
-			assert(stdout.includes(`Script output: "reached end of script despite error"`));
-		}, "--html --multi-exec --dom-resource-loading")
-	);
-	it(
-		"should skip eval errors in an external linked script if --dom-resource-loading is on",
-		run_html_script_and_check_output("multi-exec/external_linked_eval_error.html", (stdout) => {
-			assert(stdout.includes(`Script output: "reached end"`));
-		}, "--html --multi-exec --dom-resource-loading")
-	);
-	it(
-		"should force execution of html attributes at the end of emulation",
-		run_html_script_and_check_output("multi-exec/attribute_code.html", (stdout) => {
-			assert(stdout.includes(`Script output: "forced execution of body onclick test pass"`));
-		}, "--html --multi-exec --dom-resource-loading")
-	);
-});
 
 describe("symbolic html", function() {
 	this.timeout(2000000);
