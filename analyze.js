@@ -20,6 +20,7 @@ const mode = process.argv[4];
 const default_enabled = mode === "default";
 const multi_exec_enabled = mode === "multi-exec";
 const sym_exec_enabled = mode === "sym-exec";
+const dont_set_in_jsdom_from_sandbox = ["setInterval", "setTimeout", "alert", "JSON", /*"console",*/ "location", "navigator", "document", "origin", "self", "window"];
 
 // JScriptMemberFunctionStatement plugin registration
 require("./patches/prototype-plugin.js")(acorn.Parser);
@@ -96,7 +97,7 @@ let multiexec_indent = "";
 
 if (default_enabled || multi_exec_enabled) {
     const sandbox = make_sandbox();
-    run_in_vm(code, sandbox);
+    run_emulation(code, sandbox);
 } else if (sym_exec_enabled) {
     let sym_exec_script = prepend_users_prepend_code(originalInputScript);
     sym_exec_script = prepend_sym_exec_script(sym_exec_script);
@@ -160,7 +161,7 @@ if (default_enabled || multi_exec_enabled) {
         //Run sandbox for this input combination
         const sandbox = make_sandbox(input);
         //pass true to make them run in vm2 rather than jsdom for now
-        run_in_vm(code, sandbox, true);
+        run_emulation(code, sandbox, true);
     }
 }
 
@@ -555,473 +556,342 @@ function sandbox_object_is_default(path_to_obj, instance) {
     return true;
 }
 
-async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
-    if (argv["vm2"] || sym_ex_vm2_flag) {
-        lib.debug("Analyzing with vm2 v" + require("vm2/package.json").version);
+function log_dom_proxy_get(target, name, prefix) {
+    if (name in target) {
+        if (typeof name === "symbol") return target[name];
+        if (name === "toString" || name === "valueOf") {
+            lib.logDOM(`${prefix}.${name}`);
+            return target[name];
+        }
+        if (typeof target[name] === "function") { //log function calls with arguments
+            return function () {
+                lib.logDOM(`${prefix}.${name}`, false, null, true, arguments);
+                return target[name].apply(target, arguments);
+            }
+        }
+        lib.logDOM(`${prefix}.${name}`);
+        return target[name];
+    }
+    return undefined;
+}
 
-        // Fake cscript.exe style ReferenceError messages.
-        // Fake up Object.toString not being defined in cscript.exe.
-        //code = "Object.prototype.toString = undefined;\n\n" + code;
+function log_dom_proxy_set(target, name, val, prefix) {
+    if (name in target) {
+        lib.logDOM(`${prefix}.${name}`, true, val);
+        target[name] = val;
+        return true;
+    }
+    return false;
+}
 
-        let codeHadAnError = multi_exec_enabled;
-        do {
+function make_log_dom_proxy(obj, prefix) {
+    return new Proxy(obj, {
+        get: (t, n) => log_dom_proxy_get(t, n, prefix),
+        set: (t, n, v) => log_dom_proxy_set(t, n, v, prefix),
+    });
+}
+
+function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window) {
+    //add our sandbox properties
+    for (let field in sandbox) {
+        if (sandbox.hasOwnProperty(field) && !dont_set_from_sandbox.includes(field)) {
+            window[field] = sandbox[field];
+        }
+    }
+    //this boolean is what we use to check that the emulation has reached the end
+    window.emulationFinished = false;
+
+    let og_screen = window.screen;
+    delete window.screen;
+    window.screen = make_log_dom_proxy(og_screen, "window.screen");
+
+    window.history = make_log_dom_proxy(window.history, "window.history");
+
+    let og_loc = window.location;
+    let loc_proxy = make_log_dom_proxy(og_loc, "window.location");
+    delete window.location;
+    window.location = loc_proxy;
+
+    window._document = new Proxy(window._document, {
+        get: (target, name) => {
+            if (name in target) {
+                if (name === "cookie") return target[name];
+                if (name === "location") return loc_proxy;
+                if (typeof name === "symbol") return target[name];
+                if (typeof target[name] === "function") { //log function calls with arguments
+                    return function () {
+                        return return_node_proxy_or_value("window.document", target, name, true, arguments);
+                    }
+                }
+                return return_node_proxy_or_value("window.document", target, name, false);
+            }
+            return undefined;
+        },
+        set: function (target, name, val) {
+            if (name === "cookie") {
+                target[name] = val;
+                return true;
+            }
+            if (name === "location") {
+                og_loc = val;
+                return true;
+            }
+            return log_dom_proxy_set(target, name, val, "window.document");
+        },
+    });
+
+    //Add logging to the window's members
+    logged_dom_vals.window.properties.forEach((prop) => {
+        let real_val = window[prop[0]];
+        let attributes = {
+            get: function () {
+                lib.logDOM(`window.${prop[0]}`);
+                return prop[1] ? real_val : window[`__${prop[0]}`];
+            },
+            enumerable: true,
+            configurable: !prop[1]
+        };
+        if (!prop[1]) {
+            window[`__${prop[0]}`] = real_val;
+            attributes.set = function (val) {
+                lib.logDOM(`window.${prop[0]}`, true, val);
+                window[`__${prop[0]}`] = val;
+            };
+        }
+        Object.defineProperty(window, prop[0], attributes);
+    })
+
+    //window method logging
+    logged_dom_vals.window.methods.forEach((method) => {
+        let og_function = window[method[0]];
+        window[method[0]] = function () {
+            lib.logDOM(method[0], false, null, true, arguments);
+            if (method[1])  //if implemented in jsdom
+                return og_function.apply(window, arguments);
+        }
+    })
+
+    window._localStorage = make_log_dom_proxy(window._localStorage, "window.localStorage");
+
+    window._sessionStorage = make_log_dom_proxy(window._sessionStorage, "window.sessionStorage");
+
+    let nav_proxy = make_log_dom_proxy(window.navigator, "window.navigator");
+    Object.defineProperty(window, "navigator", {
+        get: function () {
+            return nav_proxy;
+        },
+        enumerable: true,
+        configurable: false
+    })
+}
+
+function create_node_proxy(node, prefix, node_name, from_func_call = false, args = null, index_str = null) {
+    const args_str = args === null ? "" : Array.from(args).map(a => String(a)).join(", ");
+    const prefix_str = `${prefix}.${node_name.toString()}${from_func_call ? "(" + args_str + ")" : ""}${index_str ? index_str : ""}`;
+
+    return new Proxy(node, {
+        get: (t, n) => {
+            if (n in t) {
+                if (typeof n === "symbol") return t[n];
+                if (typeof t[n] === "function") {
+                    return function () {
+                        return return_node_proxy_or_value(prefix_str, t, n, true, arguments);
+                    }
+                }
+                return return_node_proxy_or_value(prefix_str, t, n, false);
+            }
+            return undefined;
+        },
+        set: function (t, n, v) {
+            if (n in t) {
+                if (typeof n === "symbol") return t[n];
+                lib.logDOM(`${prefix_str}.${n.toString()}`, true, v);
+                t[n] = v;
+                return true;
+            }
+            return false;
+        },
+    });
+}
+
+function return_node_proxy_or_value(prefix_str, t, n, function_ctx, args = null) {
+    lib.logDOM(`${prefix_str}.${n.toString()}`, false, null, function_ctx, args);
+    let result = function_ctx ? t[n].apply(t, args) : t[n];
+    if (typeof result !== "undefined") {
+        if (result.nodeType)
+            return create_node_proxy(result, prefix_str, n, function_ctx, args);
+        if (result.toString().includes("HTMLCollection") || result.toString().includes("NodeList")) {
+            let new_list = [];
+            for (let i = 0; i < result.length; i++) {
+                new_list.push(create_node_proxy(result[i], prefix_str, n, function_ctx, args, `[${i}]`));
+            }
+            return new_list;
+        }
+    }
+    return result;
+}
+
+async function run_in_jsdom_vm(sandbox, code) {
+    lib.debug("Analyzing with jsdom");
+
+    let url = "https://example.org/";
+    if (argv["url"]) {
+        url = argv["url"];
+    } else if (!sandbox_object_is_default("./emulator/location.js", sandbox.location)) {
+        //construct a url from location to set as the url in the jsdom emulation
+        // if (require("./emulator/location.js").getDefaultFields().href !== sandbox.location.href)  {
+        //     url = sandbox.location.href;
+        // } else {
+        //     url = sandbox.location.url;
+        // }
+    }
+
+    function try_to_set_from_file(file_arg, set_func) {
+        if (argv[file_arg]) {
             try {
-                const vm = new VM({
-                    timeout: (argv.timeout || 10) * 1000,
-                    sandbox,
-                });
-
-                vm.run(code);
-                codeHadAnError = false;
+                set_func();
             } catch (e) {
-                if (multi_exec_enabled) {
-                    code = replaceErrorCausingCode(e, code);
+                lib.error(`Error setting values for ${file_arg} from ${argv[file_arg]}`);
+            }
+        }
+    }
 
-                    //RESTART LOGGING AND SANDBOX STUFF:
-                    restartLoggedState();
-                } else if (sym_exec_enabled) {
-                    lib.error(e.stack, true, false);
-                    return;
+    let one_cookie = argv.cookie ? "document.cookie = \"" + argv.cookie + "\";" : "";
+
+    let multiple_cookies = "";
+    try_to_set_from_file("cookie-file", () => {multiple_cookies = fs.readFileSync(argv["cookie-file"], "utf8").split("\n").map((c) => `document.cookie = \"${c}\";`).join("\n");})
+
+    let set_storage = (file_arg, name) => {
+        let storageJSON = JSON.parse(fs.readFileSync(argv[file_arg], "utf8"));
+        let storage_str = "";
+        for (let prop in storageJSON)
+            storage_str += `${name}.setItem(\`${prop}\`, \`${storageJSON[prop]}\`);\n`;
+        return storage_str;
+    };
+
+    let initialLocalStorage = "";
+    try_to_set_from_file("local-storage-file", () => initialLocalStorage = set_storage("local-storage-file", "localStorage"));
+
+    let initialSessionStorage = "";
+    try_to_set_from_file("session-storage-file", () => initialSessionStorage = set_storage("session-storage-file", "sessionStorage"));
+
+    let codeHadAnError = multi_exec_enabled;
+    do {
+        try {
+            const virtualConsole = new jsdom.VirtualConsole();
+            virtualConsole.sendTo(lib, {omitJSDOMErrors: true});
+            virtualConsole.on("jsdomError", (e) => {
+                if (e.detail) {
+                    throw e.detail
                 } else {
-                    lib.error(e.stack, true, false);
-                    throw e;
+                    throw e
                 }
-            }
-        } while (codeHadAnError)
-    } else if (argv["dangerous-vm"]) {
-        lib.verbose("Analyzing with native vm module (dangerous!)");
-        const vm = require("vm");
-        vm.runInNewContext(code, sandbox, {
-            displayErrors: true,
-            // lineOffset: -fs.readFileSync(path.join(__dirname, "patch.js"), "utf8").split("\n").length,
-             filename: "sample.js",
-        });
-    } else { //jsdom default emulation context
-        lib.debug("Analyzing with jsdom");
-        let dont_set_from_sandbox = ["setInterval", "setTimeout", "alert", "JSON", /*"console",*/ "location", "navigator", "document", "origin", "self", "window"];
+            });
 
-        let url = "https://example.org/";
-        if (argv["url"]) {
-            url = argv["url"];
-        } else if (!sandbox_object_is_default("./emulator/location.js", sandbox.location)) {
-            //construct a url from location to set as the url in the jsdom emulation
-            // if (require("./emulator/location.js").getDefaultFields().href !== sandbox.location.href)  {
-            //     url = sandbox.location.href;
-            // } else {
-            //     url = sandbox.location.url;
-            // }
-        }
-
-
-        let one_cookie = argv.cookie ? "document.cookie = \"" + argv.cookie + "\";" : "";
-        let multiple_cookies = ""; //TODO: maybe reduce the duplicate code here
-        if (argv["cookie-file"]) {
-            try {
-                multiple_cookies = fs.readFileSync(argv["cookie-file"], "utf8").split("\n").map((c) => `document.cookie = \"${c}\";`).join("\n");
-            } catch (e) {
-                lib.error("Error setting cookies from " + argv["cookie-file"]);
-            }
-        }
-        let initialLocalStorage = "";
-        if (argv["local-storage-file"]) {
-            try {
-                let localStorageJSON = JSON.parse(fs.readFileSync(argv["local-storage-file"], "utf8"));
-                for (let prop in localStorageJSON) {
-                    initialLocalStorage += `localStorage.setItem(\`${prop}\`, \`${localStorageJSON[prop]}\`);\n`;
-                }
-            } catch (e) {
-                lib.error("Error setting local storage from " + argv["local-storage-file"]);
-            }
-        }
-        let initialSessionStorage = "";
-        if (argv["session-storage-file"]) {
-            try {
-                let sessionStorageJSON = JSON.parse(fs.readFileSync(argv["session-storage-file"], "utf8"));
-                for (let prop in sessionStorageJSON) {
-                    initialSessionStorage += `sessionStorage.setItem(\`${prop}\`, \`${sessionStorageJSON[prop]}\`);\n`;
-                }
-            } catch (e) {
-                lib.error("Error setting session storage from " + argv["session-storage-file"]);
-            }
-        }
-
-        function create_node_proxy(node, prefix, node_name, from_func_call = false, args = null, index_str = null) {
-            const args_str = args === null ? "" : Array.from(args).map(a => String(a)).join(", ");
-            const prefix_str = `${prefix}.${node_name.toString()}${from_func_call ? "(" + args_str + ")" : ""}${index_str ? index_str : ""}`;
-            return new Proxy(node, {
-                get: (t, n) => {
-                    if (n in t) {
-                        if (typeof n === "symbol") return t[n];
-                        if (typeof t[n] === "function") {
-                            return function() {
-                                lib.logDOM(`${prefix_str}.${n.toString()}`, false, null, true, arguments);
-                                let result = t[n].apply(t, arguments);
-                                if (typeof result !== "undefined") {
-                                    if (result.nodeType)
-                                        return create_node_proxy(result, prefix_str, n, true, arguments);
-                                    if (result.toString().includes("HTMLCollection") || result.toString().includes("NodeList")) {
-                                        let new_list = [];
-                                        for (let i = 0; i < result.length; i++) {
-                                            new_list.push(create_node_proxy(result[i], prefix_str, n, true, arguments, `[${i}]`));
-                                        }
-                                        return new_list;
-                                    }
-                                }
-                                return result;
+            let cookie_jar = new jsdom.CookieJar();
+            let cookie_jar_log_funcs = ["setCookie", "setCookieSync", "getCookies", "getCookiesSync", "getCookieString", "getCookieStringSync", "getSetCookieStrings", "getSetCookieStringsSync", "removeAllCookies", "removeAllCookiesSync"];
+            const cookieJar = new Proxy(cookie_jar, {
+                get: (target, name) => {
+                    if (name in target) {
+                        if (typeof target[name] === "function" && cookie_jar_log_funcs.includes(name)) {
+                            return function () {
+                                lib.logDOM(`cookieJar.${name}`, false, null, true, arguments);
+                                return target[name].apply(target, arguments);
                             }
                         }
-                        lib.logDOM(`${prefix_str}.${n.toString()}`);
-                        let result = t[n];
-                        if (typeof result !== "undefined") {
-                            if (result.nodeType)
-                                return create_node_proxy(result, prefix, n);
-                            if (result.toString().includes("HTMLCollection") || result.toString().includes("NodeList")) {
-                                let new_list = [];
-                                for (let i = 0; i < result.length; i++) {
-                                    new_list.push(create_node_proxy(result[i], prefix, n, false, null, `[${i}]`));
-                                }
-                                return new_list;
-                            }
-                        }
-                        return result;
+                        return target[name];
                     }
                     return undefined;
                 },
-                set: function(t, n, v) {
-                    if (n in t) {
-                        if (typeof n === "symbol") return t[n];
-                        //TODO: need to set a create_node_proxy if v is a node?
-                        lib.logDOM(`${prefix_str}.${n.toString()}`, true, v);
-                        t[n] = v;
-                        return true;
-                    }
-                    return false;
-                },
+                set: (t, n, v) => log_dom_proxy_set(t, n, v, "cookieJar"),
             });
-        }
 
-        let codeHadAnError = multi_exec_enabled;
-        do {
-            try {
-                const virtualConsole = new jsdom.VirtualConsole();
-                virtualConsole.sendTo(lib, { omitJSDOMErrors: true });
-                virtualConsole.on("jsdomError", (e) => {
-                    if (e.detail) {
-                        throw e.detail
-                    } else {
-                        throw e
-                    }
-                });
+            let dom_str = `<html><head></head><body></body><script>${initialLocalStorage}${initialSessionStorage}${one_cookie}${multiple_cookies}${code}</script></html>`;
 
-                let dom_str = `<html><head></head><body></body><script>${initialLocalStorage}${initialSessionStorage}${one_cookie}${multiple_cookies}${code}</script></html>`;
-                let cookie_jar = new jsdom.CookieJar();
-                let cookie_jar_log_funcs = ["setCookie", "setCookieSync", "getCookies", "getCookiesSync", "getCookieString", "getCookieStringSync", "getSetCookieStrings", "getSetCookieStringsSync", "removeAllCookies", "removeAllCookiesSync"];
-                const cookieJar = new Proxy(cookie_jar, {
-                    get: (target, name) => {
-                        if (name in target) {
-                            if (typeof target[name] === "function" && cookie_jar_log_funcs.includes(name)) {
-                                return function () {
-                                    lib.logDOM(`cookieJar.${name}`,false, null, true, arguments);
-                                    return target[name].apply(target, arguments);
-                                }
-                            }
-                            return target[name];
-                        }
-                        return undefined;
-                    },
-                    set: function (target, name, val) {
-                        if (name in target) {
-                            lib.logDOM(`cookieJar.${name}`, true, val);
-                            target[name] = val;
-                        }
-                        return false;
-                    },
-                });
+            //Keep in mind this runs asynchronous
+            let dom = new JSDOM(dom_str, {
+                url: url,
+                referrer: url,
+                contentType: "text/html",
+                includeNodeLocations: true,
+                virtualConsole,
+                runScripts: "dangerously",
+                pretendToBeVisual: true,
+                cookieJar,
 
-                //Keep in mind this runs asynchronous
-                let dom = new JSDOM(dom_str, {
-                    url: url,
-                    referrer: url,
-                    contentType: "text/html",
-                    includeNodeLocations: true,
-                    virtualConsole,
-                    runScripts: "dangerously",
-                    pretendToBeVisual: true,
-                    cookieJar,
-
-                    //Setting up the global context of the emulation
-                    beforeParse(window) {
-                        //add our sandbox properties
-                        for (let field in sandbox) {
-                            if (sandbox.hasOwnProperty(field) && !dont_set_from_sandbox.includes(field)) {
-                                window[field] = sandbox[field];
-                            }
-                        }
-                        //this boolean is what we use to check that the emulation has reached the end
-                        window.emulationFinished = false;
-
-                        let og_screen = window.screen;
-                        delete window.screen;
-                        window.screen = new Proxy(og_screen, {
-                            get: (target, name) => {
-                                if (name in target) {
-                                    if (typeof name !== "symbol")
-                                        lib.logDOM(`window.screen.${name}`);
-                                    return target[name];
-                                }
-                                return undefined;
-                            },
-                            set: function (target, name, val) {
-                                if (name in target) {
-                                    lib.logDOM(`window.screen.${name}`, true, val);
-                                    target[name] = val;
-                                }
-                                return false;
-                            },
-                        });
-
-                        window.history = new Proxy(window.history, {
-                            get: (target, name) => {
-                                if (name in target) {
-                                    if (typeof name !== "symbol")
-                                        lib.logDOM(`window.history.${name}`);
-                                    return target[name];
-                                }
-                                return undefined;
-                            },
-                            set: function (target, name, val) {
-                                if (name in target) {
-                                    lib.logDOM(`window.history.${name}`, true, val);
-                                    target[name] = val;
-                                }
-                                return false;
-                            },
-                        });
-
-                        let og_loc = window.location;
-                        let loc_proxy = new Proxy(og_loc, {
-                            get: (target, name) => {
-                                if (name in target) {
-                                    if (typeof name !== "symbol")
-                                        lib.logDOM(`window.location.${name}`);
-                                    return target[name];
-                                }
-                                return undefined;
-                            },
-                            set: function(target, name, val) {
-                                if (name in target) {
-                                    lib.logDOM(`window.location.${name}`, true, val);
-                                    target[name] = val;
-                                }
-                                return false;
-                            },
-                        });
-                        delete window.location;
-                        window.location = loc_proxy;
-
-                        window._document = new Proxy(window._document, {
-                            get: (target, name) => {
-                                if (name in target) {
-                                    if (name === "cookie") return target[name];
-                                    if (name === "location") return loc_proxy;
-                                    if (typeof name !== "symbol") {
-                                        if (typeof target[name] === "function") { //log function calls with arguments
-                                            return function () {
-                                                lib.logDOM(`window.document.${name}`,false, null, true, arguments);
-                                                let result = target[name].apply(target, arguments);
-                                                if (typeof result !== "undefined") {
-                                                    if (result.nodeType)
-                                                        return create_node_proxy(result, "window.document", name, true, arguments);
-                                                    if (result.toString().includes("HTMLCollection") || result.toString().includes("NodeList")) {
-                                                        let new_list = [];
-                                                        for (let i = 0; i < result.length; i++) {
-                                                            new_list.push(create_node_proxy(result[i], "window.document", name, true, arguments, `[${i}]`));
-                                                        }
-                                                        return new_list;
-                                                    }
-                                                }
-                                                return result;
-                                            }
-                                        }
-                                        lib.logDOM(`window.document.${name}`);
-                                    }
-                                    let result = target[name];
-                                    if (typeof result !== "undefined") {
-                                        if (result.nodeType)
-                                            return create_node_proxy(result, "window.document", name);
-                                        if (result.toString().includes("HTMLCollection") || result.toString().includes("NodeList")) {
-                                            let new_list = [];
-                                            for (let i = 0; i < result.length; i++) {
-                                                new_list.push(create_node_proxy(result[i], "window.document", name, false, null, `[${i}]`));
-                                            }
-                                            return new_list;
-                                        }
-                                    }
-                                    return result;
-                                }
-                                return undefined;
-                            },
-                            set: function (target, name, val) {
-                                if (name === "cookie") {
-                                    target[name] = val;
-                                    return true;
-                                }
-                                if (name === "location") {
-                                    og_loc = val;
-                                    return true;
-                                }
-                                if (name in target) {
-                                    lib.logDOM(`window.document.${name}`, true, val);
-                                    target[name] = val;
-                                    return true;
-                                }
-                                return false;
-                            },
-                        });
-
-                        //Add logging to the window's members
-                        logged_dom_vals.window.properties.forEach((prop) => {
-                            let real_val = window[prop[0]];
-                            //if readonly property
-                            if (prop[1]) { //TODO: use some hacky workaround for this duplication
-                                Object.defineProperty(window, prop[0], {
-                                    get: function() {
-                                        lib.logDOM(`window.${prop[0]}`);
-                                        return real_val;
-                                    },
-                                    enumerable: true,
-                                    configurable: !prop[1]
-                                })
-                            } else {
-                                window[`__${prop[0]}`] = real_val;
-                                Object.defineProperty(window, prop[0], {
-                                    get: function() {
-                                        lib.logDOM(`window.${prop[0]}`);
-                                        return window[`__${prop[0]}`];
-                                    },
-                                    set: function(val) {
-                                        lib.logDOM(`window.${prop[0]}`, true, val);
-                                        window[`__${prop[0]}`] = val;
-                                    },
-                                    enumerable: true,
-                                    configurable: !prop[1]
-                                })
-                            }
-                        })
-
-                        //window method logging
-                        logged_dom_vals.window.methods.forEach((m) => {
-                            let og_function = window[m[0]];
-                            window[m[0]] = function () {
-                                lib.logDOM(m[0], false, null, true, arguments);
-                                if (m[1])  //if implemented in jsdom
-                                    return og_function.apply(window, arguments);
-                            }
-                        })
-
-                        window._localStorage = new Proxy(window._localStorage, {
-                            get: (target, name) => {
-                                if (name in target) {
-                                    if (typeof name !== "symbol") {
-                                        if (typeof target[name] === "function") { //log function calls with arguments
-                                            return function () {
-                                                lib.logDOM(`window.localStorage.${name}`,false, null, true, arguments);
-                                                return target[name].apply(target, arguments);
-                                            }
-                                        }
-                                        lib.logDOM(`window.localStorage.${name}`);
-                                    }
-                                    return target[name];
-                                }
-                                return undefined;
-                            },
-                            set: function (target, name, val) {
-                                if (name in target) {
-                                    lib.logDOM(`window.localStorage.${name}`, true, val);
-                                    target[name] = val;
-                                    return true;
-                                }
-                                return false;
-                            },
-                        });
-
-                        window._sessionStorage = new Proxy(window._sessionStorage, {
-                            get: (target, name) => {
-                                if (name in target) {
-                                    if (typeof name !== "symbol") {
-                                        if (typeof target[name] === "function") { //log function calls with arguments
-                                            return function () {
-                                                lib.logDOM(`window.sessionStorage.${name}`,false, null, true, arguments);
-                                                return target[name].apply(target, arguments);
-                                            }
-                                        }
-                                        lib.logDOM(`window.sessionStorage.${name}`);
-                                    }
-                                    return target[name];
-                                }
-                                return undefined;
-                            },
-                            set: function (target, name, val) {
-                                if (name in target) {
-                                    lib.logDOM(`window.sessionStorage.${name}`, true, val);
-                                    target[name] = val;
-                                    return true;
-                                }
-                                return false;
-                            },
-                        });
-
-                        let nav_proxy = new Proxy(window.navigator, {
-                            get: (target, name) => {
-                                if (name in target) {
-                                    if (typeof name !== "symbol")
-                                        lib.logDOM(`window.navigator.${name}`);
-                                    return target[name];
-                                }
-                                return undefined;
-                            },
-                            set: function(target, name, val) {
-                                if (name in target) {
-                                    lib.logDOM(`window.navigator.${name}`, true, val);
-                                    target[name] = val;
-                                }
-                                return false;
-                            },
-                        });
-                        Object.defineProperty(window, "navigator", {
-                            get: function() {
-                                // lib.logDOM(`window.navigator`);
-                                return nav_proxy;
-                            },
-                            enumerable: true,
-                            configurable: false
-                        })
-                    }
-                });
-
-                //https://stackoverflow.com/questions/14226803/wait-5-seconds-before-executing-next-line
-                while (!dom.window.emulationFinished) //poll until emulation of main code has finished
-                    await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](100);
-
-                lib.logBrowserStorage(dom.window.localStorage, dom.window.sessionStorage);
-
-                dom.window.close();
-
-                lib.logCookies(cookie_jar);
-
-                codeHadAnError = false;
-            } catch (e) {
-                if (multi_exec_enabled) {
-                    code = replaceErrorCausingCode(e, code, false, url);
-
-                    //RESTART LOGGING AND SANDBOX STUFF:
-                    restartLoggedState();
-                } else {
-                    lib.error(e.stack ? e.stack : e, true, false);
-                    throw e;
+                //Setting up the global context of the emulation
+                beforeParse(window) {
+                    instrument_jsdom_global(sandbox, dont_set_in_jsdom_from_sandbox, window);
                 }
+            });
+
+            //https://stackoverflow.com/questions/14226803/wait-5-seconds-before-executing-next-line
+            while (!dom.window.emulationFinished) //poll until emulation of main code has finished
+                await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](100);
+
+            lib.logBrowserStorage(dom.window.localStorage, dom.window.sessionStorage);
+
+            dom.window.close();
+
+            lib.logCookies(cookie_jar);
+
+            codeHadAnError = false;
+        } catch (e) {
+            if (multi_exec_enabled) {
+                code = replaceErrorCausingCode(e, code, false, url);
+
+                //RESTART LOGGING AND SANDBOX STUFF:
+                restartLoggedState();
+            } else if (sym_exec_enabled) {
+                lib.error(e.stack, true, false);
+                return;
+            } else {
+                lib.error(e.stack, true, false);
+                throw e;
             }
-        } while (codeHadAnError)
+        }
+    } while (codeHadAnError)
+}
+
+function run_in_vm2(sandbox, code) {
+    lib.debug("Analyzing with vm2 v" + require("vm2/package.json").version);
+
+    // Fake cscript.exe style ReferenceError messages.
+    // Fake up Object.toString not being defined in cscript.exe.
+    //code = "Object.prototype.toString = undefined;\n\n" + code;
+
+    let codeHadAnError = multi_exec_enabled;
+    do {
+        try {
+            const vm = new VM({
+                timeout: (argv.timeout || 10) * 1000,
+                sandbox,
+            });
+
+            vm.run(code);
+            codeHadAnError = false;
+        } catch (e) {
+            if (multi_exec_enabled) {
+                code = replaceErrorCausingCode(e, code);
+
+                //RESTART LOGGING AND SANDBOX STUFF:
+                restartLoggedState();
+            } else if (sym_exec_enabled) {
+                lib.error(e.stack, true, false);
+                return;
+            } else {
+                lib.error(e.stack, true, false);
+                throw e;
+            }
+        }
+    } while (codeHadAnError)
+}
+
+async function run_emulation(code, sandbox, sym_ex_vm2_flag = false) {
+    if (argv["vm2"] || sym_ex_vm2_flag) {
+        run_in_vm2(sandbox, code);
+    } else { //jsdom default emulation context
+        await run_in_jsdom_vm(sandbox, code);
     }
 }
 
