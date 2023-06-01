@@ -83,6 +83,14 @@ global.origin = S$.symbol("origin", "");
 
             "scripting.filesystemobject.fileexists": S$.symbol("scripting.filesystemobject.fileexists", false),
             "scripting.filesystemobject.folderexists": S$.symbol("scripting.filesystemobject.folderexists", false),
+
+
+            "wscript.proxy.buildversion": S$.symbol("wscript.proxy.buildversion", ""),
+            "wscript.proxy.interactive": S$.symbol("wscript.proxy.interactive", false),
+            "wscript.proxy.path": S$.symbol("wscript.proxy.path", ""),
+            "wscript.proxy.scriptfullname": S$.symbol("wscript.proxy.scriptfullname", ""),
+            "wscript.proxy.scriptname": S$.symbol("wscript.proxy.scriptname", ""),
+            "wscript.proxy.version": S$.symbol("wscript.proxy.version", ""),
         }
 
         if (activex_buffers_symbolize) {

@@ -8,6 +8,8 @@ let activex_requires = {
     "scripting.filesystemobject": require("./emulator/FileSystemObject")
 }
 
+let sym_vals = {};
+
 function makeWscriptProxy() {
     return new Proxy({
         arguments: new Proxy((n) => `${n}th argument`, {
@@ -37,36 +39,36 @@ function makeWscriptProxy() {
                 }
             },
         }),
-        buildversion: "1234", //symex
+        buildversion: sym_vals.hasOwnProperty("wscript.proxy.buildversion") ? sym_vals["wscript.proxy.buildversion"] : "1234", //symex
         fullname: "C:\\WINDOWS\\system32\\wscript.exe",
-        interactive: true, //symex
+        interactive: sym_vals.hasOwnProperty("wscript.proxy.interactive") ? sym_vals["wscript.proxy.interactive"] : true, //symex
         name: "wscript.exe",
-        path: "C:\\TestFolder\\", //symex
+        path: sym_vals.hasOwnProperty("wscript.proxy.path") ? sym_vals["wscript.proxy.path"] : "C:\\TestFolder\\", //symex
         //scriptfullname: "C:\\Documents and Settings\\User\\Desktop\\sample.js",
         //scriptfullname: "C:\\Users\\Sysop12\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\ons.jse",
-        scriptfullname: "C:\Users\\Sysop12\\AppData\\Roaming\\Microsoft\\Templates\\0.2638666.jse", //symex?
-        scriptname: "0.2638666.jse", //symex?
-        get stderr() {
-            run_by_extract_js ? lib.error("WScript.StdErr not implemented") : console.log("WScript.StdErr not implemented");
+        scriptfullname: sym_vals.hasOwnProperty("wscript.proxy.scriptfullname") ? sym_vals["wscript.proxy.scriptfullname"] : "C:\Users\\Sysop12\\AppData\\Roaming\\Microsoft\\Templates\\0.2638666.jse", //symex?
+        scriptname: sym_vals.hasOwnProperty("wscript.proxy.scriptname") ? sym_vals["wscript.proxy.scriptname"] : "0.2638666.jse", //symex?
+        stderr: () =>  {
+            lib.error("WScript.StdErr not implemented");
         },
-        get stdin() {
-            run_by_extract_js ? lib.error("WScript.StdIn not implemented") : console.log("WScript.StdIn not implemented");
+        stdin: () => {
+            lib.error("WScript.StdIn not implemented");
         },
-        get stdout() {
-            run_by_extract_js ? lib.error("WScript.StdOut not implemented") : console.log("WScript.StdOut not implemented");
+        stdout: () => {
+            lib.error("WScript.StdOut not implemented");
         },
-        version: "5.8", //symex
-        get connectobject() {
-            run_by_extract_js ? lib.error("WScript.ConnectObject not implemented") : console.log("WScript.ConnectObject not implemented");
+        version: sym_vals.hasOwnProperty("wscript.proxy.version") ? sym_vals["wscript.proxy.version"] : "5.8", //symex
+        connectobject: () => {
+            lib.error("WScript.ConnectObject not implemented");
         },
         createobject: ActiveXObject,
-        get disconnectobject() {
-            run_by_extract_js ? lib.error("WScript.DisconnectObject not implemented") : console.log("WScript.DisconnectObject not implemented");
+        disconnectobject: () => {
+            lib.error("WScript.DisconnectObject not implemented");
         },
         echo() {
         },
-        get getobject() {
-            run_by_extract_js ? lib.error("WScript.GetObject not implemented") : console.log("WScript.GetObject not implemented");
+        getobject: () => {
+            lib.error("WScript.GetObject not implemented");
         },
         quit() {
         },
@@ -143,6 +145,9 @@ function setSymexInput(symex_input) {
             activex_requires[o].setSymexInput(symex_input);
         }
     }
+
+    if (symex_input)
+        sym_vals = symex_input;
 }
 
 module.exports = {
