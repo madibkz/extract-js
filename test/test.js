@@ -800,4 +800,12 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: "default branch reached"`));
 		}, "--sym-exec --timeout 1000")
 	);
+	it(
+		"should symbolically track the specified location properties and set it correctly in the jsdom emulation",
+		run_symex_script_and_check_output("location.js", (stdout) => {
+			assert(stdout.includes(`Script output: "location.hostname branch"`));
+			assert(stdout.includes(`Script output: "location.hash branch"`));
+			assert(stdout.includes(`Script output: "default branch"`));
+		}, "--sym-exec --timeout 1000")
+	);
 });
