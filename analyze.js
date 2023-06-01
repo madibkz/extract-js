@@ -715,22 +715,26 @@ function rewrite_code_for_symex_script(code) {
             switch (val.type) {
                 case "ThisExpression":
                     return require("./patches/symexec/this.js")(val);
+                case "TryStatement":
+                    recursively_set_field(val.block, "symexectrytraversed", true);
+                    if (val.finalizer !== null)
+                        recursively_set_field(val.finalizer, "symexectrytraversed", true);
+                    return;
                 case "ExpressionStatement":
                 case "IfStatement":
                 case "SwitchStatement":
                 case "WhileStatement":
                 case "DoWhileStatement":
-                case "FunctionDeclaration":
                     return require("./patches/symexec/trycatchwrap.js")(val);
                 case "VariableDeclaration":
-                    if (val.symexecthistraversed) return val;
+                    if (val.symexectrytraversed) return val;
                     if (val.kind === "const") {
                         //transform
                         //const x = e1, y = e2;
                         //to =>
                         //const x = (() => {try{return e1} catch (e) {return null}})(), y = (() => {try{return e2} catch (e) {return null}})();
                         val.declarations.forEach(d => d.init = require("./patches/symexec/consttrycatch.js")(d.init));
-                        val.symexecthistraversed = true;
+                        val.symexectrytraversed = true;
                         return val;
                     }
                     let assignments = val.declarations.filter(d => d.init).map((d) => {
@@ -745,7 +749,7 @@ function rewrite_code_for_symex_script(code) {
                         }
                     });
                     val.declarations.forEach((d) => d.init = null);
-                    val.symexecthistraversed = true;
+                    val.symexectrytraversed = true;
                     //return [
                     //  var x, y, z, etc,
                     //  x = thingy,
@@ -757,11 +761,11 @@ function rewrite_code_for_symex_script(code) {
                     ];
                 case "ForStatement":
                     //prevents the trycatch wrapping of the init part of the for loop
-                    val.init ? val.init.symexecthistraversed = true : {};
+                    val.init ? val.init.symexectrytraversed = true : {};
                     return require("./patches/symexec/trycatchwrap.js")(val);
                 case "ForInStatement":
                     //prevents the trycatch wrapping of the init part of the forIn loop
-                    val.left ? val.left.symexecthistraversed = true : {};
+                    val.left ? val.left.symexectrytraversed = true : {};
                     return require("./patches/symexec/trycatchwrap.js")(val);
                 default:
                     break;

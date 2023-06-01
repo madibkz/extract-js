@@ -4,14 +4,14 @@
 //(() => { try { return e1 } catch (e) { return null } })()
 
 module.exports = (args) => {
-    if (args.symexecthistraversed === true) return;
-    args.symexecthistraversed = true;
+    if (args.symexectrytraversed === true) return;
+    args.symexectrytraversed = true;
     return {
         "type": "CallExpression",
-        symexecthistraversed: true,
+        symexectrytraversed: true,
         "callee": {
             "type": "ArrowFunctionExpression",
-            symexecthistraversed: true,
+            symexectrytraversed: true,
             "id": null,
             "expression": false,
             "generator": false,
@@ -19,13 +19,13 @@ module.exports = (args) => {
             "params": [],
             "body": {
                 "type": "BlockStatement",
-                symexecthistraversed: true,
+                symexectrytraversed: true,
                 "body": [
                     {
                         "type": "TryStatement",
                         "block": {
                             "type": "BlockStatement",
-                            symexecthistraversed: true,
+                            symexectrytraversed: true,
                             "body": [
                                 {
                                     "type": "ReturnStatement",
@@ -41,11 +41,11 @@ module.exports = (args) => {
                             },
                             "body": {
                                 "type": "BlockStatement",
-                                symexecthistraversed: true,
+                                symexectrytraversed: true,
                                 "body": [
                                     {
                                         "type": "ReturnStatement",
-                                        symexecthistraversed: true,
+                                        symexectrytraversed: true,
                                         "argument": {
                                             "type": "Literal",
                                             "value": null,
