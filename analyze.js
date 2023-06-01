@@ -1454,6 +1454,15 @@ function make_sandbox(symex_input = null) {
         logIOC: lib.logIOC,
         logUrl: lib.logUrl,
         logMultiexec: !multi_exec_enabled ? () => {} : (x, indent) => { //TODO: maybe reduce the duplication here
+            //(check for urls)
+            //https://stackoverflow.com/questions/3809401/what-is-a-good-regular-expression-to-match-a-url
+            let matched = x.match(/(https?:\/\/)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g)
+            matched ? matched.forEach(u => {
+                if (isURL(u) || isIP(u)) {
+                    lib.logUrl("UNKNOWNMETHOD", u, `FOUND IN logMultiexec CALL WITH VALUE: ${x}`);
+                }
+            }) : null;
+
             x = x.replace(/\n/gi, "\\n"); //remove newlines
             if (indent === 0) {
                 (multiexec_indent !== "" && multiexec_indent.length > 1) ?
