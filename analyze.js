@@ -103,7 +103,8 @@ if (default_enabled || multi_exec_enabled) {
     sym_exec_script = prepend_sym_exec_script(sym_exec_script);
 
     //write script to temp file
-    let tmp_path = "./tmpsymexscript.js";
+    let tmp_filename = "./tmpsymexscript";
+    let tmp_path = `${tmp_filename}.js`;
     fs.writeFileSync(tmp_path, sym_exec_script);
     //log script
     lib.logJS(sym_exec_script, `input_script_SYM_EX_INSTRUMENTED`, "", false, null, "INPUT SCRIPT INSTRUMENTED FOR SYMBOLIC EXECUTION", false);
@@ -117,6 +118,11 @@ if (default_enabled || multi_exec_enabled) {
             EXPOSE_JSON_PATH: expose_output_path
         }
     });
+
+    //delete tmpsymexscript.js and other tmp files from expose since we're done with it
+    fs.unlinkSync(tmp_path);
+    fs.unlinkSync(tmp_filename + "_jalangi_.js");
+    fs.unlinkSync(tmp_filename + "_jalangi_.json");
 
     //read/log info from results of expose
     fs.writeFileSync(directory + "expose_output.log", expose_result.stdout);
