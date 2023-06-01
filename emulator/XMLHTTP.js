@@ -47,7 +47,7 @@ function XMLHTTP() {
 				this.statustext = "OK";
 			}
 		    response = {
-				body: new Buffer(""),
+				body: Buffer.from(""),
 				headers: {},
 		    };
 		}

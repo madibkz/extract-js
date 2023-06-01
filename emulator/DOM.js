@@ -13,7 +13,7 @@ module.exports = function(name) {
 	    switch (name) {
 	    	case "nodetypedvalue":
 				if (target.dataType !== "bin.base64") return target.text;
-				return new Buffer(target.text, "base64").toString("utf8");
+				return Buffer.from(target.text, "base64").toString("utf8");
 	    	default:
 				if (name === "__safe_item_to_string") { //this is needed for jalangi/expose
 					return false;

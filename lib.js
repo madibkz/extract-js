@@ -163,7 +163,7 @@ module.exports = {
 		if (!doDownload) {
 			lib.info("Returning HTTP 404 (Not found); use --download to try to download the payload");
 			return {
-				body: new Buffer(""),
+				body: Buffer.from(""),
 				headers: {},
 			};
 		}
