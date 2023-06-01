@@ -13,6 +13,7 @@ let uniq_resources = {};
 let uniq_iocs = [];
 let uniq_urls = [];
 let uniq_active_urls = [];
+let uniq_cookies = [];
 
 function summarize(results_dir, file_copying = true) {
 
@@ -63,6 +64,8 @@ function summarize(results_dir, file_copying = true) {
         fs.writeFileSync(results_dir + "/summary/unique_urls.json", JSON.stringify(uniq_urls, null, "\t"));
     if (!(uniq_active_urls.length === 0))
         fs.writeFileSync(results_dir + "/summary/unique_active_urls.json", JSON.stringify(uniq_active_urls, null, "\t"));
+    if (!(uniq_cookies.length === 0))
+        fs.writeFileSync(results_dir + "/summary/unique_cookies.json", JSON.stringify(uniq_cookies, null, "\t"));
 
     //copy the snippet/resource files over to the folders
     if (file_copying && !is_empty_obj(uniq_snippets)) {
@@ -214,6 +217,32 @@ function extract_from_exec(path) {
             }
         }
     }
+
+    if (fs.existsSync(path + "/cookies.json")) {
+        let cookies = JSON.parse(fs.readFileSync(path + "/cookies.json", "utf8")).cookies;
+        for (let i = 0; i < cookies.length; i++) {
+            //for each cookie:
+                //for all unique cookies:
+                    //check if this cookie is equal to one of the current uniq_cookies
+                    //if there is one it is equal to, then stop searching, add it to the location field of the ioc
+                    //otherwise, add this ioc as a unique ioc
+
+            let matched_index = -1;
+            for (let j = 0; j < uniq_cookies.length; j++) {
+                if (cookies[i].key === uniq_cookies[j].key && cookies[i].value === uniq_cookies[j].value && is_equal(cookies[i].extensions, uniq_cookies[j].extensions)) {
+                    matched_index = j;
+                    break;
+                }
+            }
+
+            if (matched_index === -1) {
+                cookies[i].location = [path];
+                uniq_cookies.push(cookies[i])
+            } else {
+                uniq_cookies[matched_index].location.push(path);
+            }
+        }
+    }
 }
 
 //used to compare whether two ioc value objects are equal
@@ -250,6 +279,8 @@ function is_equal(val1, val2) {
         case "string":
         case "boolean":
             return val1 === val2;
+        case "undefined":
+            return typeof val2 === "undefined";
         default:
             return false;
     }
