@@ -153,20 +153,31 @@ function logIOC(type, value, description) {
 	fs.writeFileSync(path.join(directory, "IOC.json"), JSON.stringify(IOC, null, "\t"));
 }
 
-function saveUrl(url) {
+function saveUrl(url, method = "UNKNOWN", info_str = "UNKNOWN") {
 	latestUrl = url;
-	if (urls.indexOf(url) === -1) urls.push(url);
+	let info = `METHOD: ${method}. INFO: ${info_str}`
+
+	let search = urls.filter((u) => u.url === url);
+	if (JSON.stringify(search) !== "[]") { //url is alreadys in urls
+		search[0].info.push(info);
+	} else { //url is not in urls so make new url obj to put there
+		urls.push({
+			url: url,
+			info: [info],
+		});
+	}
 	fs.writeFileSync(path.join(directory, "urls.json"), JSON.stringify(urls, null, "\t"));
 }
 
-function logUrl(method, url) {
+function logUrl(method, url, info_str = "UNKNOWN") {
 	log("info", `FOUND URL: ${url} ${method}`);
-	saveUrl(url);
+	saveUrl(url, method, info_str);
 }
 
 function logDOMUrl(url, options, method = "GET", requested = true) {
-	log("info", `DOM: Resource at ${url} [${method}] was ${requested ? "requested from" : "found in"} DOM emulation${options.element ? " from element " + options.element.localName : ""}. Options: ${JSON.stringify(options)}`);
-	saveUrl(url);
+	let info = `DOM: Resource at ${url} [${method}] was ${requested ? "requested from" : "found in"} DOM emulation${options.element ? " from element " + options.element.localName : ""}. Options: ${JSON.stringify(options)}`;
+	log("info", info);
+	saveUrl(url, method, info);
 }
 
 function logJS(code, prefix = "", suffix = "", id = true, rewrite = null, as = "eval'd JS", deobfuscate = false) {

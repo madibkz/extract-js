@@ -1120,12 +1120,12 @@ describe("aggregator.js", function() {
 			let urls = parse_JSON_file("aggregator_urls.js", "unique_urls.json")
 			//check values
 			assert(urls.length === 2);
-			assert(urls[0][0] === "http://document1.php");
-			assert(urls[1][0] === "http://document2.php");
+			assert(urls[0].url === "http://document1.php");
+			assert(urls[1].url === "http://document2.php");
 			//check locations
-			assert(urls[0][1][0].includes("default"));
-			assert(urls[0][1][1].includes("multi-exec"));
-			assert(urls[1][1][0].includes("multi-exec"));
+			assert(urls[0].location[0].includes("default"));
+			assert(urls[0].location[1].includes("multi-exec"));
+			assert(urls[1].location[0].includes("multi-exec"));
 		}, "--default --multi-exec")
 	);
 	// //active urls

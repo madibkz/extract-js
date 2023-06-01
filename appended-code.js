@@ -22,7 +22,7 @@ for (varName in this) {
         // check that the string is a valid url
         if (varValue.trim() === "https://example.com") continue; //skip the default URL var that will always be logged
         if (isURL(varValue.trim()) || isIP(varValue.trim())) {
-            logUrl("UNKNOWNMETHOD", varValue);
+            logUrl("UNKNOWNMETHOD", varValue, "FOUND IN URL SEARCH AT THE END IN A VARIABLE CALLED: " + varName);
         }
     }
 }

@@ -95,14 +95,14 @@ function extract_from_exec(path) {
             let url = urls[i];
             let matched_index = -1;
             for (let j = 0; j < uniq_urls.length; j++) {
-                if (uniq_urls[j][0] === url) {
+                if (uniq_urls[j].url === url.url) {
                     matched_index = j;
                 }
             }
             if (matched_index === -1) {
-                uniq_urls.push([url, [path]]);
+                uniq_urls.push({url: url.url, location: [path]});
             } else {
-                uniq_urls[matched_index][1].push(path);
+                uniq_urls[matched_index].location.push(path);
             }
         }
     }
