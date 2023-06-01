@@ -1151,6 +1151,28 @@ describe("multi-exec", function() {
 	);
 
 	it(
+		"should limit while loop executions with --multi-exec-loop-limit",
+		run_multiexec_script_and_check_output("looplimitwhile.js", (stdout) => {
+			assert(stdout.includes(`75`));
+		}, "--multi-exec --multi-exec-loop-limit 76")
+	);
+
+	it(
+		"should limit do while loop executions with --multi-exec-loop-limit",
+		run_multiexec_script_and_check_output("looplimitdowhile.js", (stdout) => {
+			assert(stdout.includes(`49`));
+		}, "--multi-exec --multi-exec-loop-limit 50")
+	);
+
+	it(
+		"should limit for loop executions with --multi-exec-loop-limit",
+		run_multiexec_script_and_check_output("looplimitfor.js", (stdout) => {
+			assert(stdout.includes(`5`));
+			assert(!stdout.includes(`6`));
+		}, "--multi-exec --multi-exec-loop-limit 5")
+	);
+
+	it(
 		"should find and log url that was in logMultiexec call",
 		run_multiexec_script_and_check_output("urlinreturn.js", (stdout) => {
 			assert(stdout.includes(`[info] FOUND URL: https://www.google.com | METHOD: UNKNOWNMETHOD | INFO: FOUND IN logMultiexec CALL`));

@@ -88,6 +88,11 @@
             "description": "Do not modify loops so that their body statements are forced to execute in multi-execution mode."
         },
         {
+            "name": "multi-exec-loop-limit",
+            "type": "Number",
+            "description": "Applies a rewrite to for, while, do while where the loop is limited to the number supplied to this flag."
+        },
+        {
             "name": "no-multi-exec-events",
             "type": "Boolean",
             "description": "Do not force event execution in multi-execution mode."
