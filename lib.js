@@ -178,7 +178,7 @@ function saveUrl(url, method = "UNKNOWN", info_str = "UNKNOWN") {
 
 	let search = urls.filter((u) => u.url === url);
 	if (JSON.stringify(search) !== "[]") { //url is alreadys in urls
-		search[0].info.push(info);
+		JSON.stringify(search[0].info.filter((i) => i === info)) === "[]" ? search[0].info.push(info) : null;
 	} else { //url is not in urls so make new url obj to put there
 		urls.push({
 			url: url,
