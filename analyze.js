@@ -911,7 +911,8 @@ function return_node_proxy_or_value(prefix_str, t, n, function_ctx, args = null)
     if (logging_state)
         lib.turnOnLogDOM();
     if (function_ctx && argv["multi-exec"] && n === "addEventListener") {
-        force_event_multi_exec(`${prefix_str}.${n}.${args[0]} (code in snippet ${maybe_snippet_name})`, t, args[0]);
+        if (!(maybe_snippet_name === undefined && `${prefix_str}.${n}.${args[0]}` === "window.document.addEventListener.load"))
+            force_event_multi_exec(`${prefix_str}.${n}.${args[0]} (code in snippet ${maybe_snippet_name})`, t, args[0]);
     }
     return result;
 }
