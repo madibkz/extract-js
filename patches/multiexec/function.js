@@ -78,6 +78,10 @@ module.exports = (args) => {
                             "type": "Literal",
                             "value": ")",
                         }
+                    },
+                    {
+                        "type": "Literal",
+                        "value": 2,
                     }
                 ],
                 "optional": false
@@ -141,6 +145,10 @@ module.exports = (args) => {
                                 "type": "Literal",
                                 "value": ") with no return value",
                             }
+                        },
+                        {
+                            "type": "Literal",
+                            "value": 0,
                         }
                     ],
                     "optional": false
@@ -229,6 +237,10 @@ module.exports = (args) => {
                                                     }
                                                 }
                                             },
+                                            {
+                                                "type": "Literal",
+                                                "value": 0,
+                                            }
                                         ],
                                         "optional": false
                                     }
@@ -296,6 +308,10 @@ module.exports = (args) => {
                                                 "type": "Literal",
                                                 "value": ") with no return value",
                                             }
+                                        },
+                                        {
+                                            "type": "Literal",
+                                            "value": 0,
                                         }
                                     ],
                                     "optional": false
@@ -323,13 +339,21 @@ module.exports = (args) => {
                                             },
                                             "operator": "+",
                                             "right": val.argument
+                                    },
+                                    {
+                                        "type": "Literal",
+                                        "value": 1,
                                     }
-                            ] :
+                                ] :
                             [
                                 {
                                     "type": "Literal",
                                     "value": `Skipped return`,
                                 },
+                                {
+                                    "type": "Literal",
+                                    "value": 1,
+                                }
                             ],
                             "optional": false
                         }

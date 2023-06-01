@@ -23,63 +23,93 @@ turns
 
 module.exports = (args) => {
     args.block.body.unshift({
-        "type": "BlockStatement",
-        "body": [
-            {
-                "type": "ExpressionStatement",
-                "expression": {
-                    "type": "CallExpression",
-                    "callee": {
-                        "type": "Identifier",
-                        "name": "logMultiexec"
-                    },
-                    "arguments": [
-                        {
-                            "type": "Literal",
-                            "value": `Entered try statement`,
-                        }
-                    ]
-                }
+        "type": "ExpressionStatement",
+        "expression": {
+            "type": "CallExpression",
+            "callee": {
+                "type": "Identifier",
+                "name": "logMultiexec"
             },
-        ]
+            "arguments": [
+                {
+                    "type": "Literal",
+                    "value": `Entered try statement`,
+                },
+                {
+                    "type": "Literal",
+                    "value": 2,
+                }
+            ]
+        }
+    })
+    args.block.body.push({
+        "type": "ExpressionStatement",
+        "expression": {
+            "type": "CallExpression",
+            "callee": {
+                "type": "Identifier",
+                "name": "logMultiexec"
+            },
+            "arguments": [
+                {
+                    "type": "Literal",
+                    "value": ``,
+                },
+                {
+                    "type": "Literal",
+                    "value": 0,
+                }
+            ]
+        }
     })
     args.block.body.push({
         "type": "ThrowStatement",
-        "start": 211,
-        "end": 267,
         "argument": {
             "type": "Literal",
-                "start": 217,
-                "end": 267,
                 "value": "Throwing error on purpose to trigger catch block",
-                "raw": "\"Throwing error on purpose to trigger catch block\""
         }
     })
     args.handler.body.body.unshift({
-        "type": "BlockStatement",
-        "body": [
-            {
-                "type": "ExpressionStatement",
-                "expression": {
-                    "type": "CallExpression",
-                    "callee": {
-                        "type": "Identifier",
-                        "name": "logMultiexec"
-                    },
-                    "arguments": [
-                        {
-                            "type": "Literal",
-                            "value": `Entered catch clause`,
-                        }
-                    ]
-                }
+        "type": "ExpressionStatement",
+        "expression": {
+            "type": "CallExpression",
+            "callee": {
+                "type": "Identifier",
+                "name": "logMultiexec"
             },
-        ]
+            "arguments": [
+                {
+                    "type": "Literal",
+                    "value": `Entered catch clause`,
+                },
+                {
+                    "type": "Literal",
+                    "value": 2,
+                }
+            ]
+        }
+    })
+    args.handler.body.body.push({
+        "type": "ExpressionStatement",
+        "expression": {
+            "type": "CallExpression",
+            "callee": {
+                "type": "Identifier",
+                "name": "logMultiexec"
+            },
+            "arguments": [
+                {
+                    "type": "Literal",
+                    "value": `Exited catch clause`,
+                },
+                {
+                    "type": "Literal",
+                    "value": 0,
+                }
+            ]
+        }
     })
     args.finalizer ? args.finalizer.body.unshift({
-        "type": "BlockStatement",
-        "body": [
-            {
                 "type": "ExpressionStatement",
                 "expression": {
                     "type": "CallExpression",
@@ -90,33 +120,34 @@ module.exports = (args) => {
                     "arguments": [
                         {
                             "type": "Literal",
-                            "value": `Entered finalizer clause`,
+                            "value": `Entered finally clause`,
+                        },
+                        {
+                            "type": "Literal",
+                            "value": 2,
                         }
                     ]
                 }
-            },
-        ]
     }) : "";
     args.finalizer ? args.finalizer.body.push({
-        "type": "BlockStatement",
-        "body": [
-            {
-                "type": "ExpressionStatement",
-                "expression": {
-                    "type": "CallExpression",
-                    "callee": {
-                        "type": "Identifier",
-                        "name": "logMultiexec"
-                    },
-                    "arguments": [
-                        {
-                            "type": "Literal",
-                            "value": `Exited try statement`,
-                        }
-                    ]
-                }
+        "type": "ExpressionStatement",
+        "expression": {
+            "type": "CallExpression",
+            "callee": {
+                "type": "Identifier",
+                "name": "logMultiexec"
             },
-        ]
+            "arguments": [
+                {
+                    "type": "Literal",
+                    "value": `Exited finally clause`,
+                },
+                {
+                    "type": "Literal",
+                    "value": 0,
+                }
+            ]
+        }
     }) : "";
     return {
         autogenerated: true,

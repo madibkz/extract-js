@@ -36,6 +36,10 @@ module.exports = (args) => ({
                     {
                         "type": "Literal",
                         "value": `Entering switch (${escodegen.generate(args.discriminant)})`,
+                    },
+                    {
+                        "type": "Literal",
+                        "value": 2,
                     }
                 ]
             }
@@ -56,13 +60,36 @@ module.exports = (args) => ({
                             {
                                 "type": "Literal",
                                 "value": switchcase.test ? `case (${escodegen.generate(switchcase.test)}):` : "default:",
+                            },
+                            {
+                                "type": "Literal",
+                                "value": 2,
                             }
                         ]
                     }
                 },
-            ].concat(switchcase.consequent)
+            ].concat(switchcase.consequent).concat({
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "CallExpression",
+                        "callee": {
+                        "type": "Identifier",
+                            "name": "logMultiexec"
+                    },
+                    "arguments": [
+                        {
+                            "type": "Literal",
+                            "value": "",
+                        },
+                        {
+                            "type": "Literal",
+                            "value": 0,
+                        }
+                    ]
+                },
+            })
         }
-    }),
+        }),
     ).concat({
         "type": "ExpressionStatement",
         "expression": {
@@ -75,6 +102,10 @@ module.exports = (args) => ({
                 {
                     "type": "Literal",
                     "value": `Exited switch (${escodegen.generate(args.discriminant)})`,
+                },
+                {
+                    "type": "Literal",
+                    "value": 0,
                 }
             ]
         }

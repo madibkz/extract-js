@@ -466,6 +466,7 @@ var wscript_proxy = new Proxy({
     }
 });
 
+let multiexec_indent = "";
 
 const sandbox = {
     saveAs : function(data, fname) {
@@ -491,7 +492,25 @@ const sandbox = {
     //Blob : Blob,
     logJS: lib.logJS,
     logIOC: lib.logIOC,
-    logMultiexec: (x) => lib.info("MULTI-EXEC: " + x),
+    logMultiexec: (x, indent) => {
+        if (indent === 0) {
+            multiexec_indent !== "" ?
+                multiexec_indent = multiexec_indent.slice(0, multiexec_indent.length - 2) :
+                multiexec_indent = "";
+            if (x !== "") {
+                lib.info("MULTI-EXEC:    " + multiexec_indent + x)
+            }
+        } else if (indent === 1) {
+            if (x !== "") {
+                lib.info("MULTI-EXEC:    " + multiexec_indent + x)
+            }
+        } else if (indent === 2) {
+            if (x !== "") {
+                lib.info("MULTI-EXEC:    " + multiexec_indent + x)
+            }
+            multiexec_indent += "  ";
+        }
+    },
     ActiveXObject,
     dom,
     alert: (x) => {},
@@ -500,7 +519,7 @@ const sandbox = {
     },
     console: {
         //		log: console.log.bind(console),
-        log: (x) => lib.info("Script output: " + JSON.stringify(x)),
+        log: (x) => lib.info("Script output: " + (multi_exec_enabled ? multiexec_indent : "") + JSON.stringify(x)),
     },
     Enumerator: require("./emulator/Enumerator"),
     GetObject: require("./emulator/WMI").GetObject,
