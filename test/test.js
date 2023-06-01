@@ -3,12 +3,17 @@
 const assert = require("assert");
 const exec = require("child_process").exec;
 const fs = require("fs");
+const fsextra = require("fs-extra");
 const tmpDir = require("os").tmpdir();
-const boxDir = `${__dirname}/..`;
-const boxCommand = `node ${boxDir}/run.js`;
+const extractDir = `${__dirname}/..`;
+const testScriptsDir = `${extractDir}/test_scripts/safe_scripts/`;
+const testResultsFolder = "test_out";
+const runExtractCommand = `node ${extractDir}/run.js --output-dir ${testResultsFolder}`;
+
+fsextra.emptyDirSync(`${extractDir}/test_out`)
 
 describe("package.json", function() {
-	const source = fs.readFileSync(`${boxDir}/package.json`, "UTF8");
+	const source = fs.readFileSync(`${extractDir}/package.json`, "UTF8");
 	const config = JSON.parse(source);
 	it("should include a extract-js executable", function() {
 		assert("bin" in config);
@@ -18,13 +23,14 @@ describe("package.json", function() {
 });
 
 describe("run.js", function() {
+	this.timeout(10000);
 	it("should exist", function() {
 		assert.doesNotThrow(function() {
-			fs.accessSync(`${boxDir}/run.js`, fs.F_OK);
+			fs.accessSync(`${extractDir}/run.js`, fs.F_OK);
 		});
 	});
 	it("should display a help text when no files are passed", function(done) {
-		exec(boxCommand, function(err, stdout) {
+		exec(`node ${extractDir}/run.js`, function(err, stdout) {
 			assert.strictEqual(err, null);
 			assert(stdout.includes("Usage:"));
 			done();
@@ -33,11 +39,288 @@ describe("run.js", function() {
 	it("should run on a blank script", function(done) {
 		const path = `${tmpDir}/blank.js`;
 		fs.writeFileSync(`${tmpDir}/blank.js`, "");
-		exec(`${boxCommand} ${path}`, done);
+		exec(`${runExtractCommand} ${path}`, done);
 	});
-	it("should run on all files in a folder");
-	it("should accept several paths");
+	it("should run on all files in a folder", function(done) {
+		const folder = `${tmpDir}/all_files_folder`;
+		try {
+			fs.mkdirSync(folder);
+			fs.writeFileSync(`${folder}/blank.js`, "");
+			fs.writeFileSync(`${folder}/blank2.js`, "");
+		} catch (e) {
+			//they might already be made
+			if (!e.toString().includes("already exists")) {
+				throw e;
+			}
+		}
+		exec(`${runExtractCommand} ${folder}`, done);
+	});
+	it("should accept several paths", function(done) {
+		const folder = `${tmpDir}/several_paths_folder`;
+		try {
+			fs.mkdirSync(folder);
+			fs.writeFileSync(`${folder}/blank.js`, "");
+			fs.writeFileSync(`${folder}/blank2.js`, "");
+		} catch (e) {
+			//they might already be made
+			if (!e.toString().includes("already exists")) {
+				throw e;
+			}
+		}
+		exec(`${runExtractCommand} ${folder}/blank.js ${folder}/blank2.js`, done);
+	});
+	//TODO: more run.js tests to do with the other modes and aggregator
 });
 
-describe("analyze.js", function() {
+describe("DOM", function() {
+	this.timeout(10000);
+
+	let domScriptsDir = `${testScriptsDir}/dom/`;
+
+	//assuming that the test is only run once within this test suite
+	let getTestResultsFolder = (nameOfTest) => `${extractDir}/${testResultsFolder}/${nameOfTest}.results/`;;
+
+	let run_and_check_output = (testScript, checkOutput, extraArgsStr = "") => function (done) {
+		const path = `${domScriptsDir}/${testScript}`;
+		exec(`${runExtractCommand} ${extraArgsStr} ${path}`, function(err, stdout) {
+			assert.strictEqual(err, null);
+			checkOutput(stdout);
+			done();
+		});
+	};
+
+	//DOM_LOG.JSON TESTS
+	it(
+		"should not create a dom_logs.json file if there are no DOM logs",
+		run_and_check_output("no_dom_logs_test.js", (stdout) => {
+			let path_to_dom_logs = `${getTestResultsFolder("no_dom_logs_test.js")}default/dom_logs.json`;
+			assert(!fs.existsSync(path_to_dom_logs));
+		})
+	);
+	it(
+		"should create a dom_logs.json file if there are DOM logs",
+		run_and_check_output("dom_logs_test.js", (stdout) => {
+			let path_to_dom_logs = `${getTestResultsFolder("dom_logs_test.js")}default/dom_logs.json`;
+			assert(fs.existsSync(path_to_dom_logs));
+		})
+	);
+
+	//TODO: REFACTOR: maybe reduce the duplication more in these logging tests
+	//DOM LOGGING TESTS
+	it(
+		"should log that alert was called",
+		run_and_check_output("alert_test.js", (stdout) => {
+			assert(stdout.includes(`called alert(ay`));
+		})
+	);
+
+	it(
+		"should log that btoa and atob was called",
+		run_and_check_output("btoa_atob_test.js", (stdout) => {
+			assert(stdout.includes(`Code called btoa(test`));
+			assert(stdout.includes(`Script output: "dGVzdA=="`));
+			assert(stdout.includes(`Code called atob(dGVzdA==`));
+			assert(stdout.includes(`Script output: "test"`));
+		})
+	);
+
+	it(
+		"should log document property reads, writes and function calls",
+		run_and_check_output("document.js", (stdout) => {
+			assert(stdout.includes(`Code accessed window.document.referrer`));
+			assert(stdout.includes(`Code modified window.document.title with value test_title`));
+			assert(stdout.includes(`Code called window.document.createElement(div, )`));
+		})
+	);
+
+	it(
+		"should log location property reads",
+		run_and_check_output("location_test.js", (stdout) => {
+			assert(stdout.includes(`Code accessed window.location.toString`));
+			assert(stdout.includes(`Code accessed window.location.href`));
+		})
+	);
+
+	it(
+		"should log navigator property reads and function calls",
+		run_and_check_output("navigator_read_val.js", (stdout) => {
+			assert(stdout.includes(`Code accessed window.navigator.userAgent`));
+			assert(stdout.includes(`Code called window.navigator.javaEnabled()`));
+		})
+	);
+
+	it(
+		"should log that window.origin was accessed",
+		run_and_check_output("origin.js", (stdout) => {
+			assert(stdout.includes(`accessed window.origin`));
+			assert(stdout.includes(`Script output: "https://example.org"`));
+		})
+	);
+
+	it(
+		"should show that window's read only properties cannot be modified",
+		run_and_check_output("readonly_window_test.js", (stdout) => {
+			assert(stdout.includes(`Script output: true`));
+		})
+	);
+
+	it(
+		"should log screen's property accesses and modifications",
+		run_and_check_output("screen_test.js", (stdout) => {
+			assert(stdout.includes(`Code accessed window.screen.colorDepth`));
+			assert(stdout.includes(`Script output: 24`));
+			assert(stdout.includes(`Code modified window.screen.colorDepth with value 3`));
+		})
+	);
+
+	it(
+		"should log history's property accesses",
+		run_and_check_output("history_test.js", (stdout) => {
+			assert(stdout.includes(`Code accessed window.history.length`));
+		})
+	);
+
+	it(
+		"should log window.scroll being called (it is one of the unimplemented functions I added)",
+		run_and_check_output("scroll_test.js", (stdout) => {
+			assert(stdout.includes(`Code called scroll(10, 20, )`));
+		})
+	);
+
+	it(
+		"should log setTimeout and setInterval calls",
+		run_and_check_output("set_timeout_interval_test.js", (stdout) => {
+			assert(stdout.includes(
+`[info] DOM: Code called setTimeout(100, () => (fun => {
+    return function () {
+        if (fun == eval)
+            arguments[0] = rewrite(arguments[0], true);
+        return fun.apply(console, arguments);
+    };
+})(console.log)('setTimeout function'), )
+[info] DOM: Code called setInterval(100, () => (fun => {
+    return function () {
+        if (fun == eval)
+            arguments[0] = rewrite(arguments[0], true);
+        return fun.apply(console, arguments);
+    };
+})(console.log)('setInterval function'), )`
+			));
+		})
+	);
+
+	it(
+		"should log when one of window's properties is modified",
+		run_and_check_output("window_edit_name.js", (stdout) => {
+			assert(stdout.includes(`Code modified window.name with value test`));
+			assert(stdout.includes(`Script output: "test"`));
+		})
+	);
+
+	it(
+		"should log the accesses/writes to a HTMLElement/Node that is returned from a document function",
+		run_and_check_output("create_element_log_test.js", (stdout) => {
+			assert(stdout.includes(`Code called window.document.createElement(p, )`));
+			assert(stdout.includes(`Code modified window.document.createElement(p).innerHTML with value TEST TEXT`));
+		})
+	);
+
+	it(
+		"should log the accesses/writes to HTMLElements/Nodes that were returned from a document function returning a HTMLCollection/NodeList",
+		run_and_check_output("document_body_children_log_test.js", (stdout) => {
+			assert(stdout.includes(`Code called window.document.body.children[0].toString()`));
+			assert(stdout.includes(`Code modified window.document.body.children[0].innerHTML with value TEST`));
+		})
+	);
+
+
+	//cookies
+	it(
+		"should log in dom_logs.json/stdout when document.cookie is read or a cookie is added",
+		run_and_check_output("cookie_read_and_add_test.js", (stdout) => {
+			assert(stdout.includes(`Code called cookieJar.getCookieStringSync(https://example.org/, [object Object], )`));
+			assert(stdout.includes(`Code called cookieJar.setCookieSync(username=garfield;, https://example.org/, [object Object], )`));
+		})
+	);
+	//cookie log file
+	it(
+		"should not create a cookies.json file if there are no cookies",
+		run_and_check_output("no_cookies_test.js", (stdout) => {
+			let path_to_cookies_json = `${getTestResultsFolder("no_cookies_test.js")}default/cookies.json`;
+			assert(!fs.existsSync(path_to_cookies_json));
+		})
+	);
+	it(
+		"should create a cookies.json file if there are cookies with correct cookie values",
+		run_and_check_output("cookie_create_test.js", (stdout) => {
+			let path_to_cookies_json = `${getTestResultsFolder("cookie_create_test.js")}default/cookies.json`;
+			assert(fs.existsSync(path_to_cookies_json));
+			let cookie = JSON.parse(fs.readFileSync(path_to_cookies_json, "utf8")).cookies[0];
+			assert(cookie.key === "test");
+			assert(cookie.value === "value");
+			assert(cookie.extensions[0] === "something=another thing");
+		})
+	);
+	//cookie-file option
+	it(
+		"should initialize the cookieJar with the cookies specified in the cookie-file argument",
+		run_and_check_output("cookie_initialized_test.js", (stdout) => {
+			let path_to_cookies_json = `${getTestResultsFolder("cookie_initialized_test.js")}default/cookies.json`;
+			let cookies = JSON.parse(fs.readFileSync(path_to_cookies_json, "utf8")).cookies;
+			assert(cookies[0].key === "test");
+			assert(cookies[0].value === "first");
+			assert(cookies[1].key === "test2");
+			assert(cookies[1].value === "second");
+			assert(cookies[1].extensions[0] === "extra=val");
+		}, `--cookie-file ${domScriptsDir}/cookie_initialized_test.txt`)
+	);
+
+	//storage
+	["local", "session"].forEach(t => {
+		//storage proxy logging
+		it(
+			`should log in dom_logs.json/stdout when ${t}Storage properties are read or called`,
+			run_and_check_output(`${t}Storage_proxy_logging.js`, (stdout) => {
+				assert(stdout.includes(`Code called window.${t}Storage.setItem(key1, value1, )`));
+				assert(stdout.includes(`Code called window.${t}Storage.getItem(key1, )`));
+				assert(stdout.includes(`Script output: "value1"`));
+				assert(stdout.includes(`Code called window.${t}Storage.removeItem(key1, )`));
+				assert(stdout.includes(`Code called window.${t}Storage.clear()`));
+			})
+		);
+		//storage.json
+		it(
+			`should not create a ${t}Storage.json file if there is no ${t}Storage`,
+			run_and_check_output(`no_${t}Storage.js`, (stdout) => {
+				let path_to_storage = `${getTestResultsFolder(`no_${t}Storage.js`)}default/${t}Storage.json`;
+				assert(!fs.existsSync(path_to_storage));
+			})
+		);
+		it(
+			`should create a ${t}Storage.json file if there is ${t}Storage with the correct values`,
+			run_and_check_output(`save_${t}Storage.js`, (stdout) => {
+				let path_to_storage = `${getTestResultsFolder(`save_${t}Storage.js`)}default/${t}Storage.json`;
+				assert(fs.existsSync(path_to_storage));
+				let storage = JSON.parse(fs.readFileSync(path_to_storage, "utf8"));
+				assert(storage.key1 === "value1");
+			})
+		);
+		//--${t}/session-storage-file
+		it(
+			`should initialize the ${t}Storage with the values specified in the ${t}-storage-file argument`,
+			run_and_check_output(`initial_${t}Storage.js`, (stdout) => {
+				let path_to_storage = `${getTestResultsFolder(`initial_${t}Storage.js`)}default/${t}Storage.json`;
+				let storage = JSON.parse(fs.readFileSync(path_to_storage, "utf8"));
+				assert(storage["something.test"] === "{\"test\":{\"pass\":true,\"version\":\"21.41.14\"}}");
+				assert(storage["another"] === "value");
+			}, `--${t}-storage-file ${domScriptsDir}/initial_storage.txt`)
+		);
+	});
+
+
+	//scripts - remember should log in img xss, normal add script element, set_timeout/interval
+	//events??
+
 });
+
+//aggregator test

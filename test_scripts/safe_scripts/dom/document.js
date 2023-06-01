@@ -1,7 +1,3 @@
 console.log(document.referrer);
-document.cookie = "set=value;";
-console.log(document.cookie);
+document.title = "test_title";
 console.log(document.createElement("div"));
-
-console.log(document.location);
-console.log(document.location.href);

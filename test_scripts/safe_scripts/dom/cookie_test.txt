@@ -1,2 +1,0 @@
-nobody=knows;
-red=rose ; not=close;

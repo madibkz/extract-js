@@ -605,7 +605,9 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window) {
     delete window.screen;
     window.screen = make_log_dom_proxy(og_screen, "window.screen");
 
-    window.history = make_log_dom_proxy(window.history, "window.history");
+    let og_history = window.history;
+    delete window.history;
+    window.history = make_log_dom_proxy(og_history, "window.history");
 
     let og_loc = window.location;
     let loc_proxy = make_log_dom_proxy(og_loc, "window.location");
@@ -759,7 +761,7 @@ async function run_in_jsdom_vm(sandbox, code) {
     let one_cookie = argv.cookie ? "document.cookie = \"" + argv.cookie + "\";" : "";
 
     let multiple_cookies = "";
-    try_to_set_from_file("cookie-file", () => {multiple_cookies = fs.readFileSync(argv["cookie-file"], "utf8").split("\n").map((c) => `document.cookie = \"${c}\";`).join("\n");})
+    try_to_set_from_file("cookie-file", () => {multiple_cookies = fs.readFileSync(argv["cookie-file"], "utf8").trim().split("\n").map((c) => `document.cookie = \"${c}\";`).join("\n");})
 
     let set_storage = (file_arg, name) => {
         let storageJSON = JSON.parse(fs.readFileSync(argv[file_arg], "utf8"));
@@ -1000,7 +1002,15 @@ function make_sandbox(symex_input = null) {
         },
         console: {
             //		log: console.log.bind(console),
-            log: (x) => lib.info("Script output: " + (multi_exec_enabled ? multiexec_indent : "") + JSON.stringify(x)),
+            log: (x) => {
+                let x_str;
+                try {
+                    x_str = JSON.stringify(x);
+                } catch (e) {
+                    x_str = x.toString();
+                }
+                lib.info("Script output: " + (multi_exec_enabled ? multiexec_indent : "") + x_str);
+            },
         },
         Enumerator: require("./emulator/Enumerator"),
         GetObject: wmi.GetObject,
