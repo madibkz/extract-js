@@ -94,7 +94,7 @@
 		} else if (typeof originalSource === "string") {
 			source = `/* Function arguments: ${JSON.stringify(args)} */\n` + rewrite(originalSource);
 		} else {
-			// What the fuck JS
+			// Wtf JS
 			// For some reason, IIFEs result in a call to Function.
 			return new _OriginalFunction(...args, source);
 		}

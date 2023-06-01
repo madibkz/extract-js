@@ -8,7 +8,7 @@ for (varName in this) {
         // check that the string is valid JS syntax
         try {
             const script = new vm.Script(varValue);
-            logJS(varValue)
+            logJS(varValue, "", "_str", true, null, "javascript string found in var " + varName)
             // Automatically evaling all JS can result in the program state getting polluted.
             //eval(varValue)
         }

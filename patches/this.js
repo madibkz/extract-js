@@ -3,7 +3,7 @@ foo.bar(baz) becomes:
 
 (fun => {
 	return function() {
-		if (fun == eval) logJS(arguments[0]);
+		if (fun == eval) rewrite(arguments[0], true);
 		return fun.apply(foo, arguments)
 	}
 })(foo.bar)(baz)
@@ -54,7 +54,7 @@ module.exports = (foo, foobar) => ({
 											"type": "CallExpression",
 											"callee": {
 												"type": "Identifier",
-												"name": "logJS",
+												"name": "rewrite",
 											},
 											"arguments": [
 												{
@@ -69,6 +69,10 @@ module.exports = (foo, foobar) => ({
 														"value": 0,
 														"raw": "0",
 													},
+												},
+												{
+													"type": "Literal",
+													"value": true,
 												},
 											],
 										},

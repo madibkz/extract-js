@@ -189,10 +189,20 @@ module.exports = {
 		fs.writeFileSync(path.join(directory, "resources.json"), JSON.stringify(resources, null, "\t"));
 	},
 	logSnippet,
-	logJS: function(code) {
-		const filename = uuid.v4() + ".js";
-		log("verb", `Code saved to ${filename}`);
-		logSnippet(filename, {as: "eval'd JS"}, code);
+	logJS: function(code, prefix = "", suffix = "", id = true, rewrite = null, as = "eval'd JS",) {
+		const genid = uuid.v4();
+		const filename = prefix + (id ? genid : "") + suffix +  ".js";
+		if (rewrite) {
+			log("verb", `Code saved to ${filename}`);
+			logSnippet(filename, {as: as}, code);
+
+			const filename2 = prefix + (id ? genid : "") + suffix + "_instrumented" + ".js";
+			log("verb", `Code saved to ${filename2}`);
+			logSnippet(filename2, {as: as}, rewrite);
+		} else {
+			log("verb", `Code saved to ${filename}`);
+			logSnippet(filename, {as: as}, code);
+		}
 		return code; // Helps with tail call optimization
 	},
 	logIOC,
