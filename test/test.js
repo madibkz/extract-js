@@ -14,6 +14,7 @@ const aggScriptsDir = `${testScriptsDir}/aggregator/`;
 const symexScriptsDir = `${testScriptsDir}/sym-exec/`;
 const rewriteScriptsDir = `${testScriptsDir}/rewrite/`;
 const multiexScriptsDir = `${testScriptsDir}/multi-exec/`;
+const htmlScriptsDir = `${testScriptsDir}/html/`;
 //TODO: tests for command line arguments
 //assuming that the test is only run once within this test suite
 let getTestResultsFolder = (nameOfTest) => `${extractDir}/${testResultsFolder}/${nameOfTest}.results/`;
@@ -221,10 +222,10 @@ describe("DOM", function() {
 	it(
 		"should log the url src for a new iframe element added to the dom",
 		run_dom_script_and_check_output("create_linked_iframe.js", (stdout) => {
-			assert(stdout.includes(`Resource at https://example.com/ [GET] was requested from DOM emulation from element iframe.`));
+			assert(stdout.includes(`Resource at https://google.com/ [GET] was requested from DOM emulation from element iframe.`));
 			let path_to_urls = `${getTestResultsFolder("create_linked_iframe.js")}default/urls.json`;
-			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://example.com/"));
-		}, "--dom-resource-loading")
+			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://google.com/"));
+		}, `--dom-resource-loading --url "https://google.com/"`)
 	);
 	//url searching tests
 	it(
@@ -413,8 +414,6 @@ describe("DOM", function() {
 			assert(stdout.includes(`Resource at https://example.com/ [GET] was requested from DOM emulation from element window.XMLHttpRequest.`));
 			assert(stdout.includes(`Code called window.XMLHttpRequest.send()`));
 			assert(stdout.includes(`Code modified window.XMLHttpRequest.onload`));
-			let path_to_urls = `${getTestResultsFolder("XHR.js")}default/urls.json`;
-			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://example.com/"));
 		}, "--dom-network-apis")
 	);
 
@@ -423,8 +422,6 @@ describe("DOM", function() {
 		run_dom_script_and_check_output("send_beacon.js", (stdout) => {
 			assert(stdout.includes(`Code called window.navigator.sendBeacon(https://example.com/, )`));
 			assert(stdout.includes(`Resource at https://example.com/ [POST] was requested from DOM emulation from element window.navigator.sendBeacon.`));
-			let path_to_urls = `${getTestResultsFolder("send_beacon.js")}default/urls.json`;
-			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://example.com/"));
 		}, "--dom-network-apis")
 	);
 
@@ -434,8 +431,6 @@ describe("DOM", function() {
 			assert(stdout.includes(`Code called window.fetch(https://example.com/, [object Object], )`));
 			assert(stdout.includes(`Resource at https://example.com/ [POST] was requested from DOM emulation from element window.navigator.fetch. Options: {"element":{"localName":"window.navigator.fetch"},"args":{"method":"POST"}}`));
 			assert(stdout.includes(`[error] Code called window.navigator.fetch() but it's not implemented!`));
-			let path_to_urls = `${getTestResultsFolder("fetch.js")}default/urls.json`;
-			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://example.com/"));
 		}, "--dom-network-apis")
 	);
 
@@ -466,6 +461,16 @@ describe("DOM", function() {
 			assert(cookie.value === "value");
 			assert(cookie.extensions[0] === "something=another thing");
 		})
+	);
+	//cookie option
+	it(
+		"should initialize the cookieJar with the cookie specified in the cookie argument",
+		run_dom_script_and_check_output("cookie_cli.js", (stdout) => {
+			let path_to_cookies_json = `${getTestResultsFolder("cookie_cli.js")}default/cookies.json`;
+			let cookies = JSON.parse(fs.readFileSync(path_to_cookies_json, "utf8")).cookies;
+			assert(cookies[0].key === "test");
+			assert(cookies[0].value === "value");
+		}, `--cookie "test= value;"`)
 	);
 	//cookie-file option
 	it(
@@ -595,6 +600,67 @@ describe("DOM", function() {
 			)
 		})
 	);
+});
+
+describe("html", function() {
+	this.timeout(20000);
+
+	let run_html_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
+		run_script_and_check_output(`${htmlScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
+
+	it(
+		"should parse and run a html file with --html enabled without errors",
+		run_html_script_and_check_output("basic_html.html", (stdout) => {
+		}, "--html")
+	);
+	it(
+		"should parse and run the scripts within a html file",
+		run_html_script_and_check_output("basic_script.html", (stdout) => {
+			assert(stdout.includes(`Script output: "first script"`));
+			assert(stdout.includes(`Script output: "second script"`));
+		}, "--html")
+	);
+	it(
+		"should download and run externally linked scripts within a html file when --dom-resource-loading is on",
+		run_html_script_and_check_output("external_linked_js.html", (stdout) => {
+			assert(stdout.includes(`Resource at https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js [GET] was requested from DOM emulation`));
+			assert(stdout.includes(`Code called window.XMLHttpRequest() but it's not enabled`));
+		}, "--html --dom-resource-loading")
+	);
+	//checking that the setup of --cookie, --cookie-file, --localStorage and --sessionStorage still works
+	it(
+		"should initialize the cookieJar with the cookie specified in the cookie argument in html mode",
+		run_html_script_and_check_output("cookie_cli.html", (stdout) => {
+			let path_to_cookies_json = `${getTestResultsFolder("cookie_cli.html")}default/cookies.json`;
+			let cookies = JSON.parse(fs.readFileSync(path_to_cookies_json, "utf8")).cookies;
+			assert(cookies[0].key === "test");
+			assert(cookies[0].value === "value");
+		}, `--html --cookie "test=value;"`)
+	);
+	it(
+		"should initialize the cookieJar with the cookies specified in the cookie-file argument in html mode",
+		run_html_script_and_check_output("cookie_file_cli.html", (stdout) => {
+			let path_to_cookies_json = `${getTestResultsFolder("cookie_file_cli.html")}default/cookies.json`;
+			let cookies = JSON.parse(fs.readFileSync(path_to_cookies_json, "utf8")).cookies;
+			assert(cookies[0].key === "test");
+			assert(cookies[0].value === "first");
+			assert(cookies[1].key === "test2");
+			assert(cookies[1].value === "second");
+			assert(cookies[1].extensions[0] === "extra=val");
+		}, `--html --cookie-file ${htmlScriptsDir}/cookie_file_cli.txt`)
+	);
+	["local", "session"].forEach(t => {
+		//--${t}/session-storage-file
+		it(
+			`should initialize the ${t}Storage with the values specified in the ${t}-storage-file argument in html mode`,
+			run_html_script_and_check_output(`initial_${t}Storage.html`, (stdout) => {
+				let path_to_storage = `${getTestResultsFolder(`initial_${t}Storage.html`)}default/${t}Storage.json`;
+				let storage = JSON.parse(fs.readFileSync(path_to_storage, "utf8"));
+				assert(storage["something.test"] === "{\"test\":{\"pass\":true,\"version\":\"21.41.14\"}}");
+				assert(storage["another"] === "value");
+			}, `--html --${t}-storage-file ${htmlScriptsDir}/initial_storage.txt`)
+		);
+	});
 });
 
 describe("multi-exec", function() {

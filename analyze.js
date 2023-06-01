@@ -22,7 +22,9 @@ const mode = process.argv[4];
 const default_enabled = mode === "default";
 const multi_exec_enabled = mode === "multi-exec";
 const sym_exec_enabled = mode === "sym-exec";
+const html_mode = argv["html"];
 const dont_set_in_jsdom_from_sandbox = ["setInterval", "setTimeout", "alert", "JSON", /*"console",*/ "location", "navigator", "document", "origin", "self", "window"];
+let listOfKnownScripts = [];
 
 class LoggingResourceLoader extends jsdom.ResourceLoader {
     fetch(url, options) {
@@ -63,7 +65,7 @@ if (argv.encoding) {
 //READ CODE
 let code = iconv.decode(sampleBuffer, encoding);
 
-if (code.match("<job") || code.match("<script")) { // The sample may actually be a .wsf, which is <job><script>..</script><script>..</script></job>.
+if (!html_mode && (code.match("<job") || code.match("<script"))) { // The sample may actually be a .wsf, which is <job><script>..</script><script>..</script></job>.
     lib.debug("Sample seems to be WSF");
     code = code.replace(/<\??\/?\w+( [\w=\"\']*)*\??>/g, ""); // XML tags
     code = code.replace(/<!\[CDATA\[/g, "");
@@ -73,23 +75,24 @@ if (code.match("<job") || code.match("<script")) { // The sample may actually be
 let numberOfExecutedSnippets = 1;
 const originalInputScript = code;
 
-lib.logJS(originalInputScript, `${numberOfExecutedSnippets}_input_script`, "", false, null, "INPUT SCRIPT", true);
-
 //*INSTRUMENTING CODE*
-code = rewrite(code);
-
-code = prepend_users_prepend_code(code);
-
-// prepend patch code
-code = fs.readFileSync(path.join(__dirname, "patch.js"), "utf8") + code;
-code = "ReferenceError.prototype.toString = function() { return \"[object Error]\";};\n\n" + code;
-
-// append more code
-code += "\n\n" + fs.readFileSync(path.join(__dirname, "appended-code.js"));
-
+if (!html_mode) {
+    lib.logJS(originalInputScript, `${numberOfExecutedSnippets}_input_script`, "", false, null, "INPUT SCRIPT", true);
+    code = rewrite(code);
+    code = prepend_users_prepend_code(code);
+    // prepend patch code
+    code = fs.readFileSync(path.join(__dirname, "patch.js"), "utf8") + code;
+    code = "ReferenceError.prototype.toString = function() { return \"[object Error]\";};\n\n" + code;
+    // append more code
+    code += "\n\n" + fs.readFileSync(path.join(__dirname, "appended-code.js"));
+    lib.logJS(code, `${numberOfExecutedSnippets}_input_script_INSTRUMENTED`, "", false, null, "INPUT SCRIPT", false);
+} else {
+    //https://stackoverflow.com/questions/16369642/javascript-how-to-use-a-regular-expression-to-remove-blank-lines-from-a-string
+    code = code.trim().replace(/^\s*\n/gm, "");
+    lib.logHTML(code, "the initial HTML inputted for analysis");
+    code = instrument_html(code);
+}
 //*END INSTRUMENTING CODE*
-
-lib.logJS(code, `${numberOfExecutedSnippets}_input_script_INSTRUMENTED`, "", false, null, "INPUT SCRIPT", false);
 
 Array.prototype.Count = function() {
     return this.length;
@@ -211,6 +214,35 @@ function prepend_sym_exec_script(sym_exec_script) {
     sym_exec_script = prepend_sym_script + "\n\n//END OF PATCHING\n" + sym_exec_script;
 
     return sym_exec_script;
+}
+
+function instrument_html(code) {
+    //for each script/piece of javascript in the html code, it is logged and replaced with rewrite(*SCRIPT*)
+    const dom = new JSDOM(code, { includeNodeLocations: true });
+
+    let scripts = dom.window.document.scripts;
+    for (let s = 0; s < scripts.length; s++) {
+        if (scripts[s].innerHTML.trim() !== "")
+            lib.logJS(scripts[s].innerHTML, `${numberOfExecutedSnippets++}_input_script`, "", false, scripts[s].innerHTML = rewrite(scripts[s].innerHTML), `FOUND IN INPUT HTML AT CHAR ${dom.nodeLocation(scripts[s]).startOffset}`, true);
+    }
+
+    //prepend patch code
+    let prepend_script = dom.window.document.createElement("script");
+    prepend_script.type = "text/javascript";
+    let patch_txt = fs.readFileSync(path.join(__dirname, "patch.js"), "utf8");
+    listOfKnownScripts.push(patch_txt);
+    prepend_script.innerHTML = patch_txt;
+    dom.window.document.head.prepend(prepend_script);
+
+    //append patch code
+    let append_script = dom.window.document.createElement("script");
+    append_script.type = "text/javascript";
+    let append_txt = fs.readFileSync(path.join(__dirname, "appended-code.js"));
+    listOfKnownScripts.push(append_txt);
+    append_script.innerHTML = append_txt;
+    dom.window.document.body.appendChild(append_script);
+
+    return dom.serialize();
 }
 
 function rewrite(code) {
@@ -924,7 +956,7 @@ function return_node_proxy_or_value(prefix_str, t, n, function_ctx, args = null)
     let logging_state = lib.domLoggingOn();
     if (logging_state)
         lib.turnOffLogDOM();
-    if (typeof result !== "undefined") {
+    if (typeof result !== "undefined" && result !== null) {
         if (result.nodeType) {
             let p = create_node_proxy(result, prefix_str, n, function_ctx, args);
             if (logging_state)
@@ -1035,9 +1067,22 @@ async function run_in_jsdom_vm(sandbox, code, symex_input = null) {
                 ...((!(!sym_exec_enabled && argv["user-agent"]) && !(sym_exec_enabled && symex_input && symex_input["navigator.userAgent"])) && {userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"}),
             });
 
-            let dom_str = `<html><head></head><body><script>${initialLocalStorage}${initialSessionStorage}${one_cookie}${multiple_cookies}${code}</script></body></html>`;
-
-            lib.logHTML(dom_str, "the initial HTML set for the jsdom emulation");
+            let dom_str;
+            let setup_str = `${initialLocalStorage}${initialSessionStorage}${one_cookie}${multiple_cookies}`;
+            listOfKnownScripts.push(setup_str);
+            if (!html_mode) {
+                dom_str = `<html><head></head><body><script>${setup_str}${code}</script></body></html>`;
+                lib.logHTML(dom_str, "the initial HTML set for the jsdom emulation");
+            } else {
+                //add the setup_str as a script in <head>
+                if (setup_str.trim() === "") {
+                    dom_str = code;
+                } else {
+                    let index_of_head = code.indexOf("<head>") + 6;
+                    dom_str = code.substring(0, index_of_head) + `<script>${setup_str}</script>` + code.substring(index_of_head);
+                }
+                lib.logHTML(dom_str, "the initial HTML instrumented for the jsdom emulation");
+            }
 
             //Keep in mind this runs asynchronous
             let dom = new JSDOM(dom_str, {
@@ -1064,7 +1109,7 @@ async function run_in_jsdom_vm(sandbox, code, symex_input = null) {
             lib.logBrowserStorage(dom.window.localStorage, dom.window.sessionStorage);
 
             dom.window.document.scripts.forEach((x) => {
-                lib.checkThatScriptHasBeenLogged(x.innerHTML);
+                lib.checkThatScriptHasBeenLogged(x.innerHTML, listOfKnownScripts);
             })
 
             lib.logHTML(dom.serialize(), "the end HTML from the jsdom emulation once it was finished");
@@ -1129,6 +1174,7 @@ function run_in_vm2(sandbox, code) {
 
 async function run_emulation(code, sandbox, symex_input = null) {
     if (argv["vm2"]) {
+        if (argv["html"]) throw new Error("Cannot run --vm2 and --html at the same time.");
         run_in_vm2(sandbox, code);
     } else { //jsdom default emulation context
         await run_in_jsdom_vm(sandbox, code, symex_input);
