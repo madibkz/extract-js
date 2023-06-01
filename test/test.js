@@ -11,7 +11,7 @@ const testResultsFolder = "test_out";
 const runExtractCommand = `node ${extractDir}/run.js --output-dir ${testResultsFolder}`;
 const domScriptsDir = `${testScriptsDir}/dom/`;
 const aggScriptsDir = `${testScriptsDir}/aggregator/`;
-
+//TODO: tests for command line arguments
 //assuming that the test is only run once within this test suite
 let getTestResultsFolder = (nameOfTest) => `${extractDir}/${testResultsFolder}/${nameOfTest}.results/`;
 let run_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") => function (done) {
@@ -309,6 +309,13 @@ describe("DOM", function() {
 				[]
 			)
 		})
+	);
+
+	it(
+		"should limit the length of logged values in lib.logDOM when --limit-dom-log-length is on",
+		run_dom_script_and_check_output("limit-dom-log-length.js", (stdout) => {
+			assert(stdout.includes(`Code modified window.document.onclick with value () => 'this is a really long s...`));
+		}, "--limit-dom-log-length")
 	);
 
 
