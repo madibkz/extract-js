@@ -116,8 +116,8 @@ const outputDir = argv["output-dir"] || "./";
 tasks.forEach(({filepath, filename}) => {
 	const results_dir = get_results_dir(filename);
 	if (argv["multi-exec"]) {
-		q.push(cb => analyze(results_dir, filepath, filename, cb))
-		q.push(cb => analyze(results_dir, filepath, filename, cb, true))
+		q.push(cb => analyze(results_dir, filepath, filename, cb, false, false))
+		q.push(cb => analyze(results_dir, filepath, filename, cb, true, false))
 	} else {
 		q.push(cb => analyze(results_dir, filepath, filename, cb))
 	}
@@ -145,7 +145,7 @@ function get_results_dir(filename) {
 	return directory;
 }
 
-function analyze(directory, filepath, filename, cb, multi_exec = false) {
+function analyze(directory, filepath, filename, cb, multi_exec = false, logToStdout = true) {
 
 	multi_exec ? directory += "multi-exec" : directory += "default";
 	fs.mkdirSync(directory);
@@ -153,10 +153,11 @@ function analyze(directory, filepath, filename, cb, multi_exec = false) {
 	fs.mkdirSync(directory + "/snippets");
 	directory += "/";
 
-	const worker = cp.fork(path.join(__dirname, "analyze"), [filepath, directory, /*multi_exec?*/ multi_exec, ...options]);
+	console.log(`(${multi_exec ? "MULTI-EXECUTION MODE" : "DEFAULT MODE"}) Starting thread for analyzing ${filename}...`);
+	const worker = cp.fork(path.join(__dirname, "analyze"), [filepath, directory, /*multi_exec?*/ multi_exec, logToStdout, ...options]);
 
 	const killTimeout = setTimeout(() => {
-		console.log(`Analysis for ${filename} timed out.`);
+		console.log(`(${multi_exec ? "MULTI-EXECUTION MODE" : "DEFAULT MODE"}) Analysis for ${filename} timed out.`);
 		if (!argv.preprocess)
 			console.log("Hint: if the script is heavily obfuscated, --preprocess --unsafe-preprocess can speed up the emulation.");
 		worker.kill();
@@ -183,7 +184,7 @@ function analyze(directory, filepath, filename, cb, multi_exec = false) {
 			process.exit(5);
 		}
 		if (code === 1) {
-			console.log(`
+			console.log(`(${multi_exec ? "MULTI-EXECUTION MODE" : "DEFAULT MODE"}) Analysis for ${filename} failed.
  * If the error is about a weird \"Unknown ActiveXObject\", try --no-kill.
  * Otherwise, report a bug at https://github.com/CapacitorSet/box-js/issues/ .`);
 		}
@@ -194,8 +195,8 @@ function analyze(directory, filepath, filename, cb, multi_exec = false) {
 	});
 
 	worker.on("error", function(err) {
-		console.log("error!");
-		console.log(err);
+		console.log(`(${multi_exec ? "MULTI-EXECUTION MODE" : "DEFAULT MODE"}) Analysis for ${filename} has an error:
+					${err}`);
 		clearTimeout(killTimeout);
 		worker.kill();
 		if (argv.debug) process.exit(1);
@@ -203,6 +204,7 @@ function analyze(directory, filepath, filename, cb, multi_exec = false) {
 	});
 
 	process.on("exit", () => {
+		console.log(`(${multi_exec ? "MULTI-EXECUTION MODE" : "DEFAULT MODE"}) Analysis for ${filename} exited`);
 		worker.kill();
 		cb();
 	});
