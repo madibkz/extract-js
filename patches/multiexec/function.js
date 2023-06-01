@@ -33,66 +33,8 @@ const traverse = require("../../utils.js").traverse;
 module.exports = (args) => {
     args.body.body.unshift(
         {
-            "type": "CallExpression",
-            "callee": {
-                "type": "Identifier",
-                "name": "logMultiexec"
-            },
-            "arguments": [
-                {
-                    "type": "BinaryExpression",
-                    "left": {
-                        "type": "BinaryExpression",
-                        "left": {
-                            "type": "Literal",
-                            "value": `Entered function ${args.id.name}(`,
-                        },
-                        "operator": "+",
-                        "right": {
-                            "type": "CallExpression",
-                            "callee": {
-                                "type": "MemberExpression",
-                                "object": {
-                                    "type": "Identifier",
-                                    "name": "Array"
-                                },
-                                "property": {
-                                    "type": "Identifier",
-                                    "name": "from"
-                                },
-                                "computed": false,
-                                "optional": false
-                            },
-                            "arguments": [
-                                {
-                                    "type": "Identifier",
-                                    "name": "arguments"
-                                }
-                            ],
-                            "optional": false
-                        }
-                    },
-                    "operator": "+",
-                    "right": {
-                        "type": "Literal",
-                        "value": ")",
-                    }
-                }
-            ],
-            "optional": false
-        }
-    );
-    let return_count = 0;
-    traverse(args.body.body, function(key, val) {
-        if (!val) return;
-        if (val.type == "ReturnStatement") {
-            val.return_count = return_count;
-            return_count++;
-        }
-    });
-    if (return_count == 0) {
-        args.body.body.push(
-            {
+            "type": "ExpressionStatement",
+            "expression": {
                 "type": "CallExpression",
                 "callee": {
                     "type": "Identifier",
@@ -105,7 +47,7 @@ module.exports = (args) => {
                             "type": "BinaryExpression",
                             "left": {
                                 "type": "Literal",
-                                "value": `Exited function ${args.id.name}(`,
+                                "value": `Entered function ${args.id.name}(`,
                             },
                             "operator": "+",
                             "right": {
@@ -135,11 +77,75 @@ module.exports = (args) => {
                         "operator": "+",
                         "right": {
                             "type": "Literal",
-                            "value": ") with no return value",
+                            "value": ")",
                         }
                     }
                 ],
                 "optional": false
+            }
+        }
+    );
+    let return_count = 0;
+    traverse(args.body.body, function(key, val) {
+        if (!val) return;
+        if (val.type == "ReturnStatement") {
+            val.return_count = return_count;
+            return_count++;
+        }
+    });
+    if (return_count == 0) {
+        args.body.body.push(
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "CallExpression",
+                    "callee": {
+                        "type": "Identifier",
+                        "name": "logMultiexec"
+                    },
+                    "arguments": [
+                        {
+                            "type": "BinaryExpression",
+                            "left": {
+                                "type": "BinaryExpression",
+                                "left": {
+                                    "type": "Literal",
+                                    "value": `Exited function ${args.id.name}(`,
+                                },
+                                "operator": "+",
+                                "right": {
+                                    "type": "CallExpression",
+                                    "callee": {
+                                        "type": "MemberExpression",
+                                        "object": {
+                                            "type": "Identifier",
+                                            "name": "Array"
+                                        },
+                                        "property": {
+                                            "type": "Identifier",
+                                            "name": "from"
+                                        },
+                                        "computed": false,
+                                        "optional": false
+                                    },
+                                    "arguments": [
+                                        {
+                                            "type": "Identifier",
+                                            "name": "arguments"
+                                        }
+                                    ],
+                                    "optional": false
+                                }
+                            },
+                            "operator": "+",
+                            "right": {
+                                "type": "Literal",
+                                "value": ") with no return value",
+                            }
+                        }
+                    ],
+                    "optional": false
+                }
             }
         );
     } else {
@@ -245,53 +251,56 @@ module.exports = (args) => {
                         "type": "BlockStatement",
                         "body": [
                             {
-                                "type": "CallExpression",
-                                "callee": {
-                                    "type": "Identifier",
-                                    "name": "logMultiexec"
-                                },
-                                "arguments": [
-                                    {
-                                        "type": "BinaryExpression",
-                                        "left": {
+                                "type": "ExpressionStatement",
+                                "expression": {
+                                    "type": "CallExpression",
+                                    "callee": {
+                                        "type": "Identifier",
+                                        "name": "logMultiexec"
+                                    },
+                                    "arguments": [
+                                        {
                                             "type": "BinaryExpression",
                                             "left": {
-                                                "type": "Literal",
-                                                "value": `Exited function ${args.id.name}(`,
+                                                "type": "BinaryExpression",
+                                                "left": {
+                                                    "type": "Literal",
+                                                    "value": `Exited function ${args.id.name}(`,
+                                                },
+                                                "operator": "+",
+                                                "right": {
+                                                    "type": "CallExpression",
+                                                    "callee": {
+                                                        "type": "MemberExpression",
+                                                        "object": {
+                                                            "type": "Identifier",
+                                                            "name": "Array"
+                                                        },
+                                                        "property": {
+                                                            "type": "Identifier",
+                                                            "name": "from"
+                                                        },
+                                                        "computed": false,
+                                                        "optional": false
+                                                    },
+                                                    "arguments": [
+                                                        {
+                                                            "type": "Identifier",
+                                                            "name": "arguments"
+                                                        }
+                                                    ],
+                                                    "optional": false
+                                                }
                                             },
                                             "operator": "+",
                                             "right": {
-                                                "type": "CallExpression",
-                                                "callee": {
-                                                    "type": "MemberExpression",
-                                                    "object": {
-                                                        "type": "Identifier",
-                                                        "name": "Array"
-                                                    },
-                                                    "property": {
-                                                        "type": "Identifier",
-                                                        "name": "from"
-                                                    },
-                                                    "computed": false,
-                                                    "optional": false
-                                                },
-                                                "arguments": [
-                                                    {
-                                                        "type": "Identifier",
-                                                        "name": "arguments"
-                                                    }
-                                                ],
-                                                "optional": false
+                                                "type": "Literal",
+                                                "value": ") with no return value",
                                             }
-                                        },
-                                        "operator": "+",
-                                        "right": {
-                                            "type": "Literal",
-                                            "value": ") with no return value",
                                         }
-                                    }
-                                ],
-                                "optional": false
+                                    ],
+                                    "optional": false
+                                }
                             },
                             val
                         ]
