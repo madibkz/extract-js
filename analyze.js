@@ -148,7 +148,7 @@ if (default_enabled || multi_exec_enabled) {
     sym_exec_script = prepend_sym_exec_script(sym_exec_script);
 
     //write script to temp file
-    let tmp_filename = "./tmpsymexscript";
+    let tmp_filename = path.join(__dirname, "./tmpsymexscript");
     let tmp_path = `${tmp_filename}.js`;
     fs.writeFileSync(tmp_path, sym_exec_script);
     //log script
@@ -156,7 +156,7 @@ if (default_enabled || multi_exec_enabled) {
 
     let expose_output_path = path.resolve(directory + "expose_out.json");
     //run expose on temp file
-    let expose_result = child_process.spawnSync(`./ExpoSE/expoSE`, [tmp_path], {
+    let expose_result = child_process.spawnSync(`${path.join(__dirname, "ExpoSE/expoSE")}`, [tmp_path], {
         shell: true,
         env: {
             //EXPOSE_PRINT_COVERAGE: 1, TODO: format print coverage to show coverage in txt file format
@@ -233,7 +233,7 @@ function is_default_sym_exec_value(o) {
 }
 
 function prepend_sym_exec_script(sym_exec_script) {
-    let prepend_sym_script = fs.readFileSync("./patches/symexec/prepend_sym_script.js", "utf-8");
+    let prepend_sym_script = fs.readFileSync(path.join(__dirname, "./patches/symexec/prepend_sym_script.js"), "utf-8");
 
     if (argv["no-sym-exec-dom"])
         prepend_sym_script = prepend_sym_script.replace(/const dom_symbolize = true/, "const dom_symbolize = false");
