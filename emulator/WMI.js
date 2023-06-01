@@ -1,4 +1,4 @@
-const lib = require("../lib");
+const lib = process.argv[1].endsWith("extract-js/analyze") ? require("../lib") : require("../symbol-lib");
 const fs = require("fs");
 const path = require("path");
 

@@ -38,7 +38,7 @@ function getDefaultFields() {
         //mediaSession: S$.symbol('navigator.mediaSession', {}), needs MediaSession object //
         onLine: true,
         //presentation: S$.symbol('navigator.presentation', {}), //presentation object needed
-        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36",
+        userAgent: "Mozilla/5.0 (Windows; MSIE 6.0; Windows NT 6.0)",
         webdriver: false,
         //xr: S$.symbol('navigator.xr', {}), //needs XRsystem object
 //NON-STANDARD PROPERTIES:
