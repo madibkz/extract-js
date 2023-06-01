@@ -103,4 +103,5 @@
 	}
 	Function.toString = () => _OriginalFunction.toString()
 	Function.valueOf  = () => _OriginalFunction.valueOf()
+	Function.toString(); //Fixes some error with function not being reloaded for the first function run after patches
 /* End patches */

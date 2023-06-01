@@ -114,10 +114,12 @@ else
 // queue the input files for analysis
 const outputDir = argv["output-dir"] || "./";
 tasks.forEach(({filepath, filename}) => {
+	const results_dir = get_results_dir(filename);
 	if (argv["multi-exec"]) {
-		q.push(cb => analyze_multi_exec(filepath, filename, cb))
+		q.push(cb => analyze(results_dir, filepath, filename, cb))
+		q.push(cb => analyze(results_dir, filepath, filename, cb, true))
 	} else {
-		q.push(cb => analyze(filepath, filename, cb))
+		q.push(cb => analyze(results_dir, filepath, filename, cb))
 	}
 });
 
@@ -131,78 +133,7 @@ q.on("success", () => {
 
 q.start();
 
-function analyze(filepath, filename, cb) {
-
-    let directory = path.join(outputDir, filename + ".results");
-
-    // Find a suitable directory name
-    for (let i = 1; fs.existsSync(directory); i++)
-	directory = path.join(outputDir, filename + "." + i + ".results");
-
-    fs.mkdirSync(directory);
-    directory += "/"; // For ease of use
-    const worker = cp.fork(path.join(__dirname, "analyze"), [filepath, directory, ...options]);
-
-    const killTimeout = setTimeout(() => {
-	console.log(`Analysis for ${filename} timed out.`);
-	if (!argv.preprocess)
-	    console.log("Hint: if the script is heavily obfuscated, --preprocess --unsafe-preprocess can speed up the emulation.");
-	worker.kill();
-	if (argv.debug) process.exit(2);
-	cb();
-    }, timeout * 1000);
-
-    let expectShellError = false;
-
-    worker.on("message", function(message) {
-	switch (message) {
-	case "expect-shell-error":
-	    expectShellError = true;
-	    break;
-	case "no-expect-shell-error":
-	    expectShellError = false;
-	    break;
-	}
-    });
-
-    worker.on("exit", function(code) {
-	if (argv.debug && expectShellError) {
-	    // Use the appropriate exit code, as documented in the README
-	    process.exit(5);
-	}
-	if (code === 1) {
-	    console.log(`
- * If the error is about a weird \"Unknown ActiveXObject\", try --no-kill.
- * Otherwise, report a bug at https://github.com/CapacitorSet/box-js/issues/ .`);
-	}
-	clearTimeout(killTimeout);
-	worker.kill();
-	if (argv.debug) process.exit(code);
-	cb();
-    });
-
-    worker.on("error", function(err) {
-	console.log("error!");
-	console.log(err);
-	clearTimeout(killTimeout);
-	worker.kill();
-	if (argv.debug) process.exit(1);
-	cb();
-    });
-
-    process.on("exit", () => {
-	worker.kill();
-	cb();
-    });
-    process.on("SIGINT", () => {
-	worker.kill();
-	cb();
-    });
-    // process.on('uncaughtException', () => worker.kill());
-}
-//TODO: refactor duplication of analyze functions here
-function analyze_multi_exec(filepath, filename, cb) {
-
+function get_results_dir(filename) {
 	let directory = path.join(outputDir, filename + ".results");
 
 	// Find a suitable directory name
@@ -211,7 +142,16 @@ function analyze_multi_exec(filepath, filename, cb) {
 
 	fs.mkdirSync(directory);
 	directory += "/"; // For ease of use
-	const worker = cp.fork(path.join(__dirname, "analyze_multi_exec"), [filepath, directory, ...options]);
+	return directory;
+}
+
+function analyze(directory, filepath, filename, cb, multi_exec = false) {
+
+	multi_exec ? directory += "multi-exec" : directory += "default";
+	fs.mkdirSync(directory);
+	directory += "/";
+
+	const worker = cp.fork(path.join(__dirname, "analyze"), [filepath, directory, /*multi_exec?*/ multi_exec, ...options]);
 
 	const killTimeout = setTimeout(() => {
 		console.log(`Analysis for ${filename} timed out.`);
