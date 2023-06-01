@@ -170,7 +170,7 @@ function saveUrl(url, method = "UNKNOWN", info_str = "UNKNOWN") {
 }
 
 function logUrl(method, url, info_str = "UNKNOWN") {
-	log("info", `FOUND URL: ${url} ${method}`);
+	log("info", `FOUND URL: ${url} | METHOD: ${method} | INFO: ${info_str}`);
 	saveUrl(url, method, info_str);
 }
 

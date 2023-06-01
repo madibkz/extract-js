@@ -13,6 +13,8 @@ const jsdom = require("jsdom");
 const JSDOM = jsdom.JSDOM;
 const traverse = require("./utils.js").traverse
 const logged_dom_vals = require("./logged_dom_values");
+const isURL = require("validator").isURL;
+const isIP = require("validator").isIP;
 
 const filename = process.argv[2];
 const directory = process.argv[3];
@@ -506,6 +508,17 @@ cc decoder.c -o decoder
             //console.log(JSON.stringify(tree));
 
             // console.log(JSON.stringify(tree, null, "\t"));
+
+            const false_flags = ["MSXML2.XMLHTTP"];
+            traverse(tree, function(key, val) {
+                if (!val) return;
+                if (val.type === "Literal" && typeof val.value === "string" && !false_flags.includes(val.value.trim())) {
+                    if (isURL(val.value.trim()) || isIP(val.value.trim())) {
+                        lib.logUrl("UNKNOWN", val.value.trim(), `FOUND IN STRING LITERAL WHILE TRAVERSING THE TREE PRE-EMULATION (START CHAR: ${val.start} END CHAR: ${val.end})`);
+                    }
+                }
+            });
+
             code = escodegen.generate(tree);
 
             // console.log("rewritten code is: ", code)
