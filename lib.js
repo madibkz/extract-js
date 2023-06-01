@@ -273,8 +273,15 @@ module.exports = {
 	logSnippet,
 	logJS,
 	logDOM: function(property, write = false, write_val = null, func = false, args = null) {
+		function argsToString() {
+			let str = "(";
+			for (let arg of args) {
+				str += JSON.stringify(arg) + ", ";
+			}
+			return str + ")";
+		}
 		if (logDom) {
-			let dom_str = `DOM: Code ${write ? "modified" : (func ? "called" : "accessed") } ${property}${func ? "()" : ""}${write_val ? " with value " + write_val : ""}${args ? " with arguments " + JSON.stringify(args) : ""}`;
+			let dom_str = `DOM: Code ${write ? "modified" : (func ? "called" : "accessed") } ${property}${func ? "()" : ""}${write_val ? " with value " + write_val : ""}${args ? " with arguments " + argsToString() : ""}`;
 			if (property === "setTimeout" || property === "setInterval") {
 				logJS(String(args[1]), `${property === "setTimeout" ? ++numberOfSetTimeoutCalls : ++numberOfSetIntervalCalls}_${property}_`, "", true, null, `${property} call`, true);
 			}

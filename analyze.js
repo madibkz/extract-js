@@ -796,6 +796,57 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                             }
                         })
 
+                        window._localStorage = new Proxy(window._localStorage, {
+                            get: (target, name) => {
+                                if (name in target) {
+                                    if (typeof name !== "symbol") {
+                                        if (typeof target[name] === "function") { //log function calls with arguments
+                                            return function () {
+                                                lib.logDOM(`window.localStorage.${name}`,false, null, true, arguments);
+                                                return target[name].apply(target, arguments);
+                                            }
+                                        }
+                                        lib.logDOM(`window.localStorage.${name}`);
+                                    }
+                                    return target[name];
+                                }
+                                return undefined;
+                            },
+                            set: function (target, name, val) {
+                                if (name in target) {
+                                    lib.logDOM(`window.localStorage.${name}`, true, val);
+                                    target[name] = val;
+                                    return true;
+                                }
+                                return false;
+                            },
+                        });
+
+                        window._sessionStorage = new Proxy(window._sessionStorage, {
+                            get: (target, name) => {
+                                if (name in target) {
+                                    if (typeof name !== "symbol") {
+                                        if (typeof target[name] === "function") { //log function calls with arguments
+                                            return function () {
+                                                lib.logDOM(`window.sessionStorage.${name}`,false, null, true, arguments);
+                                                return target[name].apply(target, arguments);
+                                            }
+                                        }
+                                        lib.logDOM(`window.sessionStorage.${name}`);
+                                    }
+                                    return target[name];
+                                }
+                                return undefined;
+                            },
+                            set: function (target, name, val) {
+                                if (name in target) {
+                                    lib.logDOM(`window.sessionStorage.${name}`, true, val);
+                                    target[name] = val;
+                                    return true;
+                                }
+                                return false;
+                            },
+                        });
 
                         let nav_proxy = new Proxy(window.navigator, {
                             get: (target, name) => {
