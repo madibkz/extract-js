@@ -767,7 +767,7 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
                 if (argv["multi-exec"] && (method[0] === "setTimeout" || method[0] === "setInterval")) {
                     currentLogMultiexec(`FORCING EXECUTION OF ${method[0]}((code in snippet ${maybe_snippet_name}), ${arguments[1].toString()}).`, 1)
                     if (typeof arguments[0] === "string") {
-                        window.eval(sandbox.rewrite(arguments[0]));
+                        sandbox.evalUntilPasses(sandbox.rewrite(arguments[0]), window.eval);
                     } else {
                         arguments[0]();
                     }
