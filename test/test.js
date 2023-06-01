@@ -1173,9 +1173,9 @@ describe("aggregator.js", function() {
 	);
 	//iocs
 	it(
-		"should aggregate iocs into summary/unique_IOCs.json with locations",
+		"should aggregate iocs into summary/unique_activex_IOCs.json with locations",
 		run_agg_script_and_check_output("aggregator_iocs.js", (stdout) => {
-			let iocs = parse_JSON_file("aggregator_iocs.js", "unique_IOCs.json")
+			let iocs = parse_JSON_file("aggregator_iocs.js", "unique_activex_IOCs.json")
 
 			assert(iocs[0].type === "UrlFetch");
 			assert(iocs[0].value.method === "GET");
