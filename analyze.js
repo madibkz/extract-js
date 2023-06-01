@@ -720,17 +720,28 @@ function create_node_proxy(node, prefix, node_name, from_func_call = false, args
 function return_node_proxy_or_value(prefix_str, t, n, function_ctx, args = null) {
     lib.logDOM(`${prefix_str}.${n.toString()}`, false, null, function_ctx, args);
     let result = function_ctx ? t[n].apply(t, args) : t[n];
+    let logging_state = lib.domLoggingOn();
+    if (logging_state)
+        lib.turnOffLogDOM();
     if (typeof result !== "undefined") {
-        if (result.nodeType)
-            return create_node_proxy(result, prefix_str, n, function_ctx, args);
+        if (result.nodeType) {
+            let p = create_node_proxy(result, prefix_str, n, function_ctx, args);
+            if (logging_state)
+                lib.turnOnLogDOM();
+            return p;
+        }
         if (result.toString().includes("HTMLCollection") || result.toString().includes("NodeList")) {
             let new_list = [];
             for (let i = 0; i < result.length; i++) {
                 new_list.push(create_node_proxy(result[i], prefix_str, n, function_ctx, args, `[${i}]`));
             }
+            if (logging_state)
+                lib.turnOnLogDOM();
             return new_list;
         }
     }
+    if (logging_state)
+        lib.turnOnLogDOM();
     return result;
 }
 
