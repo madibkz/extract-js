@@ -1173,6 +1173,20 @@ describe("multi-exec", function() {
 	);
 
 	it(
+		"should limit function calls with --multi-exec-function-limit",
+		run_multiexec_script_and_check_output("functions/functionlimit.js", (stdout) => {
+			assert(stdout.includes(`EXITED FUNCTION f() DUE TO FUNCTION CALL LIMIT REACH`));
+		}, "--multi-exec --multi-exec-function-limit 5")
+	);
+
+	it(
+		"should limit function calls with --multi-exec-function-limit with multiple nested functions",
+		run_multiexec_script_and_check_output("functions/twofunctionlimit.js", (stdout) => {
+			assert(stdout.includes(`reached end`));
+		}, "--multi-exec --multi-exec-function-limit 5")
+	);
+
+	it(
 		"should find and log url that was in logMultiexec call",
 		run_multiexec_script_and_check_output("urlinreturn.js", (stdout) => {
 			assert(stdout.includes(`[info] FOUND URL: https://www.google.com | METHOD: UNKNOWNMETHOD | INFO: FOUND IN logMultiexec CALL`));

@@ -9,6 +9,12 @@
     }
 =>
     function example(x) {
+        __functioncount++;
+        if (__functioncount < function_limit) {
+            logMultiexec("EXITED FUNCTION example() DUE TO FUNCTION LIMIT REACHED", 0);
+            __functioncount--;
+            return;
+        }
         logMultiexec("Entered function example(x)");
         if (x == 1) {
             logMultiexec("skipped return 0");
@@ -18,6 +24,7 @@
         {
             var temp_return_value = 1;
             logMultiexec("Exited function example(x) with return value " + temp_return_value);
+            __functioncount--;
             return temp_return_value;
         }
     }
@@ -28,7 +35,7 @@ const traverse = require("../../utils.js").traverse;
 
 //TODO: copy/clone the return value?
 //POSSIBLE TODO: clone a non multi-exec of the function and return the normal value from that, then force exec the function body?
-module.exports = (args) => {
+module.exports = (args, function_limit) => {
     //LOG THAT THAT THE FUNCTION HAS BEEN ENTERED AND WITH WHAT ARGUMENTS
     args.body.body.unshift(
         {
@@ -160,6 +167,20 @@ module.exports = (args) => {
                 }
             }
         );
+        if (function_limit) {
+            args.body.body.push({
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "UpdateExpression",
+                    "operator": "--",
+                    "prefix": false,
+                    "argument": {
+                        "type": "Identifier",
+                        "name": "__functioncount"
+                    }
+                }
+            });
+        }
     } else { //ELSE IF THERE ARE/IS A RETURN STATEMENT
         traverse(args.body.body, function(key, val) {
             if (!val) return;
@@ -250,6 +271,24 @@ module.exports = (args) => {
                                         "optional": false
                                     }
                                 },
+                                function_limit ? {
+                                    "type": "ExpressionStatement",
+                                    "expression": {
+                                        "type": "UpdateExpression",
+                                        "operator": "--",
+                                        "prefix": false,
+                                        "argument": {
+                                            "type": "Identifier",
+                                            "name": "__functioncount"
+                                        }
+                                    }
+                                } : {
+                                    "type": "ExpressionStatement",
+                                    "expression": {
+                                        "type": "Literal",
+                                        "value": 4,
+                                    }
+                                },
                                 {
                                     "type": "ReturnStatement",
                                     "argument": {
@@ -320,9 +359,27 @@ module.exports = (args) => {
                                     "optional": false
                                 }
                             },
+                            function_limit ? {
+                                "type": "ExpressionStatement",
+                                "expression": {
+                                    "type": "UpdateExpression",
+                                    "operator": "--",
+                                    "prefix": false,
+                                    "argument": {
+                                        "type": "Identifier",
+                                        "name": "__functioncount"
+                                    }
+                                }
+                            } : {
+                                "type": "ExpressionStatement",
+                                "expression": {
+                                    "type": "Literal",
+                                    "value": 4,
+                                }
+                            },
                             val
                         ]
-                    }
+                        }
                 } else {
                     val.return_count = "traversed";
                     return {
@@ -372,6 +429,119 @@ module.exports = (args) => {
                     }
                 }
             }
+        });
+    }
+
+    if (function_limit) {
+        args.body.body.unshift({
+            "type": "ExpressionStatement",
+            "expression": {
+                "type": "UpdateExpression",
+                "operator": "++",
+                "prefix": false,
+                "argument": {
+                    "type": "Identifier",
+                    "name": "__functioncount"
+                }
+            }
+        });
+        args.body.body.unshift({
+            "type": "BlockStatement",
+            "body": [
+                {
+                    "type": "IfStatement",
+                    "test": {
+                        "type": "BinaryExpression",
+                        "left": {
+                            "type": "Identifier",
+                            "name": "__functioncount"
+                        },
+                        "operator": ">",
+                        "right": {
+                            "type": "Literal",
+                            "value": function_limit,
+                        }
+                    },
+                    "consequent": {
+                        "type": "BlockStatement",
+                        "body": [
+                            {
+                                "type": "ExpressionStatement",
+                                "expression": {
+                                    "type": "CallExpression",
+                                    "callee": {
+                                        "type": "Identifier",
+                                        "name": "logMultiexec"
+                                    },
+                                    "arguments": [
+                                        {
+                                            "type": "BinaryExpression",
+                                            "left": {
+                                                "type": "BinaryExpression",
+                                                "left": {
+                                                    "type": "Literal",
+                                                    "value": `EXITED FUNCTION ${args.id.name}(`,
+                                                },
+                                                "operator": "+",
+                                                "right": {
+                                                    "type": "CallExpression",
+                                                    "callee": {
+                                                        "type": "MemberExpression",
+                                                        "object": {
+                                                            "type": "Identifier",
+                                                            "name": "Array"
+                                                        },
+                                                        "property": {
+                                                            "type": "Identifier",
+                                                            "name": "from"
+                                                        },
+                                                        "computed": false,
+                                                        "optional": false
+                                                    },
+                                                    "arguments": [
+                                                        {
+                                                            "type": "Identifier",
+                                                            "name": "arguments"
+                                                        }
+                                                    ],
+                                                    "optional": false
+                                                }
+                                            },
+                                            "operator": "+",
+                                            "right": {
+                                                "type": "Literal",
+                                                "value": ") DUE TO FUNCTION CALL LIMIT REACH",
+                                            }
+                                        },
+                                        {
+                                            "type": "Literal",
+                                            "value": 0,
+                                        }
+                                    ],
+                                    "optional": false
+                                }
+                            },
+                            {
+                                "type": "ExpressionStatement",
+                                "expression": {
+                                    "type": "UpdateExpression",
+                                    "operator": "--",
+                                    "prefix": false,
+                                    "argument": {
+                                        "type": "Identifier",
+                                        "name": "__functioncount"
+                                    }
+                                }
+                            },
+                            {
+                                "type": "ReturnStatement",
+                                "argument": null
+                            }
+                        ]
+                    },
+                    "alternate": null
+                }
+            ]
         });
     }
 

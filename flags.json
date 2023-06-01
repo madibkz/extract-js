@@ -93,6 +93,11 @@
             "description": "Applies a rewrite to for, while, do while where the loop is limited to the number supplied to this flag."
         },
         {
+            "name": "multi-exec-function-limit",
+            "type": "Number",
+            "description": "Applies a rewrite to functions that limits the number of function calls that can be done to the number supplied to this flag."
+        },
+        {
             "name": "no-multi-exec-events",
             "type": "Boolean",
             "description": "Do not force event execution in multi-execution mode."
