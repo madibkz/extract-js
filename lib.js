@@ -16,10 +16,11 @@ const files = {};
 const IOC = [];
 
 let latestUrl = "";
+let number_of_wscript_code_snippets = 0;
 
 const logSnippet = function(filename, logContent, content) {
 	snippets[filename] = logContent;
-	fs.writeFileSync(path.join(directory, filename), require("js-beautify").js(content));
+	fs.writeFileSync(path.join(directory + "snippets/", filename), require("js-beautify").js(content));
 	fs.writeFileSync(path.join(directory, "snippets.json"), JSON.stringify(snippets, null, "\t"));
 };
 
@@ -153,7 +154,7 @@ module.exports = {
 	},
 	logUrl,
 	logResource: function(resourceName, emulatedPath, content) {
-		const filePath = path.join(directory, resourceName);
+		const filePath = path.join(directory + "resources/", resourceName);
 		fs.writeFileSync(filePath, content);
 		log("info", `Saved ${filePath} (${content.length} bytes)`);
 
@@ -207,7 +208,7 @@ module.exports = {
 	},
 	logIOC,
 	runShellCommand: (command) => {
-		const filename = getUUID();
+		const filename = "WSCRIPT_CODE_" + (++number_of_wscript_code_snippets) + "_" + getUUID();
 		logIOC("Run", {command}, "The script ran a command.");
 		log("info", `Executing ${path.join(directory, filename)} in the WScript shell`);
 		logSnippet(filename, {as: "WScript code"}, command);

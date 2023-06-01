@@ -11,23 +11,23 @@ function TextStream(filename) {
     this.atendofstream = () => this.bufferarray.length === 0;
     this.close = () => {};
     this.readall = () => {
-	return this.buffer;
+	    return this.buffer;
     };
     this.readline = function() {
-	if (this.bufferarray.length === 0)
-	    this.bufferarray = this.buffer.split("\n");
-	return this.bufferarray.shift();
+	    if (this.bufferarray.length === 0)
+	        this.bufferarray = this.buffer.split("\n");
+	    return this.bufferarray.shift();
     };
     this.shortpath = (path) => path;
     this.write = (line) => {
-	this.buffer = this.buffer + line;
-	lib.writeFile(filename, this.buffer);
-	lib.logResource(this.uuid, this.filename, this.buffer);
+	    this.buffer = this.buffer + line;
+	    lib.writeFile(filename, this.buffer);
+	    lib.logResource(this.uuid, this.filename, this.buffer);
     };
     this.writeline = (line) => {
-	this.buffer = this.buffer + line + "\r\n";
-	lib.writeFile(filename, this.buffer);
-	lib.logResource(this.uuid, this.filename, this.buffer);
+	    this.buffer = this.buffer + line + "\r\n";
+	    lib.writeFile(filename, this.buffer);
+	    lib.logResource(this.uuid, this.filename, this.buffer);
     };
 }
 
