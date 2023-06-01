@@ -63,6 +63,11 @@
             "description": "Do not modify loops so that their body statements are forced to execute in multi-execution mode."
         },
         {
+            "name": "limit-dom-log-length",
+            "type": "Boolean",
+            "description": "This limits the length of logged dom function arguments to be only around 30 characters. This makes the logs easier to read."
+        },
+        {
             "name": "debug",
             "type": "Boolean",
             "description": "Die when an emulation error occurs, even in \"batch mode\", and pass on the exit code."
