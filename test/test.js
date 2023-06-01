@@ -69,7 +69,7 @@ describe("run.js", function() {
 		}
 		exec(`${runExtractCommand} ${folder}/blank.js ${folder}/blank2.js`, done);
 	});
-	//TODO: more run.js tests to do with the other modes and aggregator
+	//TODO: more run.js tests to do with the other modes
 });
 
 describe("DOM", function() {
@@ -317,10 +317,107 @@ describe("DOM", function() {
 		);
 	});
 
+	function check_snippets(test_script_name, list_of_start_snippet_strs, list_of_as_values, list_of_snippet_values) {
+		function get_snippets_object(test_script_name)  {
+			let path_to_snippets_json = `${getTestResultsFolder(test_script_name)}default/snippets.json`;
+			assert(fs.existsSync(path_to_snippets_json));
+			return JSON.parse(fs.readFileSync(path_to_snippets_json, "utf8"));
+		}
 
-	//scripts - remember should log in img xss, normal add script element, set_timeout/interval
-	//events??
+		function get_snippets_starting_with(list_of_start_strs, snippets) {
+			let dom_snippets = [];
+			for (let snip in snippets) {
+				list_of_start_strs.forEach((str) => {
+						if (snip.startsWith(str)) dom_snippets.push(snip);
+					}
+				);
+			}
+			return dom_snippets;
+		}
 
+		function read_snippet_files(test_script_name, list_of_snippet_file_names) {
+			let code_snips = [];
+			for (let i in list_of_snippet_file_names) {
+				code_snips.push(fs.readFileSync(`${getTestResultsFolder(test_script_name)}default/snippets/${list_of_snippet_file_names[i]}`, "utf8"));
+			}
+			return code_snips;
+		}
+
+		let snippets = get_snippets_object(test_script_name);
+		let snippet_names = get_snippets_starting_with(list_of_start_snippet_strs, snippets);
+
+		list_of_as_values.forEach((val, i) => {
+			assert(snippets[snippet_names[i]].as === val);
+		});
+
+		let code_snips = read_snippet_files(test_script_name, snippet_names);
+
+		list_of_snippet_values.forEach((val, i) => {
+			assert(code_snips[i] === val);
+		});
+	}
+
+	//scripts
+	it(
+		"should log the code set for a new script element in a snippet file",
+		run_and_check_output("add_script.js", (stdout) => {
+			check_snippets(
+				"add_script.js",
+				["DOM_1"],
+				["JavaScript string found in write value for window.document.createElement(script).innerHTML"],
+				["console.log(1);"]
+			)
+		})
+	);
+	it(
+		"should log the code set for img onerror attribute in a snippet file",
+		run_and_check_output("img_code_test.js", (stdout) => {
+			check_snippets(
+				"img_code_test.js",
+				["DOM_1"],
+				["JavaScript string found in arg [1] of call of window.document.createElement(img).setAttribute(onerror, console.log(\"XSS or code or something\"), )"],
+				["console.log(\"XSS or code or something\")"]
+			)
+		})
+	);
+	it(
+		"should log the function/code for setTimeout and setInterval calls in a snippet file",
+		run_and_check_output("set_timeout_interval_snippet_test.js", (stdout) => {
+			check_snippets(
+				"set_timeout_interval_snippet_test.js",
+				["setTimeout_1", "setInterval_1"],
+				["setTimeout call", "setInterval call"],
+				["() => 'some code setTimeout'", "() => 'some code setInterval'"]
+			)
+		})
+	);
+	it(
+		"should log the code set for events in their own snippet files",
+		run_and_check_output("add_event_listener.js", (stdout) => {
+			check_snippets(
+				"add_event_listener.js",
+				[
+					"DOM"
+				],
+				[
+					"JavaScript function found in arg [1] of call of window.document.addEventListener(click, function myFunction() {\n    return 'should log this function in a new snippet';\n}, )",
+					"JavaScript function found in arg [1] of call of window.document.addEventListener(click, () => 'anonymous function should also be logged', )",
+					"JavaScript function found in arg [1] of call of addEventListener(resize, () => 'window event should also be logged', )",
+					"JavaScript function found in arg [1] of call of window.document.createElement(button).addEventListener(click, () => 'createElement elements events should also be logged', )",
+					"JavaScript function found in write value for window.document.createElement(button).onclick"
+				],
+				[
+					`function myFunction() {
+    return 'should log this function in a new snippet';
+}`,
+					"() => 'anonymous function should also be logged'",
+					"() => 'window event should also be logged'",
+					"() => 'createElement elements events should also be logged'",
+					"() => 'event attributes should also be logged'"
+				]
+			)
+		})
+	);
 });
 
-//aggregator test
+//TODO: aggregator testing
