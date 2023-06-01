@@ -574,7 +574,12 @@ if (argv["dangerous-vm"]) {
     // Fake up Object.toString not being defined in cscript.exe.
     //code = "Object.prototype.toString = undefined;\n\n" + code;
 
-    vm.run(code);
+    try {
+        vm.run(code);
+    } catch (e) {
+        lib.error(e.stack, true, false);
+        throw e;
+    }
 }
 
 function ActiveXObject(name) {
