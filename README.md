@@ -1,6 +1,6 @@
 # extract-js
 
-extract-js is a command line program that analyzes and extracts information from an input JavaScript file (or HTML file). 
+extract-js is a command line program that analyzes and extracts information from an input JavaScript file (or HTML file). It is used to dynamically analyze obfuscated JavaScript (malware mostly).
 
 It does this by running the code in an instrumented environment with emulated DOM and ActiveX API's. There are three different modes of analysis: default (`--default`), symbolic execution (`--sym-exec`), and multi-execution (`--multi-exec`) - each of these modes can be run concurrently either on a standalone JavaScript file or a HTML file with the `--html` flag on. Once analysis is finished, the resulting information is saved in a results folder which has a folder for each analysis mode and a summary folder that summarizes the total unique information. The information extracted includes a semantic log of the code's behaviour in the emulated environment, URL's/IP's, snippets of code, downloaded resources (files), and environmental variable contexts that produce different behaviour.
 
