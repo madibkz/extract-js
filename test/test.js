@@ -744,4 +744,36 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: "Symex found the other branch (test works)."`));
 		}, "--sym-exec --timeout 1000")
 	);
+	it(
+		"should symbolically track the specified navigator's properties and set them appropriately in the specific execution context",
+		run_symex_script_and_check_output("navigator.js", (stdout) => {
+			assert(stdout.includes(`Script output: "Default branch"`));
+			assert(stdout.includes(`Script output: "Found the navigator.language branch"`));
+			assert(stdout.includes(`Script output: "Found navigator.webdriver branch"`));
+		}, "--sym-exec --timeout 1000")
+	);
+	it(
+		"should symbolically track the specified navigator.userAgentData properties and set them appropriately in the specific execution context",
+		run_symex_script_and_check_output("userAgentData.js", (stdout) => {
+			assert(stdout.includes(`Script output: "Default branch reached."`));
+			assert(stdout.includes(`Script output: "mobile branch reached."`));
+			assert(stdout.includes(`Script output: "platform branch reached."`));
+		}, "--sym-exec --timeout 1000")
+	);
+	it(
+		"should symbolically track the specified navigator.plugins.plugin properties and set them appropriately in the specific execution context",
+		run_symex_script_and_check_output("plugins.js", (stdout) => {
+			assert(stdout.includes(`Script output: "Found plugin description branch"`));
+			assert(stdout.includes(`Script output: "Found plugin name branch"`));
+			assert(stdout.includes(`Script output: "Found default branch"`));
+		}, "--sym-exec --timeout 1000")
+	);
+	it(
+		"should symbolically track the specified navigator.mimetypes.mimetype properties and set them appropriately in the specific execution context",
+		run_symex_script_and_check_output("mimetypes.js", (stdout) => {
+			assert(stdout.includes(`Script output: "Found testtype branch"`));
+			assert(stdout.includes(`Script output: "Found fakedescription branch"`));
+			assert(stdout.includes(`Script output: "Found default branch"`));
+		}, "--sym-exec --timeout 1000")
+	);
 });
