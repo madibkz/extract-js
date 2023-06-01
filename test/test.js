@@ -236,6 +236,13 @@ describe("DOM", function() {
 		})
 	);
 
+	it(
+		"should change the url used by location, and document.URL when the url is specified through --url",
+		run_dom_script_and_check_output("url_test.js", (stdout) => {
+			assert(stdout.includes(`Script output: "https://google.com/"`));
+			assert(!stdout.includes(`Script output: "https://example.org/"`));
+		}, "--url \"https://google.com\"")
+	);
 
 	//cookies
 	it(
