@@ -1403,4 +1403,12 @@ describe("symbolic html", function() {
 			assert(stdout.includes(`Script output: "it works3"`));
 		}, "--html --sym-exec --no-sym-exec-activex --timeout 1000")
 	);
+	it(
+		"should load external linked scripts if the --download-external-scripts flag is present",
+		run_html_script_and_check_output("sym-exec/external_linked_symbolic.html", (stdout) => {
+			assert(stdout.includes(`FOUND URL: https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js | METHOD: GET | INFO: EXTERNALLY LINKED SCRIPT FOUND IN HTML SCRIPT TAG`));
+			assert(stdout.includes(`Attempting to download external script https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js for symbolic execution`));
+			assert(stdout.includes(`Attempt succeeded to download external script https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js for symbolic execution`));
+		}, "--html --sym-exec --no-sym-exec-activex --timeout 1000 --download-external-scripts")
+	);
 });
