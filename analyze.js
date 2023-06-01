@@ -212,9 +212,18 @@ if (default_enabled || multi_exec_enabled) {
 
         //Run sandbox for this input combination
         const sandbox = make_sandbox(input);
-        //pass true to make them run in vm2 rather than jsdom for now
         console.log(`STARTING EMULATION FOR CONTEXT ${i}. (UNIQUE VARS: ${JSON.stringify(unique_context)})`);
-        run_emulation(code, sandbox, input);
+        let input_code = code;
+        if (input["date.now"] && input["date.now"] !== 0)
+            input_code = input_code.replace(/\/\*date.now start\*\/.*\/\*date.now end\*\//, "" + input["date.now"]);
+        if (input["date.year"] && input["date.year"] !== 0) {
+            input_code = input_code.replace(/\/\*date.year start\*\/.*\/\*date.year end\*\//, "" + input["date.year"]);
+            input_code = input_code.replace(/\/\*date.year print start\*\/.*\/\*date.year print end\*\//, "false");
+        }
+        if (input["date.time"] && input["date.time"] !== 0)
+            input_code = input_code.replace(/\/\*date.time start\*\/.*\/\*date.time end\*\//, `() => ${input["date.time"]}`);
+        listOfKnownScripts.push(input_code);
+        run_emulation(input_code, sandbox, input);
         console.log(`FINISHED EMULATION FOR CONTEXT ${i}.`);
         console.log(``);
     }
@@ -237,6 +246,9 @@ function is_default_sym_exec_value(o) {
 
 function prepend_sym_exec_script(sym_exec_script) {
     let prepend_sym_script = fs.readFileSync(path.join(__dirname, "./patches/symexec/prepend_sym_script.js"), "utf-8");
+
+    if (argv["no-sym-exec-date"])
+        prepend_sym_script = prepend_sym_script.replace(/const date_symbolize = true/, "const date_symbolize = false");
 
     if (argv["no-sym-exec-dom"])
         prepend_sym_script = prepend_sym_script.replace(/const dom_symbolize = true/, "const dom_symbolize = false");
