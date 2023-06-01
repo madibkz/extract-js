@@ -72,7 +72,12 @@ Array.prototype.functionalSplit = function(f) {
 const args = process.argv.slice(2);
 args.push(`--timeout=${timeout}`);
 
-const [targets, options] = args.functionalSplit(fs.existsSync);
+let [targets, options] = args.functionalSplit(fs.existsSync);
+if (argv["cookie-file"]) {
+	options.push("--cookie-file="+argv["cookie-file"]);
+	//cookie-file option is detected as a target file, so delete it from targets so it's not analyzed
+	targets.splice(targets.indexOf(argv["cookie-file"]), 1);
+}
 
 // Array of {filepath, filename}
 const tasks = [];

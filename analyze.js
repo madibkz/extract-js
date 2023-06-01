@@ -583,7 +583,7 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
         vm.runInNewContext(code, sandbox, {
             displayErrors: true,
             // lineOffset: -fs.readFileSync(path.join(__dirname, "patch.js"), "utf8").split("\n").length,
-            filename: "sample.js",
+             filename: "sample.js",
         });
     } else { //jsdom default emulation context
         lib.debug("Analyzing with jsdom");
@@ -591,6 +591,15 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
         delete_in_sandbox.forEach(field => delete sandbox[field]);
 
         let url = argv["url"] ? argv["url"] : "https://example.org/";
+        let one_cookie = argv.cookie ? "document.cookie = \"" + argv.cookie + "\";" : "";
+        let multiple_cookies = "";
+        if (argv["cookie-file"]) {
+            try {
+                multiple_cookies = fs.readFileSync(argv["cookie-file"], "utf8").split("\n").map((c) => `document.cookie = \"${c}\";`).join("\n");
+            } catch (e) {
+                lib.error("Error setting cookies from " + argv["cookie-file"]);
+            }
+        }
 
         let codeHadAnError = multi_exec_enabled;
         do {
@@ -605,7 +614,30 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                     }
                 });
 
-                let dom_str = `<html><head></head><body></body><script>${code}</script></html>`;
+                let dom_str = `<html><head></head><body></body><script>${one_cookie}${multiple_cookies}${code}</script></html>`;
+                let cookie_jar = new jsdom.CookieJar();
+                let cookie_jar_log_funcs = ["setCookie", "setCookieSync", "getCookies", "getCookiesSync", "getCookieString", "getCookieStringSync", "getSetCookieStrings", "getSetCookieStringsSync", "removeAllCookies", "removeAllCookiesSync"];
+                const cookieJar = new Proxy(cookie_jar, {
+                    get: (target, name) => {
+                        if (name in target) {
+                            if (typeof target[name] === "function" && cookie_jar_log_funcs.includes(name)) {
+                                return function () {
+                                    lib.logDOM(`cookieJar.${name}`,false, null, true, arguments);
+                                    return target[name].apply(target, arguments);
+                                }
+                            }
+                            return target[name];
+                        }
+                        return undefined;
+                    },
+                    set: function (target, name, val) {
+                        if (name in target) {
+                            lib.logDOM(`cookieJar.${name}`, true, val);
+                            target[name] = val;
+                        }
+                        return false;
+                    },
+                });
 
                 //Keep in mind this runs asynchronous
                 let dom = new JSDOM(dom_str, {
@@ -616,6 +648,7 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                     virtualConsole,
                     runScripts: "dangerously",
                     pretendToBeVisual: true,
+                    cookieJar,
 
                     //Setting up the global context of the emulation
                     beforeParse(window) {
@@ -762,6 +795,8 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                     await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](100);
 
                 dom.window.close();
+
+                lib.logCookies(cookie_jar);
 
                 codeHadAnError = false;
             } catch (e) {

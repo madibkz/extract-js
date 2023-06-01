@@ -201,6 +201,16 @@
             "name": "dangerous-vm",
             "type": "Boolean",
             "description": "Use the `vm` module, rather than `vm2`. This sandbox can be broken, so **don't use this** unless you're 100% sure of what you're doing. Helps with debugging by giving correct stack traces."
+        },
+        {
+            "name": "cookie",
+            "type": "String",
+            "description": "Pass in a string to set document.cookie to one initial cookie value."
+        },
+        {
+            "name": "cookie-file",
+            "type": "String",
+            "description": "Pass in a path to a file consisting of cookie strings separated by newlines to set multiple initial document.cookie values."
         }
     ],
     "export": [
