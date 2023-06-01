@@ -16,7 +16,7 @@ const window = {
         ["location", false],
         ["localStorage", true],
         ["name", false],
-        ["navigator", true],
+        // ["navigator", true],
         ["opener", false],
         ["outerHeight", true],
         ["outerWidth", true],

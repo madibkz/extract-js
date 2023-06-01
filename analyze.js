@@ -628,6 +628,45 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                         //this boolean is what we use to check that the emulation has reached the end
                         window.emulationFinished = false;
 
+                        let og_screen = window.screen;
+                        delete window.screen;
+                        window.screen = new Proxy(og_screen, {
+                            get: (target, name) => {
+                                if (name in target) {
+                                    if (typeof name !== "symbol")
+                                        lib.logDOM(`window.screen.${name}`);
+                                    return target[name];
+                                }
+                                return undefined;
+                            },
+                            set: function (target, name, val) {
+                                if (name in target) {
+                                    lib.logDOM(`window.screen.${name}`, true, val);
+                                    target[name] = val;
+                                }
+                                return false;
+                            },
+                        });
+
+                        window.history = new Proxy(window.history, {
+                            get: (target, name) => {
+                                if (name in target) {
+                                    if (typeof name !== "symbol")
+                                        lib.logDOM(`window.history.${name}`);
+                                    return target[name];
+                                }
+                                return undefined;
+                            },
+                            set: function (target, name, val) {
+                                if (name in target) {
+                                    lib.logDOM(`window.history.${name}`, true, val);
+                                    target[name] = val;
+                                }
+                                return false;
+                            },
+                        });
+
+
                         //Add logging to the window's members
                         let window_log_vals = logged_dom_vals.window;
                         window_log_vals.properties.forEach((prop) => {
@@ -659,6 +698,7 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                             }
                         })
 
+                        //window method logging
                         window_log_vals.methods.forEach((m) => {
                             let og_function = window[m[0]];
                             window[m[0]] = function () {
@@ -668,7 +708,7 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                             }
                         })
 
-                        let loc_proxy = new Proxy(window.document.location, {
+                        let loc_proxy = new Proxy(window.location, {
                             get: (target, name) => {
                                 if (name in target) {
                                     if (typeof name !== "symbol")
@@ -686,6 +726,34 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                             },
                         });
                         window.location = loc_proxy;
+                        // delete window.document.location;
+
+
+                        let nav_proxy = new Proxy(window.navigator, {
+                            get: (target, name) => {
+                                if (name in target) {
+                                    if (typeof name !== "symbol")
+                                        lib.logDOM(`window.navigator.${name}`);
+                                    return target[name];
+                                }
+                                return undefined;
+                            },
+                            set: function(target, name, val) {
+                                if (name in target) {
+                                    lib.logDOM(`window.navigator.${name}`, true, val);
+                                    target[name] = val;
+                                }
+                                return false;
+                            },
+                        });
+                        Object.defineProperty(window, "navigator", {
+                            get: function() {
+                                // lib.logDOM(`window.navigator`);
+                                return nav_proxy;
+                            },
+                            enumerable: true,
+                            configurable: false
+                        })
                     }
                 });
 
