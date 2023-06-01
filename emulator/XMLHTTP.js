@@ -2,6 +2,8 @@ const run_by_extract_js = process.argv[1].endsWith("extract-js/analyze");
 const lib = run_by_extract_js ? require("../lib") : require("../symbol-lib");
 const argv = run_by_extract_js ? require("../argv.js").run : {download: false};
 
+let sym_vals = {};
+
 function XMLHTTP() {
     this.headers = {};
     this.onreadystatechange = () => {};
@@ -29,31 +31,42 @@ function XMLHTTP() {
 		    lib.info(`Data sent to ${this.url}:`, data);
 		this.readystate = 4;
 		let response;
+		this.status = 404;
+		this.statustext = "Not found";
 		try {
-		    response = lib.fetchUrl(this.method, this.url, this.headers, data);
-		    if (argv.download) {
+			response = lib.fetchUrl(this.method, this.url, this.headers, data);
+
+			if (argv.download || sym_vals["xmlhttp.status200"]) {
 				this.status = 200;
 				this.statustext = "OK";
-		    } else {
-				this.status = 404;
-				this.statustext = "Not found";
-		    }
+			}
 		} catch (e) {
 		    // If there was an error fetching the URL, pretend that the distribution site is down
-		    this.status = 404;
-		    this.statustext = "Not found";
+			if (sym_vals.hasOwnProperty("xmlhttp.status200") && sym_vals["xmlhttp.status200"]) {
+				this.status = 200;
+				this.statustext = "OK";
+			}
 		    response = {
 				body: new Buffer(""),
 				headers: {},
 		    };
 		}
-		this.responsebody = response.body;
+
+		this.responsebody = sym_vals.hasOwnProperty("xmlhttp.responsebody") ? sym_vals["xmlhttp.responsebody"] : response.body;
 		this.responsetext = this.responsebody.toString("utf8");
-		this.responseheaders = response.headers;
+		this.responseheaders = sym_vals.hasOwnProperty("xmlhttp.responsebody") ? {} : response.headers;
 		this.onreadystatechange();
     };
     this.setoption = () => {};
     this.getresponseheader = (key) => this.responseheaders[key];
 }
 
-module.exports = lib.proxify(XMLHTTP, "XMLHTTP");
+function setSymexInput(symex_input) {
+	if (symex_input)
+		sym_vals = symex_input;
+}
+
+module.exports = {
+	create: () => lib.proxify(XMLHTTP, "XMLHTTP"),
+	setSymexInput
+};

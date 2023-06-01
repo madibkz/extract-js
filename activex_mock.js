@@ -1,6 +1,13 @@
 const run_by_extract_js = process.argv[1].endsWith("extract-js/analyze");
 const lib = run_by_extract_js ? require("./lib") : require("./symbol-lib");
 
+let activex_requires = {
+    "wscript.shell": require("./emulator/WScriptShell"),
+    "xmlhttp": require("./emulator/XMLHTTP"),
+    "adodb.stream": require("./emulator/ADODBStream"),
+    "scripting.filesystemobject": require("./emulator/FileSystemObject")
+}
+
 function makeWscriptProxy() {
     return new Proxy({
         arguments: new Proxy((n) => `${n}th argument`, {
@@ -30,15 +37,15 @@ function makeWscriptProxy() {
                 }
             },
         }),
-        buildversion: "1234",
+        buildversion: "1234", //symex
         fullname: "C:\\WINDOWS\\system32\\wscript.exe",
-        interactive: true,
+        interactive: true, //symex
         name: "wscript.exe",
-        path: "C:\\TestFolder\\",
+        path: "C:\\TestFolder\\", //symex
         //scriptfullname: "C:\\Documents and Settings\\User\\Desktop\\sample.js",
         //scriptfullname: "C:\\Users\\Sysop12\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\ons.jse",
-        scriptfullname: "C:\Users\\Sysop12\\AppData\\Roaming\\Microsoft\\Templates\\0.2638666.jse",
-        scriptname: "0.2638666.jse",
+        scriptfullname: "C:\Users\\Sysop12\\AppData\\Roaming\\Microsoft\\Templates\\0.2638666.jse", //symex?
+        scriptname: "0.2638666.jse", //symex?
         get stderr() {
             run_by_extract_js ? lib.error("WScript.StdErr not implemented") : console.log("WScript.StdErr not implemented");
         },
@@ -48,7 +55,7 @@ function makeWscriptProxy() {
         get stdout() {
             run_by_extract_js ? lib.error("WScript.StdOut not implemented") : console.log("WScript.StdOut not implemented");
         },
-        version: "5.8",
+        version: "5.8", //symex
         get connectobject() {
             run_by_extract_js ? lib.error("WScript.ConnectObject not implemented") : console.log("WScript.ConnectObject not implemented");
         },
@@ -87,7 +94,7 @@ function ActiveXObject(name) {
     lib.verbose(`New ActiveXObject: ${name}`);
     name = name.toLowerCase();
     if (name.match("xmlhttp") || name.match("winhttprequest"))
-        return require("./emulator/XMLHTTP");
+        return activex_requires["xmlhttp"].create();
     if (name.match("dom")) {
         return {
             createElement: require("./emulator/DOM"),
@@ -102,7 +109,7 @@ function ActiveXObject(name) {
             // Stubbed out for now.
             return "";
         case "adodb.stream":
-            return require("./emulator/ADODBStream")();
+            return activex_requires["adodb.stream"].create();
         case "adodb.recordset":
             return require("./emulator/ADODBRecordSet")();
         case "adodb.connection":
@@ -111,7 +118,7 @@ function ActiveXObject(name) {
         case "scriptcontrol":
             return require("./emulator/ScriptControl");
         case "scripting.filesystemobject":
-            return require("./emulator/FileSystemObject");
+            return activex_requires["scripting.filesystemobject"].create();
         case "scripting.dictionary":
             return require("./emulator/Dictionary");
         case "shell.application":
@@ -119,7 +126,7 @@ function ActiveXObject(name) {
         case "wscript.network":
             return require("./emulator/WScriptNetwork");
         case "wscript.shell":
-            return require("./emulator/WScriptShell");
+            return activex_requires["wscript.shell"].create();
         case "wbemscripting.swbemlocator":
             return require("./emulator/WBEMScriptingSWBEMLocator");
         case "msscriptcontrol.scriptcontrol":
@@ -130,7 +137,16 @@ function ActiveXObject(name) {
     }
 }
 
+function setSymexInput(symex_input) {
+    for (let o in activex_requires) {
+        if (activex_requires.hasOwnProperty(o)) {
+            activex_requires[o].setSymexInput(symex_input);
+        }
+    }
+}
+
 module.exports = {
     makeWscriptProxy,
-    ActiveXObject
+    ActiveXObject,
+    setSymexInput
 }

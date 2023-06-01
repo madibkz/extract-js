@@ -2,13 +2,13 @@ const lib = process.argv[1].endsWith("extract-js/analyze") ? require("../lib") :
 const fs = require("fs");
 const path = require("path");
 
-const diskSize = Math.floor(Math.random() * 1E11);
-const freeSpace = Math.floor(Math.random() * diskSize);
+const diskSize = Math.floor(Math.random() * 1E11); //symex?
+const freeSpace = Math.floor(Math.random() * diskSize); //symex?
 
 // Note: all fields MUST be in lowercase!
 const processes = JSON.parse(fs.readFileSync(path.join(__dirname, "processes.json"), "utf8"));
 const tables = {
-    antivirusproduct: [],
+    antivirusproduct: [], //symex?
     win32_computersystemproduct: [],
     win32_logicaldisk: [{ // dirty patch by @ALange
 	deviceid: "C:",
@@ -19,11 +19,11 @@ const tables = {
     }],
     win32_computersystem : [{
         "pscomputername" : "USER-PC",
-        "adminpasswordstatus" : 3,
+        "adminpasswordstatus" : 3, //symex?
         "bootupstate" : "Normal boot",
         "chassisbootupstate" : 3,
-        "keyboardpasswordstatus" : 3,
-        "poweronpasswordstatus" : 3,
+        "keyboardpasswordstatus" : 3, //symex?
+        "poweronpasswordstatus" : 3, //symex?
         "powersupplystate" : 3,
         "powerstate" : 0,
         "frontpanelresetstatus" : 3,
@@ -42,20 +42,20 @@ const tables = {
         "daylightineffect" : "True",
         "description" : "AT/AT COMPATIBLE",
         "dnshostname" : "USER-PC",
-        "domain" : "support.kingservers.com",
+        "domain" : "support.kingservers.com", //symex?
         "domainrole" : 1,
         "enabledaylightsavingstime" : "True",
         "hypervisorpresent" : "False",
         "infraredsupported" : "False",
-        "manufacturer" : "Dell Inc.",
-        "model" : "XPS 15",
-        "networkservermodeenabled" : "True",
-        "numberoflogicalprocessors" : 8,
-        "numberofprocessors" : 2,
+        "manufacturer" : "Dell Inc.", //symex?
+        "model" : "XPS 15", //symex?
+        "networkservermodeenabled" : "True", //symex?
+        "numberoflogicalprocessors" : 8, //symex?
+        "numberofprocessors" : 2, //symex?
         "oemstringarray" : "{Dell System, 1[07BF], 3[1.0], 12[www.dell.com]...}",
         "partofdomain" : "True",
         "pauseafterreset" : -1,
-        "pcsystemtype" : 2,
+        "pcsystemtype" : 2, //symex?
         "pcsystemtypeex" : 2,
         "primaryownername" : "Sysop12",
         "resetcapability" : 1,
@@ -64,7 +64,7 @@ const tables = {
         "roles" : "{LM_Workstation, LM_Server, NT}",
         "systemfamily" : "Precision",
         "systemskunumber" : "07BF",
-        "systemtype" : "x64-based PC",
+        "systemtype" : "x64-based PC", //symex?
         "totalphysicalmemory" : "17021726720",
         "username" : "SUPPORT\Sysop12",
         "wakeuptype" : 6,
@@ -73,7 +73,7 @@ const tables = {
         "options" : "System.Management.ObjectGetOptions",
         "classpath" : "\\USER-PC\root\cimv2:Win32_ComputerSystem",
         "properties" : "{AdminPasswordStatus, AutomaticManagedPagefile, AutomaticResetBootOption, AutomaticResetCapability...}",
-        "systemproperties" : "{__GENUS, __CLASS, __SUPERCLASS, __DYNASTY...}",
+        "systemproperties" : "{__GENUS, __CLASS, __SUPERCLASS, __DYNASTY...}", //symex?
         "qualifiers" : "{dynamic, Locale, provider, UUID}",
     }],
     win32_networkadapterconfiguration: [{
@@ -81,22 +81,22 @@ const tables = {
         "dhcpleaseexpires": "19330110154953.000000-360",
         "index": "7",
         "description": "Huawei Ethernet",
-        "dhcpenabled": "True",
+        "dhcpenabled": "True", //symex
         "dhcpleaseobtained": "19330109154953.000000-360",
-        "dhcpserver": "121.173.9.22",
-        "dnsdomain": "kingservers.com",
+        "dhcpserver": "121.173.9.22", //symex?
+        "dnsdomain": "kingservers.com", //symex?
         "dnsenabledforwinsresolution": "False",
         "dnshostname": "USER-PC",
         "dnsserversearchorder": ["8.8.8.8"],
-        "domaindnsregistrationenabled": "False",
-        "fulldnsregistrationenabled": "True",
-        "ipaddress": ["185.180.196.9", "2002:b9b4:c409:0:0:0:0:0"],
+        "domaindnsregistrationenabled": "False", //symex?
+        "fulldnsregistrationenabled": "True", //symex?
+        "ipaddress": ["185.180.196.9", "2002:b9b4:c409:0:0:0:0:0"], //symex?
         "ipconnectionmetric": "25",
-        "ipenabled": "True",
-        "ipfiltersecurityenabled": "False",
+        "ipenabled": "True", //symex?
+        "ipfiltersecurityenabled": "False", //symex?
         "winsenablelmhostslookup": "True",
-        "winsprimaryserver": "185.180.192.1",
-        "winssecondaryserver": "185.180.192.17",
+        "winsprimaryserver": "185.180.192.1", //symex?
+        "winssecondaryserver": "185.180.192.17", //symex?
         "__genus": "2",
         "__class": "Win32_NetworkAdapterConfiguration",
         "__superclass": "CIM_Setting",
@@ -113,7 +113,7 @@ const tables = {
         "gatewaycostmetric": ["0"],
         "interfaceindex": "22",
         "ipsubnet": ["255.255.255.0", "64"],
-        "macaddress": "F9:22:77:A3:9C:12",
+        "macaddress": "F9:22:77:A3:9C:12", //symex?
         "servicename": "fhggtlqq",
         "settingid": ["F8528A8E-51DC-4D29-B02D-518E944A970B"],
         "tcpipnetbiosoptions": "0",
@@ -126,10 +126,10 @@ const tables = {
     }
                                        ],
     win32_operatingsystem: [{
-        "pscomputername": "LPTOP-127A",
-        "status": "OK",
-        "name": "Microsoft Windows 10 Enterprise|C:\WINDOWS|\Device\Harddisk0\Partition4",
-        "freephysicalmemory": 8313236,
+        "pscomputername": "LPTOP-127A", //symex?
+        "status": "OK", //symex?
+        "name": "Microsoft Windows 10 Enterprise|C:\WINDOWS|\Device\Harddisk0\Partition4", //symex?
+        "freephysicalmemory": 8313236, //symex?
         "freespaceinpagingfiles": 9541376,
         "freevirtualmemory": 15864120,
         "__genus": 2,
@@ -142,27 +142,27 @@ const tables = {
         "__server": "LPTOP-127A",
         "__namespace": "root\cimv2",
         "__path": "\\LPTOP-127A\root\cimv2:Win32_OperatingSystem=@",
-        "bootdevice": "\Device\HarddiskVolume2",
-        "buildnumber": "17134",
+        "bootdevice": "\Device\HarddiskVolume2", //symex?
+        "buildnumber": "17134", //symex?
         "buildtype": "Multiprocessor Free",
-        "caption": "Microsoft Windows 10 Enterprise",
+        "caption": "Microsoft Windows 10 Enterprise", //symex?
         "codeset": 1252,
-        "countrycode": 1,
+        "countrycode": 1, //symex?
         "creationclassname": "Win32_OperatingSystem",
         "cscreationclassname": "Win32_ComputerSystem",
         "csname": "LPTOP-127A",
-        "currenttimezone": -100,
-        "dataexecutionprevention_32bitapplications": "True",
+        "currenttimezone": -100, //symex?
+        "dataexecutionprevention_32bitapplications": "True", //symex?
         "dataexecutionprevention_available": "True",
         "dataexecutionprevention_drivers": "True",
         "dataexecutionprevention_supportpolicy": 2,
         "debug": "False",
         "distributed": "False",
-        "encryptionlevel": 256,
+        "encryptionlevel": 256, //symex?
         "foregroundapplicationboost": 2,
         "installdate": "20180917214145.000000-300",
         "lastbootuptime": "20190724150844.500000-300",
-        "localdatetime": "20190806095747.977000-300",
+        "localdatetime": "20190806095747.977000-300", //symex?
         "locale": "0409",
         "manufacturer": "Microsoft Corporation",
         "maxnumberofprocesses": 4294967295,
@@ -170,27 +170,27 @@ const tables = {
         "muilanguages": ["en-US"],
         "numberofprocesses": 258,
         "numberofusers": 8,
-        "operatingsystemsku": 4,
+        "operatingsystemsku": 4, //symex?
         "organization": "King Servers",
-        "osarchitecture": "64-bit",
-        "oslanguage": 1033,
+        "osarchitecture": "64-bit", //symex?
+        "oslanguage": 1033, //symex?
         "osproductsuite": 256,
-        "ostype": 18,
+        "ostype": 18, //symex?
         "portableoperatingsystem": "False",
         "primary": "True",
         "producttype": 1,
-        "registereduser": "Sysop12",
-        "serialnumber": "50014-13304-92463-12771",
+        "registereduser": "Sysop12", //symex?
+        "serialnumber": "50014-13304-92463-12771", //symex?
         "servicepackmajorversion": 0,
         "servicepackminorversion": 0,
         "sizestoredinpagingfiles": 9713940,
         "suitemask": 272,
-        "systemdevice": "\Device\HarddiskVolume4",
-        "systemdirectory": "C:\WINDOWS\system32",
+        "systemdevice": "\Device\HarddiskVolume4", //symex?
+        "systemdirectory": "C:\WINDOWS\system32", //symex?
         "systemdrive": "C:",
         "totalvirtualmemorysize": 26336720,
         "totalvisiblememorysize": 16622780,
-        "version": "10.0.17134",
+        "version": "10.0.17134", //symex?
         "windowsdirectory": "C:\WINDOWS",
         "scope": "System.Management.ManagementScope",
         "path": "\\LPTOP-127A\root\cimv2:Win32_OperatingSystem=@",
@@ -201,13 +201,14 @@ const tables = {
         "qualifiers": ["dynamic", "Locale", "provider", "Singleton"],
     }],
     win32_process: processes,
-    win32_processstoptrace: [{"processname": "chrome.exe"}],
+    win32_processstoptrace: [{"processname": "chrome.exe"}], //symex?
 };
 
 const classes = {
     win32_process: new Proxy(processes, {
 	get(target, _prop) {
-	    const prop = _prop.toLowerCase();
+        if (prop === "__safe_item_to_string") return false;
+        const prop = _prop.toLowerCase();
 	    if (prop in target) return target[prop];
 	    if (prop === "create")
 		return command => {
@@ -216,15 +217,30 @@ const classes = {
 		}
 	    lib.kill(`Win32_Process.${prop} not implemented!`);
 	},
+        set: function(a, b, c) {
+            if (b === "__safe_item_to_string") { //this is needed for jalangi/expose
+                a[b] = c;
+                return true;
+            }
+            return false;
+        },
     }),
     win32_processstartup: new Proxy({
 	spawninstance_: () => {}
     }, {
 	get(target, _prop) {
+        if (prop === "__safe_item_to_string") return false;
 	    const prop = _prop.toLowerCase();
 	    if (prop in target) return target[prop];
 	    lib.kill(`Win32_Process.${prop} not implemented!`);
 	},
+        set: function(a, b, c) {
+            if (b === "__safe_item_to_string") { //this is needed for jalangi/expose
+                a[b] = c;
+                return true;
+            }
+            return false;
+        },
     })
 }
 
@@ -258,10 +274,18 @@ function getTable(_tableName) {
     // Proxify everything for the normal case.
     return tables[tableName].map(row => new Proxy(row, {
 	get(target, _prop) {
+        if (prop === "__safe_item_to_string") return false;
 	    const prop = _prop.toLowerCase();
 	    if (prop in target) return target[prop];
 	    lib.kill(`${tableName}.${prop} not implemented!`);
 	},
+        set: function(a, b, c) {
+            if (b === "__safe_item_to_string") { //this is needed for jalangi/expose
+                a[b] = c;
+                return true;
+            }
+            return false;
+        },
     }));
 }
 
@@ -274,10 +298,18 @@ function EventTable(baseTableName) {
     // Save the table data to serve out.
     this.tableData = tables[baseTableName].map(row => new Proxy(row, {
 	get(target, _prop) {
+        if (prop === "__safe_item_to_string") return false;
 	    const prop = _prop.toLowerCase();
 	    if (prop in target) return target[prop];
 	    lib.kill(`${tableName}.${prop} not implemented!`);
 	},
+        set: function(a, b, c) {
+            if (b === "__safe_item_to_string") { //this is needed for jalangi/expose
+                a[b] = c;
+                return true;
+            }
+            return false;
+        },
     }));
     
     // Cycle through the table data.
@@ -362,11 +394,19 @@ module.exports.GetObject = function(name) {
 	},
     }, {
 	get(target, name) {
+        if (prop === "__safe_item_to_string") return false;
             console.log("^^^^^^^^^^^");
             console.log(target);
             console.log(name);
 	    if (name in target) return target[name];
 	    lib.kill(`WMI.GetObject.${name} not implemented!`);
 	},
+        set: function(a, b, c) {
+            if (b === "__safe_item_to_string") { //this is needed for jalangi/expose
+                a[b] = c;
+                return true;
+            }
+            return false;
+        },
     });
 };

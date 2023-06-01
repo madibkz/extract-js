@@ -43,12 +43,12 @@
 // var f = xa.getfile("folder1");
 // throw new Error("scripting.filesystemobject " + f.attributes);
 
-var xa = new ActiveXObject('scripting.filesystemobject');
-var ts = xa.createtextfile("textstream1");
-throw new Error("scripting.filesystemobject " + ts.writeline("a line") + ts.readline());
+//var xa = new ActiveXObject('scripting.filesystemobject');
+//var ts = xa.createtextfile("textstream1");
+//throw new Error("scripting.filesystemobject " + ts.writeline("a line") + ts.readline());
 
-// var xa = new ActiveXObject('WScript.Shell');
-// throw new Error("wscript.shell " + xa.ExpandEnvironmentStrings("%TEMP%") + xa.Run("%TEMP%" + '\\' + "tmp.exe", 1, 0));
+var xa = new ActiveXObject('WScript.Shell');
+throw new Error("wscript.shell " + xa.ExpandEnvironmentStrings("%TEMP%") + xa.Run("%TEMP%" + '\\' + "tmp.exe", 1, 0));
 
 // if ("addcode" in xa) {
 //     throw new Error("IT IS IN")

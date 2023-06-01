@@ -5,6 +5,7 @@ var self = global;
 
 global.origin = S$.symbol("origin", "");
 
+//build DOM emulation / symbol tracking
 (() => {
     function buildProxyForEmulatedObject(symex_prefix, file_path) {
         let emulatedPatch = require(file_path);
@@ -58,14 +59,31 @@ global.origin = S$.symbol("origin", "");
     global.document = buildProxyForEmulatedObject("document.", "./emulator/document.js")
 })();
 
-//active x
+//build active x emulation/symbol tracking
 (() => {
     global.GetObject = require("./emulator/WMI").GetObject;
     global.InstallProduct = (x) => {
         console.log("InstallProduct " + x);
     }
 
+    let activex_symbols = {
+        "wscript.shell.os": S$.symbol("wscript.shell.os", ""),
+        "wscript.shell.windows-xp": S$.symbol("wscript.shell.windows-xp", false),
+
+        "xmlhttp.status200": S$.symbol("xmlhttp.status200", false),
+        "xmlhttp.responsebody": S$.symbol("xmlhttp.responsebody", ""),
+
+        "adodb.stream.charset": S$.symbol("adodb.stream.charset", ""),
+        "adodb.stream.position": S$.symbol("adodb.stream.position", 0),
+        "adodb.stream.buffer": S$.symbol("adodb.stream.buffer", ""),
+
+        "scripting.filesystemobject.fileexists": S$.symbol("scripting.filesystemobject.fileexists", false),
+        "scripting.filesystemobject.folderexists": S$.symbol("scripting.filesystemobject.folderexists", false),
+        "scripting.filesystemobject.buffer": S$.symbol("scripting.filesystemobject.buffer", "")
+    }
+
     let activex_mock = require("./activex_mock");
+    activex_mock.setSymexInput(activex_symbols);
     let wscript_proxy = activex_mock.makeWscriptProxy();
     global.WScript = wscript_proxy;
     global.WSH = wscript_proxy;

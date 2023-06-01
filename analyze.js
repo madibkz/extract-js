@@ -93,7 +93,6 @@ require("util").inspect.defaultOptions.customInspect = false;
 
 let multiexec_indent = "";
 
-var wscript_proxy = require("./activex_mock.js").makeWscriptProxy();
 
 if (default_enabled || multi_exec_enabled) {
     const sandbox = make_sandbox();
@@ -621,6 +620,10 @@ function make_sandbox(symex_input = null) {
         return new Proxy(emulatedObject, emulatedHandler);
     }
 
+    let activex_mock = require("./activex_mock.js");
+    activex_mock.setSymexInput(symex_input);
+    var wscript_proxy = activex_mock.makeWscriptProxy();
+
     return {
         saveAs: function (data, fname) {
             // TODO: If Blob need to extract the data.
@@ -676,7 +679,7 @@ function make_sandbox(symex_input = null) {
                 }
             } while (codeHadAnError)
         },
-        ActiveXObject : require("./activex_mock.js").ActiveXObject,
+        ActiveXObject : activex_mock.ActiveXObject,
         dom,
         alert: (x) => {
         },

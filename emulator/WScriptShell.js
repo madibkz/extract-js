@@ -1,19 +1,22 @@
 const run_by_extract_js = process.argv[1].endsWith("extract-js/analyze");
 const lib = run_by_extract_js ? require("../lib") : require("../symbol-lib");
 const TextStream = require("./TextStream.js");
-const argv = run_by_extract_js ? require("../argv.js").run : {"no-echo": false, "windows-xp": false}; //TODO symbolize
+const argv = run_by_extract_js ? require("../argv.js").run : {"no-echo": false, "windows-xp": false};
+
+//memory value
+let sym_vals = {};
 
 function WScriptShell() {
     const vars = {
 		/* %APPDATA% equals C:\Documents and Settings\{username}\Application Data on Windows XP,
 		 * but C:\Users\{username}\AppData\Roaming on Win Vista and above.
 		 */
-		appdata: argv["windows-xp"]
+		appdata: (sym_vals.hasOwnProperty("wscript.shell.windows-xp") ? sym_vals["wscript.shell.windows-xp"] : argv["windows-xp"])
 		    ? "C:\\Documents and Settings\\User\\Application Data"
 		    : "C:\\Users\\User\\AppData\\Roaming",
 		computername: "USER-PC",
 		comspec: "%SystemRoot%\\system32\\cmd.exe",
-		os: "Windows_NT",
+		os: sym_vals.hasOwnProperty("wscript.shell.os") ? sym_vals["wscript.shell.os"] : "Windows_NT", //TODO refactor hasOwnProperty pattern to function
 		processor_revision: "0209",
 		processor_architecture: "x86",
 		programdata: "C:\\ProgramData",
@@ -227,4 +230,13 @@ function WScriptShell() {
     };
 }
 
-module.exports = lib.proxify(WScriptShell, "WScriptShell");
+function setSymexInput(symex_input) {
+	if (symex_input)
+		sym_vals = symex_input;
+}
+
+module.exports = {
+	create: () => lib.proxify(WScriptShell, "WScriptShell"),
+	setSymexInput
+};
+

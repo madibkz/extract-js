@@ -28,10 +28,12 @@ const iconv = require("iconv-lite");
  SOFTWARE.
 */
 
+let sym_vals = {};
+
 function ADODBStream() {
     this.virtual_filename = "(undefined)";
-    this.charset = "";
-    this.position = 0;
+    this.charset = sym_vals.hasOwnProperty("adodb.stream.charset") ? sym_vals["adodb.stream.charset"] : ""; //symex?
+    this.position = sym_vals.hasOwnProperty("adodb.stream.position") ? sym_vals["adodb.stream.position"] : 0; //symex
     this.open = function () {};
     this.savetofile = function(filename) {
         this.virtual_filename = filename;
@@ -46,22 +48,35 @@ function ADODBStream() {
         return this.buffer;
     };
     this.write = function(text) {
+        if (!run_by_extract_js)  {
+            this.buffer = text;
+            return;
+        }
         if (this.charset)
             this.buffer = iconv.encode(text, this.charset);
         else
             this.buffer = text;
     };
     this.writetext = function(text) {
+        if (!run_by_extract_js)  {
+            this.buffer = text;
+            return;
+        }
+
         if (this.charset)
             this.buffer = iconv.encode(text, this.charset);
         else
             this.buffer = text;
     };
     this.loadfromfile = function(filename) {
-        if (this.charset)
-            this.buffer = iconv.decode(lib.readFile(filename), this.charset);
-        else
-            this.buffer = lib.readFile(filename);
+        if (sym_vals.hasOwnProperty("adodb.stream.buffer")) {
+            this.buffer = sym_vals["adodb.stream.buffer"];
+        } else {
+            if (this.charset)
+                this.buffer = iconv.decode(lib.readFile(filename), this.charset); //symex?
+            else
+                this.buffer = lib.readFile(filename);
+        }
     };
     this.tojson = function(data) {
         console.log(data);
@@ -71,35 +86,43 @@ function ADODBStream() {
     this.tostring = () => "ADODBStream object";
 }
 
-module.exports = function() {
-    return new Proxy(new ADODBStream(), {
-        get: function(target, name) {
-            name = name.toLowerCase();
-            switch (name) {
-            case "size":
-            case "length":
-                return target.buffer.length;
-            default:
-                if (name === "__safe_item_to_string") { //this is needed for jalangi/expose
-                    return false;
+function setSymexInput(symex_input) {
+    if (symex_input)
+        sym_vals = symex_input;
+}
+
+module.exports = {
+    create : function() {
+        return new Proxy(new ADODBStream(), {
+            get: function(target, name) {
+                name = name.toLowerCase();
+                switch (name) {
+                    case "size":
+                    case "length":
+                        return target.buffer.length;
+                    default:
+                        if (name === "__safe_item_to_string") { //this is needed for jalangi/expose
+                            return false;
+                        }
+                        if (name in target) {
+                            return target[name];
+                        }
+                        lib.kill(`ADODBStream.${name} not implemented!`);
                 }
-                if (name in target) {
-                    return target[name];
+            },
+            set: function(a, b, c) {
+                if (b === "__safe_item_to_string") { //this is needed for jalangi/expose
+                    a[b] = c;
+                    return true;
                 }
-                lib.kill(`ADODBStream.${name} not implemented!`);
-            }
-        },
-        set: function(a, b, c) {
-            if (b === "__safe_item_to_string") { //this is needed for jalangi/expose
+                b = b.toLowerCase();
+                /*      if (c.length < 1024)
+                        console.log(`ADODBStream[${b}] = ${c};`);
+                */
                 a[b] = c;
                 return true;
-            }
-            b = b.toLowerCase();
-            /*      if (c.length < 1024)
-                    console.log(`ADODBStream[${b}] = ${c};`);
-            */
-            a[b] = c;
-            return true;
-        },
-    });
+            },
+        });
+    },
+    setSymexInput
 };
