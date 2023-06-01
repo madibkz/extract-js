@@ -25,6 +25,7 @@ let number_of_set_timeout_calls = 0;
 let number_of_set_interval_calls = 0;
 let number_of_jsdom_scripts = 0;
 let number_of_event_scripts = 0;
+let number_of_html_snippets = 0;
 
 let logDom = false;
 
@@ -57,6 +58,7 @@ function new_symex_log_context(count, input) {
 	number_of_set_interval_calls = 0;
 	number_of_jsdom_scripts = 0;
 	number_of_event_scripts = 0;
+	number_of_html_snippets = 0;
 
 	if (count > 0) {
 		//reset directory to normal directory
@@ -91,6 +93,7 @@ function restartState() {
 	number_of_set_interval_calls = 0;
 	number_of_jsdom_scripts = 0;
 	number_of_event_scripts = 0;
+	number_of_html_snippets = 0;
 
 	//delete any written files
 	fsextra.emptyDirSync(directory);
@@ -162,6 +165,17 @@ function logJS(code, prefix = "", suffix = "", id = true, rewrite = null, as = "
 		logSnippet(filename2, {as: as}, rewrite);
 	}
 	return code; // Helps with tail call optimization
+}
+
+function log_if_unique_snippet(str, log_func, filter_func = () => true) {
+	let unique = true;
+	str = str.replace(/\s/g, "");
+	for (let s of Object.getOwnPropertyNames(snippets).filter(filter_func)) {
+		let snip = fs.readFileSync(path.join(directory, `/snippets/${s}`), "utf8");
+		if (snip.replace(/\s/g, "") === str) unique = false;
+	}
+	if (unique)
+		log_func();
 }
 
 module.exports = {
@@ -350,6 +364,13 @@ module.exports = {
 			fs.writeFileSync(path.join(directory, "dom_logs.json"), JSON.stringify(dom_logs, null, "\t"));
 		}
 	},
+	logHTML: function(html_str, as) {
+		log_if_unique_snippet(
+			html_str,
+			() => logSnippet(`HTML_${++number_of_html_snippets}_${uuid.v4()}.txt`, {as}, html_str),
+			(s) => s.includes("HTML")
+		)
+	},
 	logCookies: function(cookieJar) {
 		let serial = cookieJar.serializeSync();
 		if (serial.cookies.length !== 0)
@@ -376,15 +397,12 @@ module.exports = {
 		process.send("no-expect-shell-error");
 	},
 	checkThatScriptHasBeenLogged: (script_str) => {
-		let unique = true;
-		script_str = script_str.replace(/\s/g, "");
-		for (let s in snippets) {
-			let snip = fs.readFileSync(path.join(directory, `/snippets/${s}`), "utf8");
-			if (snip.replace(/\s/g, "") === script_str) unique = false;
-		}
-		if (unique) {
-			log("info", "Found an extra script in window.documents.script. Saved as snippet.");
-			logJS(script_str, `DOM_${++number_of_jsdom_scripts}_`, "", true, null, "JavaScript found in window.document.scripts", true);
-		}
+		log_if_unique_snippet(
+			script_str,
+			() => {
+				log("info", "Found an extra script in window.documents.script. Saved as snippet.");
+				logJS(script_str, `DOM_${++number_of_jsdom_scripts}_`, "", true, null, "JavaScript found in window.document.scripts", true);
+			}
+		);
 	}
 };

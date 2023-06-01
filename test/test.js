@@ -92,6 +92,46 @@ describe("DOM", function() {
 	let run_dom_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
 		run_script_and_check_output(`${domScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
 
+	function check_snippets(test_script_name, list_of_start_snippet_strs, list_of_as_values, list_of_snippet_values) {
+		function get_snippets_object(test_script_name)  {
+			let path_to_snippets_json = `${getTestResultsFolder(test_script_name)}default/snippets.json`;
+			assert(fs.existsSync(path_to_snippets_json));
+			return JSON.parse(fs.readFileSync(path_to_snippets_json, "utf8"));
+		}
+
+		function get_snippets_starting_with(list_of_start_strs, snippets) {
+			let dom_snippets = [];
+			for (let snip in snippets) {
+				list_of_start_strs.forEach((str) => {
+						if (snip.startsWith(str)) dom_snippets.push(snip);
+					}
+				);
+			}
+			return dom_snippets;
+		}
+
+		function read_snippet_files(test_script_name, list_of_snippet_file_names) {
+			let code_snips = [];
+			for (let i in list_of_snippet_file_names) {
+				code_snips.push(fs.readFileSync(`${getTestResultsFolder(test_script_name)}default/snippets/${list_of_snippet_file_names[i]}`, "utf8"));
+			}
+			return code_snips;
+		}
+
+		let snippets = get_snippets_object(test_script_name);
+		let snippet_names = get_snippets_starting_with(list_of_start_snippet_strs, snippets);
+
+		list_of_as_values.forEach((val, i) => {
+			assert(snippets[snippet_names[i]].as === val);
+		});
+
+		let code_snips = read_snippet_files(test_script_name, snippet_names);
+
+		list_of_snippet_values.forEach((val, i) => {
+			assert(code_snips[i] === val);
+		});
+	}
+
 	//DOM_LOG.JSON TESTS
 	it(
 		"should not create a dom_logs.json file if there are no DOM logs",
@@ -244,6 +284,34 @@ describe("DOM", function() {
 		}, "--url \"https://google.com\"")
 	);
 
+	it(
+		"should log the beginning HTML used in the jsdom emulation",
+		run_dom_script_and_check_output("html_initial.js", (stdout) => {
+			check_snippets(
+				"html_initial.js",
+				["HTML_1"],
+				["the initial HTML set for the jsdom emulation"],
+				[]
+			)
+		})
+	);
+
+	it(
+		"should log the end HTML in the jsdom emulation if there is a new script added/differences",
+		run_dom_script_and_check_output("html_end.js", (stdout) => {
+			check_snippets(
+				"html_end.js",
+				["HTML"],
+				[
+					"the initial HTML set for the jsdom emulation",
+					"the end HTML from the jsdom emulation once it was finished"
+				],
+				[]
+			)
+		})
+	);
+
+
 	//cookies
 	it(
 		"should log in dom_logs.json/stdout when document.cookie is read or a cookie is added",
@@ -326,46 +394,6 @@ describe("DOM", function() {
 			}, `--${t}-storage-file ${domScriptsDir}/initial_storage.txt`)
 		);
 	});
-
-	function check_snippets(test_script_name, list_of_start_snippet_strs, list_of_as_values, list_of_snippet_values) {
-		function get_snippets_object(test_script_name)  {
-			let path_to_snippets_json = `${getTestResultsFolder(test_script_name)}default/snippets.json`;
-			assert(fs.existsSync(path_to_snippets_json));
-			return JSON.parse(fs.readFileSync(path_to_snippets_json, "utf8"));
-		}
-
-		function get_snippets_starting_with(list_of_start_strs, snippets) {
-			let dom_snippets = [];
-			for (let snip in snippets) {
-				list_of_start_strs.forEach((str) => {
-						if (snip.startsWith(str)) dom_snippets.push(snip);
-					}
-				);
-			}
-			return dom_snippets;
-		}
-
-		function read_snippet_files(test_script_name, list_of_snippet_file_names) {
-			let code_snips = [];
-			for (let i in list_of_snippet_file_names) {
-				code_snips.push(fs.readFileSync(`${getTestResultsFolder(test_script_name)}default/snippets/${list_of_snippet_file_names[i]}`, "utf8"));
-			}
-			return code_snips;
-		}
-
-		let snippets = get_snippets_object(test_script_name);
-		let snippet_names = get_snippets_starting_with(list_of_start_snippet_strs, snippets);
-
-		list_of_as_values.forEach((val, i) => {
-			assert(snippets[snippet_names[i]].as === val);
-		});
-
-		let code_snips = read_snippet_files(test_script_name, snippet_names);
-
-		list_of_snippet_values.forEach((val, i) => {
-			assert(code_snips[i] === val);
-		});
-	}
 
 	//scripts
 	it(

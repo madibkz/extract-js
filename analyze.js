@@ -808,7 +808,9 @@ async function run_in_jsdom_vm(sandbox, code) {
                 set: (t, n, v) => log_dom_proxy_set(t, n, v, "cookieJar"),
             });
 
-            let dom_str = `<html><head></head><body></body><script>${initialLocalStorage}${initialSessionStorage}${one_cookie}${multiple_cookies}${code}</script></html>`;
+            let dom_str = `<html><head></head><body><script>${initialLocalStorage}${initialSessionStorage}${one_cookie}${multiple_cookies}${code}</script></body></html>`;
+
+            lib.logHTML(dom_str, "the initial HTML set for the jsdom emulation");
 
             //Keep in mind this runs asynchronous
             let dom = new JSDOM(dom_str, {
@@ -836,6 +838,8 @@ async function run_in_jsdom_vm(sandbox, code) {
             dom.window.document.scripts.forEach((x) => {
                 lib.checkThatScriptHasBeenLogged(x.innerHTML);
             })
+
+            lib.logHTML(dom.serialize(), "the end HTML from the jsdom emulation once it was finished");
 
             dom.window.close();
 
