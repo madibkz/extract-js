@@ -263,12 +263,16 @@ function instrument_html(code) {
     let scripts = dom.window.document.scripts;
     for (let s = 0; s < scripts.length; s++) {
         if (scripts[s].innerHTML.trim() !== "") {
+            let old_js = scripts[s].innerHTML;
+            scripts[s].innerHTML = rewrite(scripts[s].innerHTML);
+            if (argv["multi-exec"])  //wrap scripts into an eval for multi-exec error skipping
+                scripts[s].innerHTML = "eval(`" + scripts[s].innerHTML.replace(/`/g, "\\`").replace(/\$/g, "\\$") + "`);"
             lib.logJS(
-                scripts[s].innerHTML,
+                old_js,
                 `${numberOfExecutedSnippets++}_input_script`,
                 "",
                 false,
-                scripts[s].innerHTML = rewrite(scripts[s].innerHTML),
+                scripts[s].innerHTML,
                 `FOUND IN INPUT HTML IN SCRIPT TAG AT CHAR ${dom.nodeLocation(scripts[s]).startOffset}`,
                 true
             );

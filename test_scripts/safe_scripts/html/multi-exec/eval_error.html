@@ -1,0 +1,14 @@
+ <!DOCTYPE html>
+<html>
+<head>
+  <script>
+    eval("console.log(undefinedthing)");
+  </script>
+</head>
+<body>
+  <script>
+    eval("console.log(anotherundefinedthing); dothisthing();");
+    console.log("reached end script");
+  </script>
+</body>
+</html>
