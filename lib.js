@@ -39,7 +39,7 @@ const logSnippet = function(filename, logContent, content, deobfuscate = false, 
 	fs.writeFileSync(save_path, js_beautify ? require("js-beautify").js(content) : content);
 	if (deobfuscate) {
 		//write a deobfuscated version of the JS snippet
-		child_process.exec(`./illuminatejs/deobfuscate_file.js ${save_path}`);
+		child_process.exec(`${path.join(__dirname, "/illuminatejs/deobfuscate_file.js")} ${save_path}`);
 	}
 	fs.writeFileSync(path.join(directory, "snippets.json"), JSON.stringify(snippets, null, "\t"));
 };
@@ -467,7 +467,7 @@ module.exports = {
 				dom_logs.push(dom_str);
 				fs.writeFileSync(path.join(directory, "dom_logs.json"), JSON.stringify(dom_logs, null, "\t"));
 			} catch (e) {
-				log("warn", `Call to lib.logDOM threw an error - args were (${property}, ${write}, ${write_val}, ${func}, ${args})`);
+				log("warn", `Call to lib.logDOM threw an error - args were (${property}, ${write}, ${write_val}, ${func}, ${JSON.stringify(args)})`);
 			}
 
 			logDom = true;

@@ -136,7 +136,7 @@ describe("code rewriting", function() {
 	it(
 		"should find and log any string literals which are urls/ips",
 		run_rewrite_script_and_check_output("url_in_literal.js", (stdout) => {
-			assert(stdout.includes(`FOUND URL: https://google.com | METHOD: UNKNOWN | INFO: FOUND IN STRING LITERAL WHILE TRAVERSING THE TREE PRE-EMULATION (START CHAR: 10 END CHAR: 30)`));
+			assert(stdout.includes(`FOUND URL: https://google.com | METHOD: UNKNOWN | INFO: FOUND IN STRING LITERAL WHILE TRAVERSING THE TREE IN REWRITE (START CHAR: 10 END CHAR: 30)`));
 		})
 	);
 });
@@ -417,7 +417,7 @@ describe("DOM", function() {
 	it(
 		"should not log the URL and functions of window.XMLHttpRequest if --dom-network-apis is not there",
 		run_dom_script_and_check_output("no_XHR.js", (stdout) => {
-			assert(stdout.includes(`[error] Code called window.XMLHttpRequest() but it's not enabled!`));
+			assert(stdout.includes(`[info] Code called window.XMLHttpRequest() but it's not enabled!`));
 		})
 	);
 	it(
@@ -647,7 +647,6 @@ describe("html", function() {
 		"should download and run externally linked scripts within a html file when --dom-resource-loading is on",
 		run_html_script_and_check_output("external_linked_js.html", (stdout) => {
 			assert(stdout.includes(`Resource at https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js [GET] was requested from DOM emulation`));
-			assert(stdout.includes(`Code called window.XMLHttpRequest() but it's not enabled`));
 		}, "--html --dom-resource-loading")
 	);
 	//checking that the setup of --cookie, --cookie-file, --localStorage and --sessionStorage still works
@@ -760,10 +759,20 @@ describe("multi-exec", function() {
 			assert(stdout.includes(`"1"`));
 			assert(stdout.includes(`} catch {`));
 			assert(stdout.includes(`"2"`));
-			assert(stdout.includes(`} (EXITED CATCH CLAUSE)`));
 			assert(stdout.includes(`} finally {`));
 			assert(stdout.includes(`"3"`));
 			assert(stdout.includes(`} (EXITED FINALLY CLAUSE)`));
+		}, "--multi-exec")
+	);
+	it(
+		"should skip error in try clause",
+		run_multiexec_script_and_check_output("trycatchthrow.js", (stdout) => {
+			assert(stdout.includes(`try {`));
+			assert(stdout.includes(`try statement`));
+			assert(stdout.includes(`reached end of try clause`));
+			assert(stdout.includes(`} catch {`));
+			assert(stdout.includes(`catch statement`));
+			assert(stdout.includes(`} (EXITED CATCH CLAUSE)`));
 		}, "--multi-exec")
 	);
 	it(

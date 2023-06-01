@@ -655,7 +655,7 @@ cc decoder.c -o decoder
                 if (!val) return;
                 if (val.type === "Literal" && typeof val.value === "string" && !false_flags.includes(val.value.trim())) {
                     if (isURL(val.value.trim()) || isIP(val.value.trim())) {
-                        lib.logUrl("UNKNOWN", val.value.trim(), `FOUND IN STRING LITERAL WHILE TRAVERSING THE TREE PRE-EMULATION (START CHAR: ${val.start} END CHAR: ${val.end})`);
+                        lib.logUrl("UNKNOWN", val.value.trim(), `FOUND IN STRING LITERAL WHILE TRAVERSING THE TREE IN REWRITE (START CHAR: ${val.start} END CHAR: ${val.end})`);
                     }
                 }
             });
@@ -700,8 +700,21 @@ function rewrite_code_for_symex_script(code) {
             return;
         }
 
+        function recursively_set_field(obj, field, value) {
+            obj[field] = value;
+            for (let i of Object.keys(obj))
+                if (typeof obj[i] === "object")
+                    recursively_set_field(obj[i], field, value);
+        }
+
         traverse(tree, function(key, val) {
             if (!val) return;
+            if (val.type === "AssignmentExpression") {
+                recursively_set_field(val.left, "symexeclocfield", true);
+            }
+            if (val.type === "MemberExpression" && !val.symexeclocfield) {
+                return require("./patches/symexec/locationfield.js")(val);
+            }
             switch (val.type) {
                 case "ThisExpression":
                     return require("./patches/symexec/this.js")(val);
@@ -714,7 +727,7 @@ function rewrite_code_for_symex_script(code) {
                     return require("./patches/symexec/trycatchwrap.js")(val);
                 case "VariableDeclaration":
                     if (val.symexecthistraversed) return val;
-                    let assignments = val.declarations.map((d) => {
+                    let assignments = val.declarations.filter(d => d.init).map((d) => {
                         return {
                             type: "ExpressionStatement",
                             expression: {
@@ -859,6 +872,7 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
     let og_loc = window.location;
     let loc_proxy = new Proxy(og_loc, {
         get: (t, n) => {
+            if (n == Symbol.toPrimitive && symex_input && symex_input.hasOwnProperty(`location.href`)) return () => symex_input[`location.href`];
             if (symex_input && symex_input.hasOwnProperty(`location.${n}`)) return symex_input[`location.${n}`];
             return log_dom_proxy_get(t, n, "window.location");
         },
@@ -868,28 +882,29 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
     window.location = loc_proxy;
 
     //xhr
-    if (argv["dom-network-apis"]) {
-        let og_xhr = window.XMLHttpRequest;
-        window.XMLHttpRequest = function() {
-            return new Proxy(new og_xhr(), {
-                get: (t, n) => {
-                    if (n === "open") {
-                        return function () {
-                            lib.logDOM(`window.XMLHttpRequest.${n}`, false, null, true, arguments);
-                            lib.logDOMUrl(arguments[1], {element: {localName: "window.XMLHttpRequest"}, as: "from xmlhttprequest.open"});
-                            return t[n].apply(t, arguments);
+    let og_xhr = window.XMLHttpRequest;
+    window.XMLHttpRequest = function() {
+        return new Proxy(new og_xhr(), {
+            get: (t, n) => {
+                if (n === "open") {
+                    return function () {
+                        lib.logDOM(`window.XMLHttpRequest.${n}`, false, null, true, arguments);
+                        lib.logDOMUrl(arguments[1], {element: {localName: "window.XMLHttpRequest"}, as: "from xmlhttprequest.open"});
+                        if (!argv["dom-network-apis"]) {
+                            lib.info("Code called window.XMLHttpRequest() but it's not enabled!");
+                            return null;
                         }
+                        return t[n].apply(t, arguments);
                     }
-                    return log_dom_proxy_get(t, n, "window.XMLHttpRequest");
-                },
-                set: (t, n, v) => log_dom_proxy_set(t, n, v, "window.XMLHttpRequest"),
-            });
-        }
-    } else {
-        window.XMLHttpRequest = function() {
-            lib.error("Code called window.XMLHttpRequest() but it's not enabled!");
-            return null;
-        }
+                }
+                if (!argv["dom-network-apis"]) {
+                    lib.info("Code called window.XMLHttpRequest() but it's not enabled!");
+                    return null;
+                }
+                return log_dom_proxy_get(t, n, "window.XMLHttpRequest");
+            },
+            set: (t, n, v) => log_dom_proxy_set(t, n, v, "window.XMLHttpRequest"),
+        });
     }
 
 
@@ -1026,9 +1041,9 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
             return (code) => {
                 lib.info("ENTERING EVAL");
                 if (argv["multi-exec"]) {
-                    sandbox.evalUntilPasses(sandbox.rewrite(code, true), real_eval);
+                    return sandbox.evalUntilPasses(sandbox.rewrite(code, true), real_eval);
                 } else {
-                    real_eval(sandbox.rewrite(code, true));
+                    return real_eval(sandbox.rewrite(code, true));
                 }
                 lib.info("EXITING EVAL");
             }
@@ -1180,7 +1195,18 @@ async function run_in_jsdom_vm(sandbox, code, symex_input = null) {
             let setup_str = `${initialLocalStorage}${initialSessionStorage}${one_cookie}${multiple_cookies}`;
             listOfKnownScripts.push(setup_str);
             if (!html_mode) {
-                dom_str = `<html><head></head><body><script>${setup_str}${code}</script></body></html>`;
+                dom_str = `<html><head></head><body><script>${setup_str}${code}</script>
+<form action="/submit.php">
+  <label for="username">Username:</label><br>
+  <input type="text" id="username" name="username" value="fakename"><br>
+  <label for="password">Password:</label><br>
+  <input type="text" id="password" name="password" value="fakepassword"><br>
+  <label for="credit-card">Credit card:</label><br>
+  <input type="text" id="credit-card" name="credit-card" value="credit-card"><br>
+  <input type="submit" value="Submit">
+</form>
+<button type="button">Fakebutton</button>
+</body></html>`;
                 lib.logHTML(dom_str, "the initial HTML set for the jsdom emulation");
             } else {
                 //add the setup_str as a script in <head>
@@ -1382,9 +1408,10 @@ function make_sandbox(symex_input = null) {
         evalUntilPasses: !argv["multi-exec"] ? () => {} : (evalCode, evalFunc) => {
             let codeHadAnError = true;
             let multiexec_indent_checkpoint = multiexec_indent;
+            let ret_val;
             do {
                 try {
-                    evalFunc(evalCode);
+                    ret_val = evalFunc(evalCode);
                     codeHadAnError = false;
                 } catch (e) {
                     evalCode = replaceErrorCausingCode(e, evalCode, true);
@@ -1398,6 +1425,7 @@ function make_sandbox(symex_input = null) {
             //log this code as the final instrumented snippet
             let filename = lib.getLastInstrumentedFilename().split(".")[0];
             lib.logJS(evalCode, filename, "", false, null, "eval code that passed multi-exec with skipped errors", false);
+            return ret_val;
         },
         ActiveXObject : activex_mock.ActiveXObject,
         alert: (x) => {

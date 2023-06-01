@@ -7,6 +7,7 @@ function Dictionary() {
 	// See https://github.com/eslint/eslint/issues/7285
 	this.add = (key, value) => (this.dictionary[key] = value);
 	this.item = (key) => this.dictionary[key];
+	this.exists = () => true;
 }
 
 module.exports = lib.proxify(Dictionary, "Scripting.Dictionary");

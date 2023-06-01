@@ -8,6 +8,9 @@ function getProxyHandler() {
                     if (name === "defaultView") {
                         return global;
                     }
+                    if (name === "hasFocus") {
+                        return () => target.hasFocusValue;
+                    }
                     if (name === "toString") {
                         return () => "document";
                     }
@@ -50,9 +53,9 @@ function getInnerProxies() {
 
 function getObject() {
     return {
-        hasFocus() {
-            return this.hasFocusValue;
-        },
+        // hasFocus() {
+        //     return this.hasFocusValue;
+        // },
     };
 }
 
