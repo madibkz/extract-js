@@ -557,8 +557,26 @@ function rewrite_code_for_symex_script(code) {
                 case "WhileStatement":
                 case "DoWhileStatement":
                 case "FunctionDeclaration":
-                case "VariableDeclaration":
                     return require("./patches/symexec/trycatchwrap.js")(val);
+                case "VariableDeclaration":
+                    if (val.symexecthistraversed) return val;
+                    let assignments = val.declarations.map((d) => {
+                        return {
+                            type: "ExpressionStatement",
+                            expression: {
+                                type: "AssignmentExpression",
+                                operator: "=",
+                                left: d.id,
+                                right: d.init
+                            },
+                        }
+                    });
+                    val.declarations.forEach((d) => d.init = null);
+                    val.symexecthistraversed = true;
+                    return [
+                            val,
+                            ...assignments
+                    ];
                 case "ForStatement":
                     //prevents the trycatch wrapping of the init part of the for loop
                     val.init ? val.init.symexecthistraversed = true : {};
