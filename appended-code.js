@@ -37,7 +37,7 @@ for (varName in this) {
 
 if (htmlAndMulti) {
     //for all script attributes rewrite and force execution:
-    logMultiexec("(FORCING EXECUTION OF CODE IN HTML ATTRIBUTES.)", 1);
+    logMultiexec("(FORCING EXECUTION OF ANY CODE IN HTML ATTRIBUTES.)", 1);
     let all_elements = document.getElementsByTagName("*");
     for (let e = 0; e < all_elements.length; e++) {
         let atts = all_elements[e].attributes;
