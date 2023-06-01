@@ -623,6 +623,61 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
             }
         }
 
+        function create_node_proxy(node, prefix, node_name, from_func_call = false, args = null, index_str = null) {
+            const args_str = args === null ? "" : Array.from(args).map(a => String(a)).join(", ");
+            const prefix_str = `${prefix}.${node_name.toString()}${from_func_call ? "(" + args_str + ")" : ""}${index_str ? index_str : ""}`;
+            return new Proxy(node, {
+                get: (t, n) => {
+                    if (n in t) {
+                        if (typeof n === "symbol") return t[n];
+                        if (typeof t[n] === "function") {
+                            return function() {
+                                lib.logDOM(`${prefix_str}.${n.toString()}`, false, null, true, arguments);
+                                let result = t[n].apply(t, arguments);
+                                if (typeof result !== "undefined") {
+                                    if (result.nodeType)
+                                        return create_node_proxy(result, prefix_str, n, true, arguments);
+                                    if (result.toString().includes("HTMLCollection") || result.toString().includes("NodeList")) {
+                                        let new_list = [];
+                                        for (let i = 0; i < result.length; i++) {
+                                            new_list.push(create_node_proxy(result[i], prefix_str, n, true, arguments, `[${i}]`));
+                                        }
+                                        return new_list;
+                                    }
+                                }
+                                return result;
+                            }
+                        }
+                        lib.logDOM(`${prefix_str}.${n.toString()}`);
+                        let result = t[n];
+                        if (typeof result !== "undefined") {
+                            if (result.nodeType)
+                                return create_node_proxy(result, prefix, n);
+                            if (result.toString().includes("HTMLCollection") || result.toString().includes("NodeList")) {
+                                let new_list = [];
+                                for (let i = 0; i < result.length; i++) {
+                                    new_list.push(create_node_proxy(result[i], prefix, n, false, null, `[${i}]`));
+                                }
+                                return new_list;
+                            }
+                        }
+                        return result;
+                    }
+                    return undefined;
+                },
+                set: function(t, n, v) {
+                    if (n in t) {
+                        if (typeof n === "symbol") return t[n];
+                        //TODO: need to set a create_node_proxy if v is a node?
+                        lib.logDOM(`${prefix_str}.${n.toString()}`, true, v);
+                        t[n] = v;
+                        return true;
+                    }
+                    return false;
+                },
+            });
+        }
+
         let codeHadAnError = multi_exec_enabled;
         do {
             try {
@@ -751,12 +806,36 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                                         if (typeof target[name] === "function") { //log function calls with arguments
                                             return function () {
                                                 lib.logDOM(`window.document.${name}`,false, null, true, arguments);
-                                                return target[name].apply(target, arguments);
+                                                let result = target[name].apply(target, arguments);
+                                                if (typeof result !== "undefined") {
+                                                    if (result.nodeType)
+                                                        return create_node_proxy(result, "window.document", name, true, arguments);
+                                                    if (result.toString().includes("HTMLCollection") || result.toString().includes("NodeList")) {
+                                                        let new_list = [];
+                                                        for (let i = 0; i < result.length; i++) {
+                                                            new_list.push(create_node_proxy(result[i], "window.document", name, true, arguments, `[${i}]`));
+                                                        }
+                                                        return new_list;
+                                                    }
+                                                }
+                                                return result;
                                             }
                                         }
                                         lib.logDOM(`window.document.${name}`);
                                     }
-                                    return target[name];
+                                    let result = target[name];
+                                    if (typeof result !== "undefined") {
+                                        if (result.nodeType)
+                                            return create_node_proxy(result, "window.document", name);
+                                        if (result.toString().includes("HTMLCollection") || result.toString().includes("NodeList")) {
+                                            let new_list = [];
+                                            for (let i = 0; i < result.length; i++) {
+                                                new_list.push(create_node_proxy(result[i], "window.document", name, false, null, `[${i}]`));
+                                            }
+                                            return new_list;
+                                        }
+                                    }
+                                    return result;
                                 }
                                 return undefined;
                             },
