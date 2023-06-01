@@ -167,12 +167,20 @@ describe("DOM", function() {
 
 	//RESOURCE LOADING TESTS
 	it(
+		"should not log the url src for a new script element added to the dom if there is no dom-resource-loading flag",
+		run_dom_script_and_check_output("no_dom_resource_loading.js", (stdout) => {
+			assert(!stdout.includes(`Resource at https://code.jquery.com/jquery-3.6.0.slim.min.js was requested from DOM emulation from element script.`));
+			let path_to_urls = `${getTestResultsFolder("no_dom_resource_loading.js")}default/urls.json`;
+			assert(!fs.existsSync(path_to_urls));
+		})
+	);
+	it(
 		"should log the url src for a new script element added to the dom",
 		run_dom_script_and_check_output("create_linked_script.js", (stdout) => {
 			assert(stdout.includes(`Resource at https://code.jquery.com/jquery-3.6.0.slim.min.js was requested from DOM emulation from element script.`));
 			let path_to_urls = `${getTestResultsFolder("create_linked_script.js")}default/urls.json`;
 			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://code.jquery.com/jquery-3.6.0.slim.min.js"));
-		})
+		}, "--dom-resource-loading")
 	);
 	it(
 		"should log the url src for a new stylesheet element added to the dom",
@@ -180,7 +188,7 @@ describe("DOM", function() {
 			assert(stdout.includes(`Resource at https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css was requested from DOM emulation from element link.`));
 			let path_to_urls = `${getTestResultsFolder("create_linked_stylesheet.js")}default/urls.json`;
 			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"));
-		})
+		}, "--dom-resource-loading")
 	);
 	it(
 		"should log the url src for a new iframe element added to the dom",
@@ -188,7 +196,7 @@ describe("DOM", function() {
 			assert(stdout.includes(`Resource at https://example.com/ was requested from DOM emulation from element iframe.`));
 			let path_to_urls = `${getTestResultsFolder("create_linked_iframe.js")}default/urls.json`;
 			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://example.com/"));
-		})
+		}, "--dom-resource-loading")
 	);
 
 

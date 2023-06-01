@@ -852,7 +852,7 @@ async function run_in_jsdom_vm(sandbox, code) {
                 runScripts: "dangerously",
                 pretendToBeVisual: true,
                 cookieJar,
-                resources: resourceLoader,
+                resources: argv["dom-resource-loading"] ? resourceLoader : undefined,
 
                 //Setting up the global context of the emulation
                 beforeParse(window) {
