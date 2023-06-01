@@ -179,45 +179,6 @@ function is_default_sym_exec_value(o) {
     return false;
 }
 
-//returns an object which has all the default values with corresponding symbol keys
-function get_sym_exec_default_values() {
-    function addDefaultValuesOfEmulatedObject(obj, symex_prefix, file_path) {
-        let emulatedPatch = require(file_path);
-        let emulatedObject = emulatedPatch.getObject();
-        let emulatedDefaultFields = emulatedPatch.getDefaultFields();
-        let emulatedInnerProxies = emulatedPatch.getInnerProxies();
-
-        for (let field in emulatedDefaultFields) {
-            if (emulatedDefaultFields.hasOwnProperty(field)) {
-                emulatedObject[field] = emulatedDefaultFields[field];
-                obj[symex_prefix + field] = emulatedDefaultFields[field];
-            }
-        }
-
-        //inner proxies
-        for (let field in emulatedInnerProxies) {
-            if (emulatedInnerProxies.hasOwnProperty(field)) {
-                let innerProxy = emulatedInnerProxies[field];
-                if (Array.isArray(emulatedObject)) {
-                    for (let a = 0; a < emulatedObject.length; a++) {
-                        if (emulatedObject[a] === field) {
-                            obj = addDefaultValuesOfEmulatedObject(obj, innerProxy.symex_prefix, innerProxy.file_path);
-                        }
-                    }
-                } else {
-                    obj = addDefaultValuesOfEmulatedObject(obj, innerProxy.symex_prefix, innerProxy.file_path);
-                }
-            }
-        }
-
-        return obj;
-    }
-    let res = {};
-    res = addDefaultValuesOfEmulatedObject(res, "location.", "./emulator/location.js");
-    res = addDefaultValuesOfEmulatedObject(res, "navigator.", "./emulator/navigator/navigator.js");
-    return res;
-}
-
 function prepend_sym_exec_script(sym_exec_script) {
     let activex_mock_code = fs.readFileSync("./activex_mock.js", "utf-8");
     activex_mock_code = activex_mock_code.substring(activex_mock_code.indexOf("SYMEXDELETEBEFORE") - 2, activex_mock_code.indexOf("SYMEXDELETEAFTER"));
