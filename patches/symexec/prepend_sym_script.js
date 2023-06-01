@@ -66,24 +66,35 @@ global.origin = S$.symbol("origin", "");
         console.log("InstallProduct " + x);
     }
 
-    let activex_symbols = {
-        "wscript.shell.os": S$.symbol("wscript.shell.os", ""),
-        "wscript.shell.windows-xp": S$.symbol("wscript.shell.windows-xp", false),
+    let activex_mock = require("./activex_mock");
 
-        "xmlhttp.status200": S$.symbol("xmlhttp.status200", false),
-        "xmlhttp.responsebody": S$.symbol("xmlhttp.responsebody", ""),
+    let activex_symbolize = true;
+    let activex_buffers_symbolize = true;
 
-        "adodb.stream.charset": S$.symbol("adodb.stream.charset", ""),
-        "adodb.stream.position": S$.symbol("adodb.stream.position", 0),
-        "adodb.stream.buffer": S$.symbol("adodb.stream.buffer", ""),
+    if (activex_symbolize) {
+        let activex_symbols = {
+            "wscript.shell.os": S$.symbol("wscript.shell.os", ""),
+            "wscript.shell.windows-xp": S$.symbol("wscript.shell.windows-xp", false),
 
-        "scripting.filesystemobject.fileexists": S$.symbol("scripting.filesystemobject.fileexists", false),
-        "scripting.filesystemobject.folderexists": S$.symbol("scripting.filesystemobject.folderexists", false),
-        "scripting.filesystemobject.buffer": S$.symbol("scripting.filesystemobject.buffer", "")
+            "xmlhttp.status200": S$.symbol("xmlhttp.status200", false),
+
+            "adodb.stream.charset": S$.symbol("adodb.stream.charset", ""),
+            "adodb.stream.position": S$.symbol("adodb.stream.position", 0),
+
+            "scripting.filesystemobject.fileexists": S$.symbol("scripting.filesystemobject.fileexists", false),
+            "scripting.filesystemobject.folderexists": S$.symbol("scripting.filesystemobject.folderexists", false),
+        }
+
+        if (activex_buffers_symbolize) {
+            activex_symbols["xmlhttp.responsebody"] = S$.symbol("xmlhttp.responsebody", "");
+            activex_symbols["adodb.stream.buffer"] = S$.symbol("adodb.stream.buffer", "");
+            activex_symbols["scripting.filesystemobject.buffer"] = S$.symbol("scripting.filesystemobject.buffer", "");
+        }
+
+        activex_mock.setSymexInput(activex_symbols);
     }
 
-    let activex_mock = require("./activex_mock");
-    activex_mock.setSymexInput(activex_symbols);
+
     let wscript_proxy = activex_mock.makeWscriptProxy();
     global.WScript = wscript_proxy;
     global.WSH = wscript_proxy;

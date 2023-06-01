@@ -179,15 +179,15 @@ function is_default_sym_exec_value(o) {
 }
 
 function prepend_sym_exec_script(sym_exec_script) {
-    let activex_mock_code = fs.readFileSync("./activex_mock.js", "utf-8");
-    activex_mock_code = activex_mock_code.substring(activex_mock_code.indexOf("SYMEXDELETEBEFORE") - 2, activex_mock_code.indexOf("SYMEXDELETEAFTER"));
-    activex_mock_code = activex_mock_code.replace(/lib\.error/g, "throw ");
-    activex_mock_code = activex_mock_code.replace(/lib\.verbose/g, "console.log");
-    activex_mock_code = activex_mock_code.replace(/lib\.kill/g, "throw ");
-
     let prepend_sym_script = fs.readFileSync("./patches/symexec/prepend_sym_script.js", "utf-8");
 
-    sym_exec_script = prepend_sym_script + /*"\n\n" + activex_mock_code +*/ "\n\n//END OF PATCHING\n" + sym_exec_script;
+    if (argv["no-sym-exec-activex"])
+        prepend_sym_script = prepend_sym_script.replace(/let activex_symbolize = true/, "let activex_symbolize = false");
+
+    if (argv["no-sym-exec-activex-buffers"])
+        prepend_sym_script = prepend_sym_script.replace(/let activex_buffers_symbolize = true/, "let activex_buffers_symbolize = false");
+
+    sym_exec_script = prepend_sym_script + "\n\n//END OF PATCHING\n" + sym_exec_script;
 
     return sym_exec_script;
 }

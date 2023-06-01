@@ -28,6 +28,16 @@
             "description": "Only run symbolic execution mode: This runs the script under dynamic symbolic execution to find different sandbox contexts which trigger different behaviours."
         },
         {
+            "name": "no-sym-exec-activex",
+            "type": "Boolean",
+            "description": "Disable symbolic execution of ActiveX emulated objects when running symbolic execution mode. (With this enabled, ActiveX uses their default properties.)"
+        },
+        {
+            "name": "no-sym-exec-activex-buffers",
+            "type": "Boolean",
+            "description": "Disable symbolically tracking ActiveX buffers such as XMLHTTP's response body or TextStream's buffer. (With this enabled, only non-buffer variables are symbolically tracked in ActiveX objects.)"
+        },
+        {
             "name": "multi-exec",
             "type": "Boolean",
             "description": "Only run multi-execution analysis: Cover all of the code by forcing execution of the multiple control paths. Since execution is out of order, there may be errors but potentially new information can be extracted."
