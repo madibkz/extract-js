@@ -5,6 +5,9 @@ function getProxyHandler() {
                 case Symbol.toPrimitive:
                     return () => "[object HTMLDocument]";
                 default:
+                    if (name === "toString") {
+                        return () => "document";
+                    }
                     if (name in target) {
                         return target[name];
                     }
@@ -15,11 +18,8 @@ function getProxyHandler() {
             }
         },
         set: function (target, name, value) {
-            if (name === "__safe_item_to_string") { //this is needed for jalangi/expose
-                target[name] = value;
-                return true;
-            }
-            return false;
+            target[name] = value;
+            return true;
         }
     };
 }
@@ -27,6 +27,16 @@ function getProxyHandler() {
 function getDefaultFields() {
     return {
         cookie: "",
+        documentURI: "",
+        hidden: false,
+        visibilityState: "visible",
+        designMode: "off",
+        domain: "",
+        readyState: "",
+        referrer: "",
+        title: "",
+        URL: "",
+        hasFocusValue: false,
     };
 }
 
@@ -37,6 +47,9 @@ function getInnerProxies() {
 
 function getObject() {
     return {
+        hasFocus() {
+            return this.hasFocusValue;
+        },
     };
 }
 
