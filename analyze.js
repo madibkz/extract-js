@@ -172,7 +172,10 @@ if (default_enabled || multi_exec_enabled) {
         //Run sandbox for this input combination
         const sandbox = make_sandbox(input);
         //pass true to make them run in vm2 rather than jsdom for now
+        console.log(`STARTING EMULATION FOR CONTEXT ${i}. (UNIQUE VARS: ${JSON.stringify(unique_context)})`);
         run_emulation(code, sandbox, input);
+        console.log(`FINISHED EMULATION FOR CONTEXT ${i}.`);
+        console.log(``);
     }
 }
 
