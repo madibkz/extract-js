@@ -135,7 +135,7 @@ tasks.forEach(({filepath, filename}) => {
 	} else if (!default_flag && !multi_flag && !sym_flag) {
 		q.push(cb => analyze(results_dir, filepath, filename, cb, "default"))
 	} else {
-		let log_to_stdout = (default_flag + multi_flag + sym_flag) === 1;
+		let log_to_stdout = ((default_flag?1:0) + (multi_flag?1:0) + (sym_flag?1:0)) === 1;
 		if (default_flag) {
 			q.push(cb => analyze(results_dir, filepath, filename, cb, "default", log_to_stdout));
 		}

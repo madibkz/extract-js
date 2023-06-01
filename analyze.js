@@ -9,10 +9,9 @@ const {VM} = require("vm2");
 //const {NodeVM} = require('vm2');
 const child_process = require("child_process");
 const argv = require("./argv.js").run;
-const jsdom = require("jsdom").JSDOM;
-const dom = new jsdom(`<html><head></head><body></body></html>`);
+const jsdom = require("jsdom");
+const JSDOM = jsdom.JSDOM;
 const traverse = require("./utils.js").traverse
-const traverseFully = require("./utils.js").traverseFully
 
 const filename = process.argv[2];
 const directory = process.argv[3];
@@ -543,17 +542,9 @@ function rewrite_code_for_symex_script(code) {
 
     return code;
 }
-
-function run_in_vm(code, sandbox) {
-    if (argv["dangerous-vm"]) {
-        lib.verbose("Analyzing with native vm module (dangerous!)");
-        const vm = require("vm");
-        vm.runInNewContext(code, sandbox, {
-            displayErrors: true,
-            // lineOffset: -fs.readFileSync(path.join(__dirname, "patch.js"), "utf8").split("\n").length,
-            filename: "sample.js",
-        });
-    } else {
+//TODO: think about the ramifications of making this async
+async function run_in_vm(code, sandbox) {
+    if (argv["vm2"]) {
         lib.debug("Analyzing with vm2 v" + require("vm2/package.json").version);
 
         // Fake cscript.exe style ReferenceError messages.
@@ -579,6 +570,69 @@ function run_in_vm(code, sandbox) {
                 } else if (sym_exec_enabled) {
                     lib.error(e.stack, true, false);
                     return;
+                } else {
+                    lib.error(e.stack, true, false);
+                    throw e;
+                }
+            }
+        } while (codeHadAnError)
+    } else if (argv["dangerous-vm"]) {
+        lib.verbose("Analyzing with native vm module (dangerous!)");
+        const vm = require("vm");
+        vm.runInNewContext(code, sandbox, {
+            displayErrors: true,
+            // lineOffset: -fs.readFileSync(path.join(__dirname, "patch.js"), "utf8").split("\n").length,
+            filename: "sample.js",
+        });
+    } else { //jsdom default emulation context
+        lib.debug("Analyzing with jsdom");
+        let delete_in_sandbox = ["setInterval", "setTimeout", "alert", "JSON", /*"console",*/ "location", "navigator", "document", "origin", "self", "window"];
+        delete_in_sandbox.forEach(field => delete sandbox[field]);
+
+        let url = "https://example.org/";
+
+        let codeHadAnError = multi_exec_enabled;
+        do {
+            try {
+                const virtualConsole = new jsdom.VirtualConsole();
+                virtualConsole.sendTo(lib, { omitJSDOMErrors: true });
+                virtualConsole.on("jsdomError", (e) => {throw e.detail}); //TODO: what happens when error occurs in default mode? what happens when non-jsdom error occurs?
+
+                let dom_str = `<html><head></head><body></body><script>${code}</script></html>`;
+
+                //Keep in mind this runs asynchronous
+                let dom = new JSDOM(dom_str, { //TODO: do I need to HTML special char escape code?
+                    url: url, //TODO: add command line arg to change url and referrer for default/multi
+                    referrer: url,
+                    contentType: "text/html",
+                    includeNodeLocations: true,
+                    virtualConsole,
+                    runScripts: "dangerously",
+                    pretendToBeVisual: true,
+
+                    beforeParse(window) {
+                        for (let field in sandbox) {
+                            if (sandbox.hasOwnProperty(field)) {
+                                window[field] = sandbox[field];
+                            }
+                        }
+                        window.emulationFinished = false;
+                    }
+                });
+
+                //https://stackoverflow.com/questions/14226803/wait-5-seconds-before-executing-next-line
+                while (!dom.window.emulationFinished) //poll until emulation of main code has finished
+                    await setTimeout[Object.getOwnPropertySymbols(setTimeout)[0]](100);
+
+                dom.window.close();
+
+                codeHadAnError = false;
+            } catch (e) {
+                if (multi_exec_enabled) {
+                    code = replaceErrorCausingCode(e, code, false, url);
+
+                    //RESTART LOGGING AND SANDBOX STUFF:
+                    restartLoggedState();
                 } else {
                     lib.error(e.stack, true, false);
                     throw e;
@@ -651,7 +705,7 @@ function make_sandbox(symex_input = null) {
         //Blob : Blob,
         logJS: lib.logJS,
         logIOC: lib.logIOC,
-        logMultiexec: (x, indent) => {
+        logMultiexec: (x, indent) => { //TODO: maybe reduce the duplication here
             if (indent === 0) {
                 (multiexec_indent !== "" && multiexec_indent.length > 1) ?
                     multiexec_indent = multiexec_indent.slice(0, multiexec_indent.length - 2) :
@@ -683,7 +737,6 @@ function make_sandbox(symex_input = null) {
             } while (codeHadAnError)
         },
         ActiveXObject : activex_mock.ActiveXObject,
-        dom,
         alert: (x) => {
         },
         InstallProduct: (x) => {
@@ -700,8 +753,8 @@ function make_sandbox(symex_input = null) {
         navigator: buildProxyForEmulatedObject(symex_input, "navigator.", "./emulator/navigator/navigator.js"),
         document: buildProxyForEmulatedObject(symex_input, "document.", "./emulator/document.js"),
         origin: symex_input ? symex_input["origin"] : "https://default-origin.com",
-        parse: (x) => {
-        },
+        window: {},
+        parse: (x) => {},
         rewrite: (code, log = false) => {
             const ret = rewrite(code);
             if (log) lib.logJS(code, `${++numberOfExecutedSnippets}_`, "", true, ret, "eval'd JS", true);
@@ -720,7 +773,7 @@ function make_sandbox(symex_input = null) {
     };
 }
 
-function replaceErrorCausingCode(e, code, eval = false) {
+function replaceErrorCausingCode(e, code, eval = false, url = "https://example.org/") {
     /* The following code finds the enclosing statement of the error, and replaces it with a logging
     function in the code so that the code can be run again
 
@@ -732,8 +785,20 @@ function replaceErrorCausingCode(e, code, eval = false) {
     * */
 
     //NodeJS doesn't have error.lineNumber, so instead I have to use RegEx to find it from the stack message
-    let lineRegexp = eval ? new RegExp(/<anonymous>:(\d+):(\d+)/gm) : new RegExp(/at vm.js:(\d+):(\d+)/gm);
-    let regexpResults = lineRegexp.exec(e.stack);
+    var lineRegexp, regexpResults;
+    if (argv["vm2"]) {
+        lineRegexp = eval ? new RegExp(/<anonymous>:(\d+):(\d+)/gm) : new RegExp(/at vm.js:(\d+):(\d+)/gm);
+        regexpResults = lineRegexp.exec(e.stack);
+    } else { //assume running in jsdom
+        if (eval) {
+            lineRegexp = new RegExp(/<anonymous>:(\d+):(\d+)/gm);
+            regexpResults = lineRegexp.exec(e.stack);
+        } else {
+            lineRegexp = new RegExp(/:(\d+):(\d+)/gm);
+            let line_info = e.stack.split("\n")[1].trim().substring(3 + url.length);
+            regexpResults = lineRegexp.exec(line_info);
+        }
+    }
     let lineNumber = parseInt(regexpResults[1]);
     let colNumber = parseInt(regexpResults[2]);
     let charNumber = 0;
@@ -743,7 +808,7 @@ function replaceErrorCausingCode(e, code, eval = false) {
         if (code.charAt(charNumber) === "\n") {
             l++;
         }
-        if (l == lineNumber) {
+        if (l === lineNumber) {
             //found char number
             charNumber += colNumber;
             break;

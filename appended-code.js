@@ -8,11 +8,15 @@ for (varName in this) {
     if (typeof(varValue) == "string") {
         // check that the string is valid JS syntax
         try {
-            const script = new vm.Script(varValue);
-            logJS(varValue, `STRING_${++number_of_js_str}_`, "", true, null, "JavaScript string found in var " + varName)
-            // Automatically evaling all JS can result in the program state getting polluted.
-            //eval(varValue)
+            if (varValue.trim() !== "" && varValue !== "dangerously") {
+                const script = new vm.Script(varValue);
+                logJS(varValue, `STRING_${++number_of_js_str}_`, "", true, null, "JavaScript string found in var " + varName)
+                // Automatically evaling all JS can result in the program state getting polluted.
+                //eval(varValue)
+            }
         }
         catch (err) {}
     }
 }
+
+window.emulationFinished = true;
