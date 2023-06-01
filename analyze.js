@@ -138,20 +138,84 @@ if (default_enabled || multi_exec_enabled) {
     //run analysis for each combination of input
     for (let i = 0; i < expose_json_results.done.length; i++) {
         numberOfExecutedSnippets = 1;
+        let input = expose_json_results.done[i].input;
         //Make new folder for this new input, change directory of logging to be in this folder now
-        lib.new_symex_log_context(i, expose_json_results.done[i].input);
+        lib.new_symex_log_context(i, input);
 
+        let unique_context = {};
+        for (let field in input) { //only include unique values in context
+            if (input.hasOwnProperty(field)) {
+                if (!is_default_sym_exec_value(input[field])) {
+                    unique_context[field] = input[field];
+                }
+            }
+        }
         //Write to file that this input is associated to this folder
         ran_inputs[i] = {
-            "context": expose_json_results.done[i].input,
+            "unique_context": unique_context,
             "execution folder": `./executions/${i}`
         };
-        fs.writeFileSync(directory + "contexts.json", JSON.stringify(ran_inputs, null, 4));
+        fs.writeFileSync(directory + "contexts.json",
+            "//unique_context only shows the non-default variables found\n//look at the folder for the full context\n" + JSON.stringify(ran_inputs, null, 4));
 
         //Run sandbox for this input combination
-        const sandbox = make_sandbox(expose_json_results.done[i].input);
+        const sandbox = make_sandbox(input);
         run_in_vm(code, sandbox);
     }
+}
+
+function is_default_sym_exec_value(o) {
+    if (Array.isArray(o)) {
+        return o.length === 0 || is_default_sym_exec_value(o[0]);
+    } else if (typeof o === "string" && o === "") {
+        return true
+    } else if (typeof o === "number" && o == 0) {
+        return true;
+    } else if (typeof o === "boolean" && o === false) {
+        return true;
+    } else if (typeof o === "object" && o === Object.keys(o).length) { //check if empty object
+        return true;
+    }
+    return false;
+}
+
+//returns an object which has all the default values with corresponding symbol keys
+function get_sym_exec_default_values() {
+    function addDefaultValuesOfEmulatedObject(obj, symex_prefix, file_path) {
+        let emulatedPatch = require(file_path);
+        let emulatedObject = emulatedPatch.getObject();
+        let emulatedDefaultFields = emulatedPatch.getDefaultFields();
+        let emulatedInnerProxies = emulatedPatch.getInnerProxies();
+
+        for (let field in emulatedDefaultFields) {
+            if (emulatedDefaultFields.hasOwnProperty(field)) {
+                emulatedObject[field] = emulatedDefaultFields[field];
+                obj[symex_prefix + field] = emulatedDefaultFields[field];
+            }
+        }
+
+        //inner proxies
+        for (let field in emulatedInnerProxies) {
+            if (emulatedInnerProxies.hasOwnProperty(field)) {
+                let innerProxy = emulatedInnerProxies[field];
+                if (Array.isArray(emulatedObject)) {
+                    for (let a = 0; a < emulatedObject.length; a++) {
+                        if (emulatedObject[a] === field) {
+                            obj = addDefaultValuesOfEmulatedObject(obj, innerProxy.symex_prefix, innerProxy.file_path);
+                        }
+                    }
+                } else {
+                    obj = addDefaultValuesOfEmulatedObject(obj, innerProxy.symex_prefix, innerProxy.file_path);
+                }
+            }
+        }
+
+        return obj;
+    }
+    let res = {};
+    res = addDefaultValuesOfEmulatedObject(res, "location.", "./emulator/location.js");
+    res = addDefaultValuesOfEmulatedObject(res, "navigator.", "./emulator/navigator/navigator.js");
+    return res;
 }
 
 function prepend_sym_exec_script(sym_exec_script) {
@@ -665,22 +729,7 @@ function make_sandbox(symex_input = null) {
         Enumerator: require("./emulator/Enumerator"),
         GetObject: require("./emulator/WMI").GetObject,
         JSON,
-        location: new Proxy({
-            href: symex_input ? symex_input["location.href"] : "http://www.foobar.com/",
-            protocol: symex_input ? symex_input["location.protocol"] : "http:",
-            host: symex_input ? symex_input["location.host"] : "www.foobar.com",
-            hostname: symex_input ? symex_input["location.hostname"] : "www.foobar.com",
-        }, {
-            get: function (target, name) {
-                switch (name) {
-                    case Symbol.toPrimitive:
-                        return () => "http://www.foobar.com/";
-                    default:
-                        return target[name.toLowerCase()];
-                }
-            },
-            //TODO: logging of tampering with location stuff
-        }),
+        location: buildProxyForEmulatedObject(symex_input, "location.", "./emulator/location.js"),
         navigator: buildProxyForEmulatedObject(symex_input, "navigator.", "./emulator/navigator/navigator.js"),
         parse: (x) => {
         },
