@@ -118,8 +118,11 @@ else
 
 // queue the input files for analysis
 const outputDir = argv["output-dir"] || "./";
+let results_dirs = [];
+
 tasks.forEach(({filepath, filename}) => {
 	const results_dir = get_results_dir(filename);
+	results_dirs.push(results_dir);
 	if (argv["all"]) {
 		q.push(cb => analyze(results_dir, filepath, filename, cb, "default", false))
 		q.push(cb => analyze(results_dir, filepath, filename, cb, "multi-exec", false))
@@ -140,6 +143,12 @@ q.on("success", () => {
     if (tasks.length !== 1)
 	console.log(`Progress: ${completed}/${tasks.length} (${(100 * completed/tasks.length).toFixed(2)}%)`);
 });
+
+q.on("end", () => {
+	for (let i = 0; i < results_dirs.length; i++) {
+		require("./aggregator.js").summarize(results_dirs[i]);
+	}
+})
 
 q.start();
 
