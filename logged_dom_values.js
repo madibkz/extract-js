@@ -146,7 +146,7 @@ const window = {
         ["btoa", true],
         ["clearInterval", true],
         ["clearTimeout", true],
-        ["fetch", true],
+        // ["fetch", true],
         ["setInterval", true],
         ["setTimeout", true],
         ["reportError", true],

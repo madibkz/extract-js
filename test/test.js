@@ -400,6 +400,17 @@ describe("DOM", function() {
 		}, "--dom-network-apis")
 	);
 
+	it(
+		"should log the URL/args of window.fetch",
+		run_dom_script_and_check_output("fetch.js", (stdout) => {
+			assert(stdout.includes(`Code called window.fetch(https://example.com/, [object Object], )`));
+			assert(stdout.includes(`Resource at https://example.com/ [POST] was requested from DOM emulation from element window.navigator.fetch. Options: {"element":{"localName":"window.navigator.fetch"},"args":{"method":"POST"}}`));
+			assert(stdout.includes(`[error] Code called window.navigator.fetch() but it's not implemented!`));
+			let path_to_urls = `${getTestResultsFolder("fetch.js")}default/urls.json`;
+			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://example.com/"));
+		}, "--dom-network-apis")
+	);
+
 
 	//cookies
 	it(

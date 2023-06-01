@@ -12,6 +12,7 @@ virtualConsole.sendTo(console, { omitJSDOMErrors: true });
 
 //Keep in mind this runs asynchronous
 let dom = new JSDOM(dom_str, {
+    url: "https://example.com/",
     contentType: "text/html",
     includeNodeLocations: true,
     runScripts: "dangerously",
