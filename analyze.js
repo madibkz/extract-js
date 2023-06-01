@@ -238,6 +238,9 @@ function prepend_sym_exec_script(sym_exec_script) {
     if (argv["no-sym-exec-dom"])
         prepend_sym_script = prepend_sym_script.replace(/const dom_symbolize = true/, "const dom_symbolize = false");
 
+    if (argv["sym-exec-location-object"])
+        prepend_sym_script = prepend_sym_script.replace(/const location_object = false/, "const location_object = true");
+
     if (argv["no-sym-exec-activex"])
         prepend_sym_script = prepend_sym_script.replace(/let activex_symbolize = true/, "let activex_symbolize = false");
 
@@ -709,15 +712,6 @@ function rewrite_code_for_symex_script(code) {
 
         traverse(tree, function(key, val) {
             if (!val) return;
-            if (val.type === "AssignmentExpression") {
-                recursively_set_field(val.left, "symexeclocfield", true);
-            }
-            if (val.type === "UpdateExpression") {
-                recursively_set_field(val.argument, "symexeclocfield", true);
-            }
-            if (val.type === "MemberExpression" && !val.symexeclocfield) {
-                return require("./patches/symexec/locationfield.js")(val);
-            }
             switch (val.type) {
                 case "ThisExpression":
                     return require("./patches/symexec/this.js")(val);
@@ -875,8 +869,9 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
     let og_loc = window.location;
     let loc_proxy = new Proxy(og_loc, {
         get: (t, n) => {
-            if (n == Symbol.toPrimitive && symex_input && symex_input.hasOwnProperty(`location.href`)) return () => symex_input[`location.href`];
+            if (n == Symbol.toPrimitive && symex_input && symex_input.hasOwnProperty(`location._href`)) return () => symex_input[`location._href`];
             if (symex_input && symex_input.hasOwnProperty(`location.${n}`)) return symex_input[`location.${n}`];
+            if (n === "href" && symex_input && symex_input.hasOwnProperty(`location._href`)) return symex_input[`location._href`];
             if (typeof n === "string" && n === "replace") {
               lib.logDOM("window.location.replace", false, null, false);
               return () => null;

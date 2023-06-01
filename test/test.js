@@ -1399,7 +1399,7 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: "location.hostname branch"`));
 			assert(stdout.includes(`Script output: "location.hash branch"`));
 			assert(stdout.includes(`Script output: "default branch"`));
-		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
+		}, "--sym-exec --no-sym-exec-activex --timeout 1000 --sym-exec-location-object")
 	);
 
 	it(
