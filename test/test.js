@@ -1157,7 +1157,7 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: "Default branch"`));
 			assert(stdout.includes(`Script output: "Symex found the innerHeight branch."`));
 			assert(stdout.includes(`Script output: "Symex found the other branch (test works)."`));
-		}, "--sym-exec --timeout 1000")
+		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
 	);
 	it(
 		"should symbolically track the specified navigator's properties and set them appropriately in the specific execution context",
@@ -1165,7 +1165,7 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: "Default branch"`));
 			assert(stdout.includes(`Script output: "Found the navigator.language branch"`));
 			assert(stdout.includes(`Script output: "Found navigator.webdriver branch"`));
-		}, "--sym-exec --timeout 1000")
+		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
 	);
 	it(
 		"should symbolically track the specified navigator.userAgentData properties and set them appropriately in the specific execution context",
@@ -1173,7 +1173,7 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: "Default branch reached."`));
 			assert(stdout.includes(`Script output: "mobile branch reached."`));
 			assert(stdout.includes(`Script output: "platform branch reached."`));
-		}, "--sym-exec --timeout 1000")
+		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
 	);
 	it(
 		"should symbolically track the specified navigator.plugins.plugin properties and set them appropriately in the specific execution context",
@@ -1181,7 +1181,7 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: "Found plugin description branch"`));
 			assert(stdout.includes(`Script output: "Found plugin name branch"`));
 			assert(stdout.includes(`Script output: "Found default branch"`));
-		}, "--sym-exec --timeout 1000")
+		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
 	);
 	it(
 		"should symbolically track the specified navigator.mimetypes.mimetype properties and set them appropriately in the specific execution context",
@@ -1189,14 +1189,14 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: "Found testtype branch"`));
 			assert(stdout.includes(`Script output: "Found fakedescription branch"`));
 			assert(stdout.includes(`Script output: "Found default branch"`));
-		}, "--sym-exec --timeout 1000")
+		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
 	);
 	it(
 		"should symbolically track the navigator.userAgent and set it as the jsdom user agent",
 		run_symex_script_and_check_output("useragent.js", (stdout) => {
 			assert(stdout.includes(`Script output: "test passed"`));
 			assert(stdout.includes(`Script output: "default branch"`));
-		}, "--sym-exec --timeout 1000")
+		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
 	);
 	it(
 		"should symbolically track the specified document properties and set it correctly in the jsdom emulation",
@@ -1205,7 +1205,7 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: "document.hidden branch reached"`));
 			assert(stdout.includes(`Script output: "document.hasFocus branch reached"`));
 			assert(stdout.includes(`Script output: "default branch reached"`));
-		}, "--sym-exec --timeout 1000")
+		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
 	);
 	it(
 		"should symbolically track the specified screen properties and set it correctly in the jsdom emulation",
@@ -1213,7 +1213,7 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: "reached screen height"`));
 			assert(stdout.includes(`Script output: "reached screen pixelDepth"`));
 			assert(stdout.includes(`Script output: "default branch reached"`));
-		}, "--sym-exec --timeout 1000")
+		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
 	);
 	it(
 		"should symbolically track the specified location properties and set it correctly in the jsdom emulation",
@@ -1221,7 +1221,7 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: "location.hostname branch"`));
 			assert(stdout.includes(`Script output: "location.hash branch"`));
 			assert(stdout.includes(`Script output: "default branch"`));
-		}, "--sym-exec --timeout 1000")
+		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
 	);
 
 	it(
@@ -1229,6 +1229,6 @@ describe("sym-exec", function() {
 		run_symex_script_and_check_output("symex_wrap_trycatch.js", (stdout) => {
 			assert(stdout.includes(`Script output: 1`));
 			assert(stdout.includes(`Script output: 2`));
-		}, "--sym-exec --timeout 1000")
+		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
 	);
 });
