@@ -1,5 +1,5 @@
 function test() {
-  return 32;
+  return "TEST RETURN VALUE";
 }
 
 console.log(test());

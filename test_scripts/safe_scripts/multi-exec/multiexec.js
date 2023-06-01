@@ -38,7 +38,7 @@ function test(x) {
 			console.log(1);
 	}
 
-	return "FUNCTION FINISHED IDK";
+	return "FUNCTION FINISHED";
 }
 
 try {

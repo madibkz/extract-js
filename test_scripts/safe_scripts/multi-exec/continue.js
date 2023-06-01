@@ -1,6 +1,5 @@
-for (var i = 0; i < 10; i++) {
-	if (i == 5) continue;
+for (var i = 0; i < 2; i++) {
+	if (i == 1) continue;
 	console.log(i);
 }
-//should just print 0-9
 

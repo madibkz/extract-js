@@ -13,6 +13,7 @@ const domScriptsDir = `${testScriptsDir}/dom/`;
 const aggScriptsDir = `${testScriptsDir}/aggregator/`;
 const symexScriptsDir = `${testScriptsDir}/sym-exec/`;
 const rewriteScriptsDir = `${testScriptsDir}/rewrite/`;
+const multiexScriptsDir = `${testScriptsDir}/multi-exec/`;
 //TODO: tests for command line arguments
 //assuming that the test is only run once within this test suite
 let getTestResultsFolder = (nameOfTest) => `${extractDir}/${testResultsFolder}/${nameOfTest}.results/`;
@@ -726,6 +727,210 @@ describe("aggregator.js", function() {
 			}, "--default --multi-exec")
 		);
 	})
+});
+
+describe("multi-exec", function() {
+	this.timeout(2000);
+
+	let run_multiexec_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
+		run_script_and_check_output(`${multiexScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
+
+	//testing AST transformations work as expected
+	it(
+		"should skip and log break statements",
+		run_multiexec_script_and_check_output("break.js", (stdout) => {
+			assert(stdout.includes(`Script output: "0"`));
+			assert(stdout.includes(`Script output: "1"`));
+			assert(stdout.includes(`break (SKIPPED)`));
+		}, "--multi-exec --no-multi-exec-loop")
+	);
+	it(
+		"should skip and log continue statements",
+		run_multiexec_script_and_check_output("continue.js", (stdout) => {
+			assert(stdout.includes(`Script output: 0`));
+			assert(stdout.includes(`Script output: 1`));
+			assert(stdout.includes(`continue (SKIPPED)`));
+		}, "--multi-exec --no-multi-exec-loop")
+	);
+	it(
+		"should skip and log if statements",
+		run_multiexec_script_and_check_output("if_test.js", (stdout) => {
+			assert(stdout.includes(`if (3 === 3)`));
+			assert(stdout.includes(`first branch`));
+			assert(stdout.includes(`if (7 === 7)`));
+			assert(stdout.includes(`second branch`));
+			assert(stdout.includes(`else`));
+			assert(stdout.includes(`third branch`));
+		}, "--multi-exec")
+	);
+	it(
+		"should skip and log one branch if statements",
+		run_multiexec_script_and_check_output("simple_if_test.js", (stdout) => {
+			assert(stdout.includes(`if (1 + 2 == 3)`));
+			assert(stdout.includes(`First branch`));
+			assert(stdout.includes(`if (1 + 2 == 3)`));
+		}, "--multi-exec")
+	);
+	it(
+		"should skip and log switch statements",
+		run_multiexec_script_and_check_output("switch_test.js", (stdout) => {
+			assert(stdout.includes(`switch (x)`));
+			assert(stdout.includes(`case (0):`));
+			assert(stdout.includes(`first case`));
+			assert(stdout.includes(`break (SKIPPED)`));
+			assert(stdout.includes(`case (1):`));
+			assert(stdout.includes(`second case`));
+			assert(stdout.includes(`break (SKIPPED)`));
+			assert(stdout.includes(`default:`));
+			assert(stdout.includes(`default case`));
+			assert(stdout.includes(`} (EXITED switch (x))`));
+		}, "--multi-exec")
+	);
+	it(
+		"should skip and log try catch statements",
+		run_multiexec_script_and_check_output("trycatch.js", (stdout) => {
+			assert(stdout.includes(`try {`));
+			assert(stdout.includes(`try statement`));
+			assert(stdout.includes(`} catch {`));
+			assert(stdout.includes(`catch statement`));
+			assert(stdout.includes(`} (EXITED CATCH CLAUSE)`));
+		}, "--multi-exec")
+	);
+	it(
+		"should skip and log try catch finally statements",
+		run_multiexec_script_and_check_output("trycatchfinally.js", (stdout) => {
+			assert(stdout.includes(`try {`));
+			assert(stdout.includes(`"1"`));
+			assert(stdout.includes(`} catch {`));
+			assert(stdout.includes(`"2"`));
+			assert(stdout.includes(`} (EXITED CATCH CLAUSE)`));
+			assert(stdout.includes(`} finally {`));
+			assert(stdout.includes(`"3"`));
+			assert(stdout.includes(`} (EXITED FINALLY CLAUSE)`));
+		}, "--multi-exec")
+	);
+	it(
+		"should force the body of while statements with false conditonals",
+		run_multiexec_script_and_check_output("while_test.js", (stdout) => {
+			assert(stdout.includes(`while (i > 1) { (FORCED EXECUTION OF WHILE BODY)`));
+			assert(stdout.includes(`"TEST PASS: forced execution of while body successful"`));
+			assert(stdout.includes(`} (EXITED FORCED EXECUTION OF BODY OF while (i > 1))`));
+			assert(stdout.includes(`while (i > 1) {`));
+			assert(stdout.includes(`} (EXITED while (i > 1))`));
+		}, "--multi-exec")
+	);
+	it(
+		"should let do while statements run normally",
+		run_multiexec_script_and_check_output("do_while_test.js", (stdout) => {
+			assert(stdout.includes(`do {`));
+			assert(stdout.includes(`do while loop iteration 0`));
+			assert(stdout.includes(`do while loop iteration 1`));
+			assert(stdout.includes(`} while (i < 2) (EXITED)`));
+		}, "--multi-exec")
+	);
+	it(
+		"should force execution of for loop bodies if test is false, or otherwise let it run normally",
+		run_multiexec_script_and_check_output("for_test.js", (stdout) => {
+			assert(stdout.includes(`for (var i = 0;; i < -1; i++;) { (FORCED EXECUTION OF FOR BODY)`));
+			assert(stdout.includes(`"First test passed"`));
+			assert(stdout.includes(`} (EXITED FORCED EXECUTION OF BODY OF for (var i = 0;; i < -1; i++;))`));
+			assert(stdout.includes(`for (var i = 0;; i < -1; i++;)`));
+			assert(stdout.includes(`} (EXITED for (var i = 0;; i < -1; i++;))`));
+			assert(stdout.includes(`for (var i = 0;; i < 2; i++;)`));
+			assert(stdout.includes(`"FOR body loop 0"`));
+			assert(stdout.includes(`"FOR body loop 1"`));
+			assert(stdout.includes(`} (EXITED for (var i = 0;; i < 2; i++;))`));
+		}, "--multi-exec")
+	);
+	it(
+		"should try to force execution of for in body but let the for in loop run after like normal if forcing doesn't work",
+		run_multiexec_script_and_check_output("for_in_test.js", (stdout) => {
+			assert(stdout.includes(`for (var i; in x) (ATTEMPTING TO FORCE EXECUTION OF BODY)`));
+			assert(stdout.includes(`undefined`));
+			assert(stdout.includes(`} (ATTEMPT TO FORCE EXECUTION OF for (var i; in x) SUCCEEDED)`));
+			assert(stdout.includes(`for (var i; in x) {`));
+			assert(stdout.includes(`"0"`));
+			assert(stdout.includes(`"1"`));
+			assert(stdout.includes(`"2"`));
+			assert(stdout.includes(`} (EXITED for (var i; in x))`));
+		}, "--multi-exec")
+	);
+	it(
+		"should force execution of the for in body where the conditional doesn't cause any loops",
+		run_multiexec_script_and_check_output("for_in_test_2.js", (stdout) => {
+			assert(stdout.includes(`for (var i; in x) (ATTEMPTING TO FORCE EXECUTION OF BODY)`));
+			assert(stdout.includes(`EXECUTED BODY`));
+			assert(stdout.includes(`} (ATTEMPT TO FORCE EXECUTION OF for (var i; in x) SUCCEEDED)`));
+			assert(stdout.includes(`for (var i; in x) {`));
+			assert(stdout.includes(`} (EXITED for (var i; in x))`));
+		}, "--multi-exec")
+	);
+	//function tests
+	it(
+		"should log that a function was called and that it exited with no return value if it just does return;",
+		run_multiexec_script_and_check_output("functions/simple_function_test.js", (stdout) => {
+			assert(stdout.includes(`test() GOT CALLED`));
+			assert(stdout.includes(`EXITED FUNCTION test() WITH NO RETURN VALUE`));
+		}, "--multi-exec")
+	);
+	it(
+		"should log that a function was called and that it exited with no return value if it didn't have a return statement",
+		run_multiexec_script_and_check_output("functions/no_return.js", (stdout) => {
+			assert(stdout.includes(`test() GOT CALLED`));
+			assert(stdout.includes(`"No return"`));
+			assert(stdout.includes(`EXITED FUNCTION test() WITH NO RETURN VALUE`));
+		}, "--multi-exec")
+	);
+	it(
+		"should log that a function was called and that it exited with it's return value",
+		run_multiexec_script_and_check_output("functions/simple_return_val.js", (stdout) => {
+			assert(stdout.includes(`test() GOT CALLED`));
+			assert(stdout.includes(`EXITED FUNCTION test() WITH RETURN VALUE: TEST RETURN VALUE`));
+		}, "--multi-exec")
+	);
+	it(
+		"should log the different return values that are being skipped within the function and the final return value",
+		run_multiexec_script_and_check_output("functions/multiple_returns.js", (stdout) => {
+			assert(stdout.includes(`test(1) GOT CALLED`));
+			assert(stdout.includes(`return 0 (SKIPPED WITH VALUE: 0)`));
+			assert(stdout.includes(`return 5 (SKIPPED WITH VALUE: 5)`));
+			assert(stdout.includes(`EXITED FUNCTION test(1) WITH RETURN VALUE: 3`));
+		}, "--multi-exec")
+	);
+	it(
+		"should log the different return values that are being skipped within the function and the final return value even if they are different types",
+		run_multiexec_script_and_check_output("functions/multiple_returns_diff_types.js", (stdout) => {
+			assert(stdout.includes(`test(1) GOT CALLED`));
+			assert(stdout.includes(`return 3 (SKIPPED WITH VALUE: 3)`));
+			assert(stdout.includes(`return 5 (SKIPPED WITH VALUE: 5)`));
+			assert(stdout.includes(`EXITED FUNCTION test(1) WITH NO RETURN VALUE`));
+		}, "--multi-exec")
+	);
+	it(
+		"should be able to log nested function calls",
+		run_multiexec_script_and_check_output("functions/multiple_functions.js", (stdout) => {
+			assert(stdout.includes(`test() GOT CALLED`));
+			assert(stdout.includes(`test2() GOT CALLED`));
+			assert(stdout.includes(`EXITED FUNCTION test2() WITH RETURN VALUE: 1`));
+			assert(stdout.includes(`EXITED FUNCTION test() WITH RETURN VALUE: 1`));
+		}, "--multi-exec")
+	);
+	it(
+		"should be able to log nested function calls with multiple returns in them",
+		run_multiexec_script_and_check_output("functions/multiple_functions_4.js", (stdout) => {
+			assert(stdout.includes(`test1() GOT CALLED`));
+			assert(stdout.includes(`test2() GOT CALLED`));
+			assert(stdout.includes(`return 'SHOULDSKIP1' (SKIPPED WITH VALUE: SHOULDSKIP1`));
+			assert(stdout.includes(`test3() GOT CALLED`));
+			assert(stdout.includes(`return 'SHOULDSKIP2' (SKIPPED WITH VALUE: SHOULDSKIP2`));
+			assert(stdout.includes(`test4() GOT CALLED`));
+			assert(stdout.includes(`return 'SHOULDSKIP3' (SKIPPED WITH VALUE: SHOULDSKIP3`));
+			assert(stdout.includes(`EXITED FUNCTION test4() WITH RETURN VALUE: FINALRETURNVALUE`));
+			assert(stdout.includes(`EXITED FUNCTION test3() WITH RETURN VALUE: FINALRETURNVALUE`));
+			assert(stdout.includes(`EXITED FUNCTION test2() WITH RETURN VALUE: FINALRETURNVALUE`));
+			assert(stdout.includes(`EXITED FUNCTION test1() WITH RETURN VALUE: FINALRETURNVALUE`));
+		}, "--multi-exec")
+	);
 });
 
 describe("sym-exec", function() {
