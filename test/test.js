@@ -147,6 +147,13 @@ describe("other-category", function() {
 			assert(stdout.includes(`FOUND URL: 123.123.213.4:2999 | METHOD: UNKNOWNMETHOD | INFO: FOUND IN URL SEARCH AT THE END IN A VARIABLE CALLED: something2`));
 		})
 	);
+	it(
+		"should set the userAgent to the supplied string is --user-agent is used",
+		run_test_script_and_check_output("user-agent.js", (stdout) => {
+			assert(stdout.includes(`Script output: "user agent is: fake user string"`));
+			assert(stdout.includes(``));
+		}, "--user-agent \"fake user string\"")
+	);
 });
 
 describe("DOM", function() {

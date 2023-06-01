@@ -865,6 +865,7 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
             if (symex_input && symex_input.hasOwnProperty(`navigator.${n}`)) {
                 return symex_input[`navigator.${n}`];
             }
+            if (n === "userAgent" && argv["user-agent"]) return argv["user-agent"];
             return log_dom_proxy_get(t, n, "window.navigator");
         },
         set: (t, n, v) => log_dom_proxy_set(t, n, v, "window.navigator"),
@@ -1011,7 +1012,8 @@ async function run_in_jsdom_vm(sandbox, code, symex_input = null) {
                 // proxy: "",
                 // strictSSL: false,
                 // userAgent: "",
-                ...((symex_input && symex_input["navigator.userAgent"]) && {userAgent: symex_input["navigator.userAgent"]})
+                ...((!sym_exec_enabled && argv["user-agent"]) && {userAgent: argv["user-agent"]}),
+                ...((sym_exec_enabled && symex_input && symex_input["navigator.userAgent"]) && {userAgent: symex_input["navigator.userAgent"]})
             });
 
             let dom_str = `<html><head></head><body><script>${initialLocalStorage}${initialSessionStorage}${one_cookie}${multiple_cookies}${code}</script></body></html>`;
