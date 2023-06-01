@@ -144,11 +144,13 @@ q.on("success", () => {
 	console.log(`Progress: ${completed}/${tasks.length} (${(100 * completed/tasks.length).toFixed(2)}%)`);
 });
 
-q.on("end", () => {
-	for (let i = 0; i < results_dirs.length; i++) {
-		require("./aggregator.js").summarize(results_dirs[i]);
-	}
-})
+if (!argv["no-summary"]) {
+	q.on("end", () => {
+		for (let i = 0; i < results_dirs.length; i++) {
+			require("./aggregator.js").summarize(results_dirs[i]);
+		}
+	});
+}
 
 q.start();
 
