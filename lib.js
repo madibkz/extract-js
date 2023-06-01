@@ -238,7 +238,7 @@ module.exports = {
 	fetchUrl: function(method, url, headers = {}, body) {
 		// Ignore HTTPS errors
 		process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-		logUrl(method, url);
+		logUrl(method, url, "FROM CALL TO lib.fetchUrl FROM AN ACTIVEX XMLHTTP OBJECT");
 		logIOC("UrlFetch", {method, url, headers, body}, "The script fetched an URL.");
 		if (!doDownload) {
 			lib.info("Returning HTTP 404 (Not found); use --download to try to download the payload");
