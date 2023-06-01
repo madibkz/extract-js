@@ -11,6 +11,7 @@ turns:
     }
 =>
     logMultiexec("switch (discriminant)");
+    discriminant;
     logMultiexec("case (CASE1):");
     consequent1
     logMultiexec("case (CASE2):");
@@ -43,6 +44,10 @@ module.exports = (args) => ({
                     }
                 ]
             }
+        },
+        {
+            "type": "ExpressionStatement",
+            "expression": args.discriminant
         },
     ].concat(args.cases.map(switchcase => {
         return {

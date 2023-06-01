@@ -720,6 +720,15 @@ describe("multi-exec", function() {
 		}, "--multi-exec")
 	);
 	it(
+		"should run the expression conditional of the if statement",
+		run_multiexec_script_and_check_output("if_expr.js", (stdout) => {
+			assert(stdout.includes(`test passed 1/2`));
+			assert(stdout.includes(`first branch`));
+			assert(stdout.includes(`test passed 2/2`));
+			assert(stdout.includes(`second branch`));
+		}, "--multi-exec")
+	);
+	it(
 		"should skip and log one branch if statements",
 		run_multiexec_script_and_check_output("simple_if_test.js", (stdout) => {
 			assert(stdout.includes(`if (1 + 2 == 3)`));
@@ -740,6 +749,12 @@ describe("multi-exec", function() {
 			assert(stdout.includes(`default:`));
 			assert(stdout.includes(`default case`));
 			assert(stdout.includes(`} (EXITED switch (x))`));
+		}, "--multi-exec")
+	);
+	it(
+		"should run the expression of the switch conditional in an expression statement",
+		run_multiexec_script_and_check_output("switch_expr.js", (stdout) => {
+			assert(stdout.includes(`test passed`));
 		}, "--multi-exec")
 	);
 	it(
