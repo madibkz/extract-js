@@ -10,17 +10,19 @@ const testScriptsDir = `${extractDir}/test_scripts/safe_scripts/`;
 const testResultsFolder = "test_out";
 const runExtractCommand = `node ${extractDir}/run.js --output-dir ${testResultsFolder}`;
 const domScriptsDir = `${testScriptsDir}/dom/`;
+const aggScriptsDir = `${testScriptsDir}/aggregator/`;
 
 //assuming that the test is only run once within this test suite
-let getTestResultsFolder = (nameOfTest) => `${extractDir}/${testResultsFolder}/${nameOfTest}.results/`;;
+let getTestResultsFolder = (nameOfTest) => `${extractDir}/${testResultsFolder}/${nameOfTest}.results/`;
 let run_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") => function (done) {
-	const path = testScript;
-	exec(`${runExtractCommand} ${extraArgsStr} ${path}`, function(err, stdout) {
+	exec(`${runExtractCommand} ${extraArgsStr} ${testScript}`, function(err, stdout) {
 		assert.strictEqual(err, null);
 		checkOutput(stdout);
 		done();
 	});
 };
+let run_test_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
+	run_script_and_check_output(`${testScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
 
 fsextra.emptyDirSync(`${extractDir}/test_out`)
 
@@ -421,9 +423,171 @@ describe("DOM", function() {
 	);
 });
 
-describe("DOM", function() {
-	this.timeout(10000);
+describe("aggregator.js", function() {
+	//need a really long timeout for the tests involving symbolic execution mode
+	this.timeout(100000);
 
+	let run_agg_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
+		run_script_and_check_output(`${aggScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
 
-	//aggregator cookie test
+	//check that summary folder is made appropriately
+	it(
+		"should not create a summary folder if only one mode is being run",
+		run_test_script_and_check_output("just_console_log.js", (stdout) => {
+			assert(!fs.existsSync(`${getTestResultsFolder("just_console_log.js")}summary`));
+		})
+	);
+	it(
+		"should create a summary folder if more than one mode has been run",
+		run_agg_script_and_check_output("summary_folder_test.js", (stdout) => {
+			assert(fs.existsSync(`${getTestResultsFolder("summary_folder_test.js")}summary`));
+		}, "--default --multi-exec")
+	);
+	it(
+		"should create a summary folder if only symex mode has run but it has produced multiple contexts",
+		run_agg_script_and_check_output("symex_mode_unique_contexts.js", (stdout) => {
+			assert(fs.existsSync(`${getTestResultsFolder("symex_mode_unique_contexts.js")}summary`));
+		}, "--sym-exec --no-sym-exec-activex")
+	);
+
+	it(
+		"should not copy the contexts.json file from symex mode into summary/unique_contexts.json if there are no unique contexts",
+		run_agg_script_and_check_output("symex_mode_no_unique_contexts.js", (stdout) => {
+			assert(!fs.existsSync(`${getTestResultsFolder("symex_mode_no_unique_contexts.js")}summary/unique_contexts.json`));
+		}, "--sym-exec --no-sym-exec-activex")
+	);
+	it(
+		"should copy the contexts.json file from symex mode into summary/unique_contexts.json if there are unique contexts",
+		function (done) {
+			//assuming that the symex_mode_unique_contexts.js test has run from the previous test above
+			assert(fs.existsSync(`${getTestResultsFolder("symex_mode_unique_contexts.js")}summary/sym_ex_contexts.json`))
+			done()
+		}
+	);
+
+	function parse_JSON_file(test_script_name, file_name) {
+		return JSON.parse(fs.readFileSync(`${getTestResultsFolder(test_script_name)}summary/${file_name}`));
+	}
+
+	//resources
+	it(
+		"should aggregate resources into summary/unique_resources.json with locations",
+		run_agg_script_and_check_output("aggregator_resources.js", (stdout) => {
+			let resources = parse_JSON_file("aggregator_resources.js", "unique_resources.json")
+
+			let first_resource = "";
+			let second_resource = "";
+			for (let r in resources) {
+				if (resources[r].location.length === 2) {
+					first_resource = r;
+				} else {
+					second_resource = r;
+				}
+			}
+
+			assert(resources[first_resource].path === "path1");
+			assert(resources[second_resource].path === "path2");
+
+			assert(resources[first_resource].location[0].includes("default"));
+			assert(resources[first_resource].location[1].includes("multi-exec"));
+			assert(resources[second_resource].location[0].includes("multi-exec"));
+
+			assert(fs.readFileSync(`${getTestResultsFolder("aggregator_resources.js")}summary/unique_resources/${first_resource}`).toString() === "something");
+			assert(fs.readFileSync(`${getTestResultsFolder("aggregator_resources.js")}summary/unique_resources/${second_resource}`).toString() === "something else");
+		}, "--default --multi-exec")
+	);
+	//snippets
+	it(
+		"should aggregate snippets into summary/unique_snippets.json with locations",
+		run_agg_script_and_check_output("aggregator_snippets.js", (stdout) => {
+			let snippets = parse_JSON_file("aggregator_snippets.js", "unique_snippets.json")
+
+			let first_snippet = Object.keys(snippets).filter((name) => name.startsWith("DOM_1"))[0];
+			let second_snippet = Object.keys(snippets).filter((name) => name.startsWith("DOM_2"))[0];
+
+			assert(snippets[first_snippet].as === "JavaScript function found in arg [1] of call of window.document.addEventListener(click, () => 'first', )");
+			assert(snippets[second_snippet].as === "JavaScript function found in arg [1] of call of window.document.addEventListener(click, () => 'second', )");
+
+			assert(snippets[first_snippet].location[0].includes("default"));
+			assert(snippets[first_snippet].location[1].includes("multi-exec"));
+			assert(snippets[second_snippet].location[0].includes("multi-exec"));
+
+			assert(fs.readFileSync(`${getTestResultsFolder("aggregator_snippets.js")}summary/unique_snippets/${first_snippet}`).toString() === "() => 'first'");
+			assert(fs.readFileSync(`${getTestResultsFolder("aggregator_snippets.js")}summary/unique_snippets/${second_snippet}`).toString() === "() => 'second'");
+		}, "--default --multi-exec")
+	);
+	//iocs
+	it(
+		"should aggregate iocs into summary/unique_IOCs.json with locations",
+		run_agg_script_and_check_output("aggregator_iocs.js", (stdout) => {
+			let iocs = parse_JSON_file("aggregator_iocs.js", "unique_IOCs.json")
+
+			assert(iocs[0].type === "UrlFetch");
+			assert(iocs[0].value.method === "GET");
+			assert(iocs[0].value.url === "http://document1.php");
+			assert(iocs[1].type === "UrlFetch");
+			assert(iocs[1].value.method === "GET");
+			assert(iocs[1].value.url === "http://document2.php");
+
+			assert(iocs[0].location[0].includes("default"));
+			assert(iocs[0].location[1].includes("multi-exec"));
+			assert(iocs[1].location[0].includes("multi-exec"));
+		}, "--default --multi-exec")
+	);
+	//urls
+	it(
+		"should aggregate urls into summary/unique_urls.json with locations",
+		run_agg_script_and_check_output("aggregator_urls.js", (stdout) => {
+			//parse the unique_urls.json file
+			let urls = parse_JSON_file("aggregator_urls.js", "unique_urls.json")
+			//check values
+			assert(urls.length === 2);
+			assert(urls[0][0] === "http://document1.php");
+			assert(urls[1][0] === "http://document2.php");
+			//check locations
+			assert(urls[0][1][0].includes("default"));
+			assert(urls[0][1][1].includes("multi-exec"));
+			assert(urls[1][1][0].includes("multi-exec"));
+		}, "--default --multi-exec")
+	);
+	// //active urls
+	// it(
+	// 	"should aggregate active urls into summary/unique_active_urls.json with locations",
+	// 	run_agg_script_and_check_output(".js", (stdout) => {
+	// 	})
+	// );
+	//cookies
+	it(
+		"should aggregate cookies into summary/unique_cookies.json with locations",
+		run_agg_script_and_check_output("aggregator_cookie_test.js", (stdout) => {
+			let cookies = parse_JSON_file("aggregator_cookie_test.js", "unique_cookies.json");
+
+			assert(cookies.length === 2);
+			assert(cookies[0].key === "test");
+			assert(cookies[0].value === "value");
+			assert(cookies[1].key === "test2");
+			assert(cookies[1].value === "value3");
+
+			assert(cookies[0].location[0].includes("default"));
+			assert(cookies[0].location[1].includes("multi-exec"));
+			assert(cookies[1].location[0].includes("multi-exec"));
+		}, "--default --multi-exec")
+	);
+	//localStorage and sessionStorage
+	["local", "session"].forEach((t) => {
+		it(
+			`should aggregate ${t}Storage into summary/unique_${t}Storage.json with locations`,
+			run_agg_script_and_check_output(`aggregator_${t}Storage.js`, (stdout) => {
+				let storage = parse_JSON_file(`aggregator_${t}Storage.js`, `unique_${t}Storage.json`);
+
+				assert(storage.key1.value === "value1");
+				assert(storage.key2.value === "value2");
+
+				assert(storage.key2.location[0].includes("default"));
+				assert(storage.key2.location[1].includes("multi-exec"));
+				assert(storage.key1.location[0].includes("multi-exec"));
+
+			}, "--default --multi-exec")
+		);
+	})
 });
