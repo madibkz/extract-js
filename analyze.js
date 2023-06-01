@@ -13,6 +13,7 @@ const jsdom = require("jsdom");
 const JSDOM = jsdom.JSDOM;
 const traverse = require("./utils.js").traverse
 const logged_dom_vals = require("./logged_dom_values");
+const vm = require("vm");
 const isURL = require("validator").isURL;
 const isIP = require("validator").isIP;
 
@@ -29,6 +30,23 @@ let listOfKnownScripts = [];
 class LoggingResourceLoader extends jsdom.ResourceLoader {
     fetch(url, options) {
         lib.logDOMUrl(url, options);
+        if (argv["multi-exec"]) {
+            let res = super.fetch(url, options);
+            return res.then(val => {
+                try { //if val is javascript, then we rewrite it and wrap it with eval
+                    const script = new vm.Script(val.toString());
+                    listOfKnownScripts.push(val.toString());
+                    let rewrite_val = wrap_code_with_eval(rewrite(val.toString()));
+                    const script2 = new vm.Script(rewrite_val);
+                    listOfKnownScripts.push(rewrite_val);
+                    lib.logJS(val.toString(), `${numberOfExecutedSnippets++}_input_script_`, "", true, rewrite_val, `external script downloaded from ${url}`, true);
+                    return Buffer.from(rewrite_val);
+                } catch (e) { //not javascript
+                    return val;
+                }
+            });
+        }
+
         return super.fetch(url, options);
     }
 }
@@ -264,9 +282,10 @@ function instrument_html(code) {
     for (let s = 0; s < scripts.length; s++) {
         if (scripts[s].innerHTML.trim() !== "") {
             let old_js = scripts[s].innerHTML;
+            listOfKnownScripts.push(old_js);
             scripts[s].innerHTML = rewrite(scripts[s].innerHTML);
             if (argv["multi-exec"])  //wrap scripts into an eval for multi-exec error skipping
-                scripts[s].innerHTML = "eval(`" + scripts[s].innerHTML.replace(/`/g, "\\`").replace(/\$/g, "\\$") + "`);"
+                scripts[s].innerHTML = wrap_code_with_eval(scripts[s].innerHTML);
             lib.logJS(
                 old_js,
                 `${numberOfExecutedSnippets++}_input_script`,
@@ -289,6 +308,7 @@ function instrument_html(code) {
             let att = atts[a];
             if (att.nodeName.startsWith("on") && att.nodeValue.trim() !== "") { //script attribute like onclick
                 let old_js = att.nodeValue;
+                listOfKnownScripts.push(old_js);
                 elem.setAttribute(att.nodeName, rewrite(att.nodeValue));
                 lib.logJS(
                     old_js,
@@ -1606,3 +1626,8 @@ function hoist(obj, scope) {
         }
     }
 }
+
+function wrap_code_with_eval(code_str) {
+    return "eval(\"" + JSON.stringify(code_str).slice(1, -1) + "\");"
+}
+

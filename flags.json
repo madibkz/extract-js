@@ -25,7 +25,7 @@
         {
             "name": "download-external-scripts",
             "type": "Boolean",
-            "description": "Use this flag to download and run externally linked scripts, when --html mode is being used with symbolic execution and multi-execution. Remember to enable --dom-resource-loading for loading of external scripts for the individual executions after symbolic execution."
+            "description": "Use this flag to download and run externally linked scripts, when --html mode is being used with symbolic execution. Remember to enable --dom-resource-loading for loading of external scripts for the individual executions after symbolic execution."
         },
         {
             "name": "no-summary",

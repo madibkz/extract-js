@@ -1422,6 +1422,24 @@ describe("multi-exec html", function() {
 			assert(stdout.includes(`Script output: "reached end script"`));
 		}, "--html --multi-exec")
 	);
+	it(
+		"should download, rewrite and run an external linked basic script if --dom-resource-loading is on",
+		run_html_script_and_check_output("multi-exec/external_linked_basic.html", (stdout) => {
+			assert(stdout.includes(`Script output: "script was loaded and ran."`));
+		}, "--html --multi-exec --dom-resource-loading")
+	);
+	it(
+		"should skip global errors in an external linked script if --dom-resource-loading is on",
+		run_html_script_and_check_output("multi-exec/external_linked_global_error.html", (stdout) => {
+			assert(stdout.includes(`Script output: "reached end of script despite error"`));
+		}, "--html --multi-exec --dom-resource-loading")
+	);
+	it(
+		"should skip eval errors in an external linked script if --dom-resource-loading is on",
+		run_html_script_and_check_output("multi-exec/external_linked_eval_error.html", (stdout) => {
+			assert(stdout.includes(`Script output: "reached end"`));
+		}, "--html --multi-exec --dom-resource-loading")
+	);
 });
 
 describe("symbolic html", function() {
