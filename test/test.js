@@ -856,6 +856,16 @@ describe("multi-exec", function() {
 		}, "--multi-exec")
 	);
 	it(
+		"should try to force execution of for of body but let the for of loop run after like normal if forcing doesn't work",
+		run_multiexec_script_and_check_output("for_of.js", (stdout) => {
+			assert(stdout.includes(`for (let i; in []) (ATTEMPTING TO FORCE EXECUTION OF BODY)`));
+			assert(stdout.includes(`test`));
+			assert(stdout.includes(`} (ATTEMPT TO FORCE EXECUTION OF for (let i; in []) SUCCEEDED)`));
+			assert(stdout.includes(`for (let i; in []) {`));
+			assert(stdout.includes(`} (EXITED for (let i; in []))`));
+		}, "--multi-exec")
+	);
+	it(
 		"should force execution of the for in body where the conditional doesn't cause any loops",
 		run_multiexec_script_and_check_output("for_in_test_2.js", (stdout) => {
 			assert(stdout.includes(`for (var i; in x) (ATTEMPTING TO FORCE EXECUTION OF BODY)`));
