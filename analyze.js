@@ -692,6 +692,7 @@ function make_sandbox(symex_input = null) {
         JSON,
         location: buildProxyForEmulatedObject(symex_input, "location.", "./emulator/location.js"),
         navigator: buildProxyForEmulatedObject(symex_input, "navigator.", "./emulator/navigator/navigator.js"),
+        document: buildProxyForEmulatedObject(symex_input, "document.", "./emulator/document.js"),
         origin: symex_input ? symex_input["origin"] : "https://default-origin.com",
         parse: (x) => {
         },

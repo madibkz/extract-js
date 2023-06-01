@@ -62,6 +62,7 @@ global.origin = S$.symbol("origin", "");
 
     global.location = buildProxyForEmulatedObject("location.", "./emulator/location.js");
     global.navigator = buildProxyForEmulatedObject("navigator.", "./emulator/navigator/navigator.js");
+    global.document = buildProxyForEmulatedObject("document.", "./emulator/document.js")
 })();
 
 //active x
