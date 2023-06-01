@@ -18,7 +18,8 @@
     "uuid": "^3.2.1",
     "vm2": "^3.6.0",
     "walk-sync": "^0.3.2",
-    "js-beautify": "^1.14.0"
+    "js-beautify": "^1.14.0",
+    "fs-extra": "10.0.0"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",

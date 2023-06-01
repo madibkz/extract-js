@@ -5,15 +5,16 @@ const path = require("path");
 const request = require("sync-request");
 const uuid = require("uuid");
 const argv = require("./argv.js").run;
+const fsextra = require("fs-extra");
 
 const directory = path.normalize(process.argv[3]);
 
-const urls = [];
-const activeUrls = [];
-const snippets = {};
-const resources = {};
-const files = {};
-const IOC = [];
+let urls = [];
+let activeUrls = [];
+let snippets = {};
+let resources = {};
+let files = {};
+let IOC = [];
 
 let latestUrl = "";
 let number_of_wscript_code_snippets = 0;
@@ -28,6 +29,24 @@ const logSnippet = function(filename, logContent, content, deobfuscate = false) 
 	}
 	fs.writeFileSync(path.join(directory, "snippets.json"), JSON.stringify(snippets, null, "\t"));
 };
+
+//used for multi-execution when an error occurs, to restart all the logging states as it's a fresh start
+function restartState() {
+	urls = [];
+	activeUrls = [];
+	snippets = {};
+	resources = {};
+	files = {};
+	IOC = [];
+
+	latestUrl = "";
+	number_of_wscript_code_snippets = 0;
+
+	//delete any written files
+	fsextra.emptyDirSync(directory);
+	fs.mkdirSync(directory + "/resources");
+	fs.mkdirSync(directory + "/snippets");
+}
 
 function kill(message) {
 	if (argv["no-kill"])
@@ -86,6 +105,7 @@ module.exports = {
 	argv,
 	kill,
 	getUUID,
+	restartState,
 
 	debug: log.bind(null, "debug"),
 	verbose: log.bind(null, "verb"),
