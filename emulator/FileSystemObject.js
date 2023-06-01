@@ -14,7 +14,7 @@ function TextStream(filename) {
     this.readall = () => {
 	    return this.buffer;
     };
-    this.readline = function() { //TODO fix this
+    this.readline = () => {
 	    if (this.bufferarray.length === 0) {
             this.bufferarray = this.buffer.split("\n");
         }
@@ -164,7 +164,7 @@ function FileSystemObject() {
     this.getfile = (filename) => new ProxiedFile(filename);
     this.getfileversion = () => "";
     this.getfolder = (str) => new ProxiedFolder(str);
-    this.getspecialfolder = function(id) {
+    this.getspecialfolder = (id) => {
 	    const folders = {
 	        0: "C:\\WINDOWS\\",
 	        1: "C:\\WINDOWS\\(System folder)\\",
