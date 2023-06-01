@@ -1,4 +1,5 @@
-/* just logs when do while loop is entered and exited
+/*
+just logs when do while loop is entered and exited
  */
 
 const escodegen = require("escodegen");

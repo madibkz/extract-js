@@ -1,5 +1,5 @@
 /*
-there is a high chance that the body of a for in statement will fail without the init var
+there is a high chance that the body of a for in statement will fail without the init var, so use a try statement
 
 turns:
     for (var x in y) {
@@ -7,11 +7,11 @@ turns:
     }
 =>
     try {
-        console.log("Attempting to force execution of For In statement");
+        logMultiexec("Attempting to force execution of For In statement");
         body
-        console.log("Attempt to force execution of For In statement succeeded");
+        logMultiexec("Attempt to force execution of For In statement succeeded");
     } catch (e) {
-        console.log("Attempt to force execution of For In statement failed");
+        logMultiexec("Attempt to force execution of For In statement failed");
     }
     for (var x in y) {
         body
