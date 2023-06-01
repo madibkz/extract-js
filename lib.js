@@ -18,9 +18,14 @@ const IOC = [];
 let latestUrl = "";
 let number_of_wscript_code_snippets = 0;
 
-const logSnippet = function(filename, logContent, content) {
+const logSnippet = function(filename, logContent, content, deobfuscate = false) {
 	snippets[filename] = logContent;
-	fs.writeFileSync(path.join(directory + "snippets/", filename), require("js-beautify").js(content));
+	let save_path = path.join(directory + "snippets/", filename);
+	fs.writeFileSync(save_path, require("js-beautify").js(content));
+	if (deobfuscate) {
+		//write a deobfuscated version of the JS snippet
+		child_process.exec(`./illuminatejs/deobfuscate_file.js ${save_path}`);
+	}
 	fs.writeFileSync(path.join(directory, "snippets.json"), JSON.stringify(snippets, null, "\t"));
 };
 
@@ -190,19 +195,15 @@ module.exports = {
 		fs.writeFileSync(path.join(directory, "resources.json"), JSON.stringify(resources, null, "\t"));
 	},
 	logSnippet,
-	logJS: function(code, prefix = "", suffix = "", id = true, rewrite = null, as = "eval'd JS",) {
+	logJS: function(code, prefix = "", suffix = "", id = true, rewrite = null, as = "eval'd JS", deobfuscate = false) {
 		const genid = uuid.v4();
 		const filename = prefix + (id ? genid : "") + suffix +  ".js";
+		log("verb", `Code saved to ${filename}`);
+		logSnippet(filename, {as: as}, code, deobfuscate);
 		if (rewrite) {
-			log("verb", `Code saved to ${filename}`);
-			logSnippet(filename, {as: as}, code);
-
-			const filename2 = prefix + (id ? genid : "") + suffix + "_instrumented" + ".js";
+			const filename2 = prefix + (id ? genid : "") + suffix + "_INSTRUMENTED" + ".js";
 			log("verb", `Code saved to ${filename2}`);
 			logSnippet(filename2, {as: as}, rewrite);
-		} else {
-			log("verb", `Code saved to ${filename}`);
-			logSnippet(filename, {as: as}, code);
 		}
 		return code; // Helps with tail call optimization
 	},

@@ -355,7 +355,7 @@ cc decoder.c -o decoder
 
 numberOfExecutedSnippets = 1;
 
-lib.logJS(code, `${numberOfExecutedSnippets}_input_script`, "", false);
+lib.logJS(code, `${numberOfExecutedSnippets}_input_script`, "", false, null, "INPUT SCRIPT", true);
 
 code = rewrite(code);
 
@@ -392,7 +392,7 @@ code = fs.readFileSync(path.join(__dirname, "patch.js"), "utf8") + code;
 // append more code
 code += "\n\n" + fs.readFileSync(path.join(__dirname, "appended-code.js"));
 
-lib.logJS(code, `${numberOfExecutedSnippets}_input_script_instrumented`, "", false);
+lib.logJS(code, `${numberOfExecutedSnippets}_input_script_INSTRUMENTED`, "", false, null, "INPUT SCRIPT", false);
 
 Array.prototype.Count = function() {
     return this.length;
@@ -523,7 +523,7 @@ const sandbox = {
     parse: (x) => {},
     rewrite: (code, log = false) => {
         const ret = rewrite(code);
-        if (log) lib.logJS(code, `${++numberOfExecutedSnippets}_`, "", true, ret);
+        if (log) lib.logJS(code, `${++numberOfExecutedSnippets}_`, "", true, ret, "eval'd JS", true);
         return ret;
     },
     ScriptEngine: () => {
