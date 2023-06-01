@@ -5,9 +5,8 @@
  * Required by prototype.js patch
  */
 
-module.exports = function(acorn) {
-    acorn.plugins.JScriptMemberFunctionStatement = function(parser) {
-        parser.extend("parseFunction", function(base) {
+module.exports = function(parser) {
+        parser.extend(function(base) {
             return function(node, isStatement, allowExpressionBody, isAsync) {
                 /**
                  * If it's function statement and identifier is expected:
@@ -30,7 +29,7 @@ module.exports = function(acorn) {
             }
         });
 
-        parser.extend("parseIdent", function(base) {
+        parser.extend(function(base) {
             return function() {
                 let r = base.apply(this, arguments);
                 if(this.isFuncStatementId)
@@ -55,5 +54,4 @@ module.exports = function(acorn) {
                 return r;
             }
         });
-    }
 }

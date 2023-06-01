@@ -22,7 +22,7 @@ const multi_exec_enabled = mode === "multi-exec";
 const sym_exec_enabled = mode === "sym-exec";
 
 // JScriptMemberFunctionStatement plugin registration
-require("./patches/prototype-plugin.js")(acorn);
+require("./patches/prototype-plugin.js")(acorn.Parser);
 
 lib.debug("Analysis launched: " + JSON.stringify(process.argv));
 lib.verbose("extract-js version: " + require("./package.json").version);
@@ -293,6 +293,7 @@ If you run into unexpected results, try uncommenting lines that look like
             try {
                 tree = acorn.parse(code, {
                     allowReturnOutsideFunction: true, // used when rewriting function bodies
+                    ecmaVersion: "latest",
                     plugins: {
                         // enables acorn plugin needed by prototype rewrite
                         JScriptMemberFunctionStatement: !argv["no-rewrite-prototype"],
@@ -481,11 +482,8 @@ function rewrite_code_for_symex_script(code) {
         try {
             tree = acorn.parse(code, {
                 allowReturnOutsideFunction: true, // used when rewriting function bodies
-                plugins: {
-                    // enables acorn plugin needed by prototype rewrite
-                    JScriptMemberFunctionStatement: !argv["no-rewrite-prototype"],
-                },
-            });
+                ecmaVersion: "latest",
+            })
         } catch (e) {
             lib.error("Couldn't parse with Acorn:");
             lib.error(e);
@@ -562,19 +560,27 @@ function run_in_vm(code, sandbox) {
 }
 
 function make_sandbox(symex_input = null) {
-    function buildNavigatorProxy(symex_input) {
-        let navigatorJS = require("./emulator/navigator.js");
-        let navigatorObject = navigatorJS.getNavigatorObject();
-        let navigatorHandler = navigatorJS.getNavigatorProxyHandler();
-        let navigatorDefaultFields = navigatorJS.getNavigatorDefaultFields();
+    function buildProxyForEmulatedObject(symex_input, symex_prefix, file_path) {
+        let emulatedPatch = require(file_path);
+        let emulatedObject = emulatedPatch.getObject();
+        let emulatedHandler = emulatedPatch.getProxyHandler();
+        let emulatedDefaultFields = emulatedPatch.getDefaultFields();
+        let emulatedInnerProxies = emulatedPatch.getInnerProxies();
 
-        for (let field in navigatorDefaultFields) {
-            if (navigatorDefaultFields.hasOwnProperty(field)) {
-                navigatorObject[field] = symex_input ? symex_input[`navigator.${field}`] : navigatorDefaultFields[field];
+        for (let field in emulatedDefaultFields) {
+            if (emulatedDefaultFields.hasOwnProperty(field)) {
+                emulatedObject[field] = symex_input ? symex_input[`${symex_prefix}${field}`] : emulatedDefaultFields[field];
             }
         }
 
-        return new Proxy(navigatorObject, navigatorHandler);
+        for (let field in emulatedInnerProxies) {
+            if (emulatedInnerProxies.hasOwnProperty(field)) {
+                let innerProxy = emulatedInnerProxies[field];
+                emulatedObject[field] = buildProxyForEmulatedObject(symex_input, innerProxy.symex_prefix, innerProxy.file_path);
+            }
+        }
+
+        return new Proxy(emulatedObject, emulatedHandler);
     }
 
     return {
@@ -662,7 +668,7 @@ function make_sandbox(symex_input = null) {
             },
             //TODO: logging of tampering with location stuff
         }),
-        navigator: buildNavigatorProxy(symex_input),
+        navigator: buildProxyForEmulatedObject(symex_input, "navigator.", "./emulator/navigator/navigator.js"),
         parse: (x) => {
         },
         rewrite: (code, log = false) => {
