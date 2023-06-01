@@ -903,6 +903,7 @@ async function run_in_jsdom_vm(sandbox, code, symex_input = null) {
                 // proxy: "",
                 // strictSSL: false,
                 // userAgent: "",
+                ...((symex_input && symex_input["navigator.userAgent"]) && {userAgent: symex_input["navigator.userAgent"]})
             });
 
             let dom_str = `<html><head></head><body><script>${initialLocalStorage}${initialSessionStorage}${one_cookie}${multiple_cookies}${code}</script></body></html>`;

@@ -776,4 +776,11 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: "Found default branch"`));
 		}, "--sym-exec --timeout 1000")
 	);
+	it(
+		"should symbolically track the navigator.userAgent and set it as the jsdom user agent",
+		run_symex_script_and_check_output("useragent.js", (stdout) => {
+			assert(stdout.includes(`Script output: "test passed"`));
+			assert(stdout.includes(`Script output: "default branch"`));
+		}, "--sym-exec --timeout 1000")
+	);
 });
