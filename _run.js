@@ -119,20 +119,32 @@ else
 // queue the input files for analysis
 const outputDir = argv["output-dir"] || "./";
 let results_dirs = [];
+let all_flag = argv["all"];
+let default_flag = argv["default"];
+let multi_flag = argv["multi-exec"];
+let sym_flag = argv["sym-exec"];
 
 tasks.forEach(({filepath, filename}) => {
 	const results_dir = get_results_dir(filename);
 	results_dirs.push(results_dir);
-	if (argv["all"]) {
+
+	if (all_flag) {
 		q.push(cb => analyze(results_dir, filepath, filename, cb, "default", false))
 		q.push(cb => analyze(results_dir, filepath, filename, cb, "multi-exec", false))
 		q.push(cb => analyze(results_dir, filepath, filename, cb, "sym-exec", false))
-	} else if (argv["multi-exec"]) {
-		q.push(cb => analyze(results_dir, filepath, filename, cb, "multi-exec"))
-	} else if (argv["sym-exec"]) {
-		q.push(cb => analyze(results_dir, filepath, filename, cb, "sym-exec"))
-	} else { //default
+	} else if (!default_flag && !multi_flag && !sym_flag) {
 		q.push(cb => analyze(results_dir, filepath, filename, cb, "default"))
+	} else {
+		let log_to_stdout = (default_flag + multi_flag + sym_flag) === 1;
+		if (default_flag) {
+			q.push(cb => analyze(results_dir, filepath, filename, cb, "default", log_to_stdout));
+		}
+		if (multi_flag) {
+			q.push(cb => analyze(results_dir, filepath, filename, cb, "multi-exec", log_to_stdout));
+		}
+		if (sym_flag) {
+			q.push(cb => analyze(results_dir, filepath, filename, cb, "sym-exec", log_to_stdout));
+		}
 	}
 });
 
