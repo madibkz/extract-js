@@ -148,11 +148,20 @@ function logIOC(type, value, description) {
 	fs.writeFileSync(path.join(directory, "IOC.json"), JSON.stringify(IOC, null, "\t"));
 }
 
-function logUrl(method, url) {
-	log("info", `${method} ${url}`);
+function saveUrl(url) {
 	latestUrl = url;
 	if (urls.indexOf(url) === -1) urls.push(url);
 	fs.writeFileSync(path.join(directory, "urls.json"), JSON.stringify(urls, null, "\t"));
+}
+
+function logUrl(method, url) {
+	log("info", `${method} ${url}`);
+	saveUrl(url);
+}
+
+function logDOMUrl(url, options) {
+	log("info", `DOM: Resource at ${url} was requested from DOM emulation${options.element ? " from element " + options.element.localName : ""}. Options: ${JSON.stringify(options)}`);
+	saveUrl(url);
 }
 
 function logJS(code, prefix = "", suffix = "", id = true, rewrite = null, as = "eval'd JS", deobfuscate = false) {
@@ -295,6 +304,7 @@ module.exports = {
 	},
 	logSnippet,
 	logJS,
+	logDOMUrl,
 	logDOM: function(property, write = false, write_val = null, func = false, args = null) {
 		function args_to_string() {
 			let str = "";

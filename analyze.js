@@ -22,6 +22,13 @@ const multi_exec_enabled = mode === "multi-exec";
 const sym_exec_enabled = mode === "sym-exec";
 const dont_set_in_jsdom_from_sandbox = ["setInterval", "setTimeout", "alert", "JSON", /*"console",*/ "location", "navigator", "document", "origin", "self", "window"];
 
+class LoggingResourceLoader extends jsdom.ResourceLoader {
+    fetch(url, options) {
+        lib.logDOMUrl(url, options);
+        return super.fetch(url, options);
+    }
+}
+
 // JScriptMemberFunctionStatement plugin registration
 require("./patches/prototype-plugin.js")(acorn.Parser);
 
@@ -825,6 +832,12 @@ async function run_in_jsdom_vm(sandbox, code) {
                 set: (t, n, v) => log_dom_proxy_set(t, n, v, "cookieJar"),
             });
 
+            const resourceLoader = new LoggingResourceLoader({
+                // proxy: "",
+                // strictSSL: false,
+                // userAgent: "",
+            });
+
             let dom_str = `<html><head></head><body><script>${initialLocalStorage}${initialSessionStorage}${one_cookie}${multiple_cookies}${code}</script></body></html>`;
 
             lib.logHTML(dom_str, "the initial HTML set for the jsdom emulation");
@@ -839,6 +852,7 @@ async function run_in_jsdom_vm(sandbox, code) {
                 runScripts: "dangerously",
                 pretendToBeVisual: true,
                 cookieJar,
+                resources: resourceLoader,
 
                 //Setting up the global context of the emulation
                 beforeParse(window) {
