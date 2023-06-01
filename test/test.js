@@ -1276,6 +1276,12 @@ describe("aggregator.js", function() {
 			assert(fs.existsSync(`${getTestResultsFolder("symex_mode_unique_contexts.js")}summary`));
 		}, "--sym-exec --no-sym-exec-activex --timeout 1000")
 	);
+	it(
+		"should create a summary folder if only multi_exec_brute mode has run",
+		run_agg_script_and_check_output("multi_exec_brute.js", (stdout) => {
+			assert(fs.existsSync(`${getTestResultsFolder("multi_exec_brute.js")}summary`));
+		}, "--multi-exec-brute --timeout 1000")
+	);
 
 	it(
 		"should not copy the contexts.json file from symex mode into summary/unique_contexts.json if there are no unique contexts",

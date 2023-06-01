@@ -113,6 +113,10 @@ if (tasks.length === 0) {
     console.log("Please pass one or more filenames or directories as an argument.");
     process.exit(255);
 }
+if (argv["multi-exec"] && argv["multi-exec-brute"]) {
+	console.log("Cannot have --multi-exec and --multi-exec-brute at the same time");
+	process.exit(255);
+}
 
 // Prevent "possible memory leak" warning
 process.setMaxListeners(Infinity);
@@ -135,7 +139,36 @@ let results_dirs = [];
 let all_flag = argv["all"];
 let default_flag = argv["default"];
 let multi_flag = argv["multi-exec"];
+let multi_brute_flag = argv["multi-exec-brute"];
 let sym_flag = argv["sym-exec"];
+
+function multi_brute_push_q(q, results_dir, filepath, filename) {
+	let mutually_exclusive_opts = ["", "--multi-exec-only-eval", "--multi-exec-no-eval"];
+	let total_opts = {};
+	fs.mkdirSync(results_dir + "/multi-exec");
+
+	let count = 0;
+	for (let i of mutually_exclusive_opts) {
+		for (let j of ["", "--no-multi-exec-loop"]) {
+			for (let k of ["", "--multi-exec-loop-limit=1000"]) {
+				for (let l of ["", "--multi-exec-function-limit=1000"]) {
+					for (let m of ["", "--no-multi-exec-events"]) {
+						for (let n of ["", "--no-multi-exec-function"]) {
+							let multi_opts = [i, j, k, l, m, n];
+							multi_opts = multi_opts.filter((o) => o !== "");
+							let c = count;
+							q.push(cb => analyze(results_dir, filepath, filename, cb, "multi-exec", false, multi_opts, c));
+							total_opts[count] = multi_opts;
+							count++;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	fs.writeFileSync(results_dir + "/multi-exec-brute-opts.json", JSON.stringify(total_opts, null, 4));
+}
 
 tasks.forEach(({filepath, filename}) => {
 	const results_dir = get_results_dir(filename);
@@ -143,9 +176,13 @@ tasks.forEach(({filepath, filename}) => {
 
 	if (all_flag) {
 		q.push(cb => analyze(results_dir, filepath, filename, cb, "default", false))
-		q.push(cb => analyze(results_dir, filepath, filename, cb, "multi-exec", false))
+		if (multi_brute_flag) {
+			multi_brute_push_q(q, results_dir, filepath, filename);
+		} else {
+			q.push(cb => analyze(results_dir, filepath, filename, cb, "multi-exec", false));
+		}
 		q.push(cb => analyze(results_dir, filepath, filename, cb, "sym-exec", false))
-	} else if (!default_flag && !multi_flag && !sym_flag) {
+	} else if (!default_flag && !multi_flag && !multi_brute_flag && !sym_flag) {
 		q.push(cb => analyze(results_dir, filepath, filename, cb, "default"))
 	} else {
 		let log_to_stdout = ((default_flag?1:0) + (multi_flag?1:0) + (sym_flag?1:0)) === 1;
@@ -154,6 +191,9 @@ tasks.forEach(({filepath, filename}) => {
 		}
 		if (multi_flag) {
 			q.push(cb => analyze(results_dir, filepath, filename, cb, "multi-exec", log_to_stdout));
+		}
+		if (multi_brute_flag) {
+			multi_brute_push_q(q, results_dir, filepath, filename);
 		}
 		if (sym_flag) {
 			q.push(cb => analyze(results_dir, filepath, filename, cb, "sym-exec", log_to_stdout));
@@ -191,16 +231,18 @@ function get_results_dir(filename) {
 	return directory;
 }
 
-function analyze(directory, filepath, filename, cb, mode = "default", logToStdout = true) {
+function analyze(directory, filepath, filename, cb, mode = "default", logToStdout = true, multi_brute_opts = null, multi_brute_count = -1) {
 
-	directory += mode;
+	directory += mode + (multi_brute_opts ?  "/" + multi_brute_count : "");
 	fs.mkdirSync(directory);
 	fs.mkdirSync(directory + "/resources");
 	fs.mkdirSync(directory + "/snippets");
 	directory += "/";
 
-	console.log(`(${mode.toUpperCase()} MODE) Starting thread for analyzing ${filename}...`);
-	const worker = cp.fork(path.join(__dirname, "analyze"), [filepath, directory, /*multi_exec?*/ mode, logToStdout, ...options]);
+	console.log(`(${mode.toUpperCase()}${multi_brute_opts ? "-" + multi_brute_count : ""} MODE) Starting thread for analyzing ${filename}...`);
+	let final_options = multi_brute_opts ? options.concat(multi_brute_opts) : options;
+	const worker = cp.fork(path.join(__dirname, "analyze"), [filepath, directory, /*multi_exec?*/ mode, logToStdout, ...final_options]);
+	if (multi_brute_opts) mode += "-" + multi_brute_count;
 
 	const killTimeout = setTimeout(() => {
 		console.log(`(${mode.toUpperCase()} MODE) Analysis for ${filename} timed out.`);
