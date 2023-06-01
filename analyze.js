@@ -1167,6 +1167,7 @@ function make_sandbox(symex_input = null) {
         toggleLogDOM: lib.toggleLogDOM,
         logJS: lib.logJS,
         logIOC: lib.logIOC,
+        logUrl: lib.logUrl,
         logMultiexec: !argv["multi-exec"] ? () => {} : (x, indent) => { //TODO: maybe reduce the duplication here
             x = x.replace(/\n/gi, "\\n"); //remove newlines
             if (indent === 0) {
@@ -1246,7 +1247,9 @@ function make_sandbox(symex_input = null) {
         WScript: wscript_proxy,
         WSH: wscript_proxy,
         self: {},
-        require //require is required for some of the ActiveX stuff to work - TODO: change this
+        require, //require is required for some of the ActiveX stuff to work - TODO: change this,
+        isURL: require("validator").isURL,
+        isIP: require("validator").isIP,
     };
 }
 

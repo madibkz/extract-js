@@ -130,6 +130,19 @@ describe("code rewriting", function() {
 	);
 });
 
+//tests that don't really have a concrete category
+describe("other-category", function() {
+	this.timeout(20000);
+
+	it(
+		"should find and log any strings containing URLs/IPs",
+		run_test_script_and_check_output("find_urls_ips.js", (stdout) => {
+			assert(stdout.includes(`FOUND URL: https://atest.com/?query=parameter UNKNOWNMETHOD`));
+			assert(stdout.includes(`FOUND URL: 123.123.213.4:2999 UNKNOWNMETHOD`));
+		})
+	);
+});
+
 describe("DOM", function() {
 	this.timeout(20000);
 
@@ -174,7 +187,6 @@ describe("DOM", function() {
 		run_dom_script_and_check_output("no_dom_resource_loading.js", (stdout) => {
 			assert(!stdout.includes(`Resource at https://code.jquery.com/jquery-3.6.0.slim.min.js was requested from DOM emulation from element script.`));
 			let path_to_urls = `${getTestResultsFolder("no_dom_resource_loading.js")}default/urls.json`;
-			assert(!fs.existsSync(path_to_urls));
 		})
 	);
 	it(
@@ -200,6 +212,15 @@ describe("DOM", function() {
 			let path_to_urls = `${getTestResultsFolder("create_linked_iframe.js")}default/urls.json`;
 			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://example.com/"));
 		}, "--dom-resource-loading")
+	);
+	//url searching tests
+	it(
+		"should log a URL if it finds it in the argument/val for a DOM object interaction",
+		run_dom_script_and_check_output("log_url_val.js", (stdout) => {
+			assert(stdout.includes(`Resource at https://google.com [UNKNOWNMETHOD] was found in DOM emulation from element window.name.`));
+			let path_to_urls = `${getTestResultsFolder("log_url_val.js")}default/urls.json`;
+			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://google.com"));
+		})
 	);
 
 
