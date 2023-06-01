@@ -265,7 +265,7 @@ function get_symex_code_from_html(code) {
             if (isURL(scripts[s].src)) {
                 lib.logUrl("GET", scripts[s].src, "EXTERNALLY LINKED SCRIPT FOUND IN HTML SCRIPT TAG");
                 //download the script if the command line argument is there
-                if (argv["download-external-scripts"]) {
+                if (argv["sym-exec-external-scripts"]) {
                     lib.info("Attempting to download external script " + scripts[s].src + " for symbolic execution");
                     try {
                         //then add this to the symex_code
@@ -1650,4 +1650,3 @@ function hoist(obj, scope) {
 function wrap_code_with_eval(code_str) {
     return "eval(\"" + JSON.stringify(code_str).slice(1, -1) + "\");"
 }
-
