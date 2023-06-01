@@ -100,6 +100,10 @@ module.exports = (args, function_limit) => {
     let return_count = 0;
     traverse(args.body.body, function(key, val) {
         if (!val) return;
+        if (val.type == "FunctionDeclaration" || val.type == "FunctionExpression") {
+            val.skiponce = true;
+            return;
+        }
         if (val.type == "ReturnStatement") {
             val.return_count = return_count;
             return_count++;
@@ -184,6 +188,10 @@ module.exports = (args, function_limit) => {
     } else { //ELSE IF THERE ARE/IS A RETURN STATEMENT
         traverse(args.body.body, function(key, val) {
             if (!val) return;
+            if (val.type == "FunctionDeclaration" || val.type == "FunctionExpression") {
+                val.skiponce = true;
+                return;
+            }
             if (val.type == "ReturnStatement") {
                 if (val.return_count == "traversed") { //PREVENT RETRAVERSAL OF THE RETURN STATEMENT
                     return;
