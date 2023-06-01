@@ -107,14 +107,4 @@
 	Function.toString(); //Fixes some error with function not being reloaded for the first function run after patches
 
 	toggleLogDOM();
-	(() => {
-		let og_eval = eval;
-		Object.defineProperty(window, "eval", {
-			get: function () {
-				return og_eval;
-			},
-			enumerable: true,
-			configurable: false
-		});
-	})();
 /* End patches */
