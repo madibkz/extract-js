@@ -15,7 +15,7 @@ module.exports = (args) => ({
         "arguments": [
             {
                 "type": "Literal",
-                "value": args.label ? `break ${escodegen.generate(args.label)}) (skipped)` : "break (skipped)",
+                "value": args.label ? `continue ${escodegen.generate(args.label)}) (skipped)` : "continue (skipped)",
             },
             {
                 "type": "Literal",

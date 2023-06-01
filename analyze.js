@@ -303,6 +303,8 @@ cc decoder.c -o decoder
                             return require("./patches/multiexec/switch.js")(val);
                         case "BreakStatement":
                             return require("./patches/multiexec/break.js")(val);
+                        case "ContinueStatement":
+                            return require("./patches/multiexec/continue.js")(val);
                         case "TryStatement":
                             return require("./patches/multiexec/try.js")(val);
                         case "WhileStatement":
