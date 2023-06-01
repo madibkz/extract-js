@@ -220,10 +220,42 @@ function instrument_html(code) {
     //for each script/piece of javascript in the html code, it is logged and replaced with rewrite(*SCRIPT*)
     const dom = new JSDOM(code, { includeNodeLocations: true });
 
+    //for all script tags:
     let scripts = dom.window.document.scripts;
     for (let s = 0; s < scripts.length; s++) {
         if (scripts[s].innerHTML.trim() !== "")
-            lib.logJS(scripts[s].innerHTML, `${numberOfExecutedSnippets++}_input_script`, "", false, scripts[s].innerHTML = rewrite(scripts[s].innerHTML), `FOUND IN INPUT HTML AT CHAR ${dom.nodeLocation(scripts[s]).startOffset}`, true);
+            lib.logJS(
+                scripts[s].innerHTML,
+                `${numberOfExecutedSnippets++}_input_script`,
+                "",
+                false,
+                scripts[s].innerHTML = rewrite(scripts[s].innerHTML),
+                `FOUND IN INPUT HTML AT CHAR ${dom.nodeLocation(scripts[s]).startOffset}`,
+                true
+            );
+    }
+
+    //for all script attributes log and rewrite js:
+    let all_elements = dom.window.document.getElementsByTagName("*");
+    for (let e = 0; e < all_elements.length; e++) {
+        let elem = all_elements[e];
+        let atts = elem.attributes;
+        for (let a = 0; a < atts.length; a++) {
+            let att = atts[a];
+            if (att.nodeName.startsWith("on") && att.nodeValue.trim() !== "") { //script attribute like onclick
+                let old_js = att.nodeValue;
+                elem.setAttribute(att.nodeName, rewrite(att.nodeValue));
+                lib.logJS(
+                    old_js,
+                    `${numberOfExecutedSnippets++}_input_attribute_script`,
+                    "",
+                    false,
+                    elem[att.nodeName],
+                    `FOUND IN INPUT HTML AT ATTRIBUTE ${att.nodeName} OF ELEMENT ${elem.nodeName} AT CHAR ${dom.nodeLocation(elem).startOffset}`,
+                    true
+                );
+            }
+        }
     }
 
     //prepend patch code
