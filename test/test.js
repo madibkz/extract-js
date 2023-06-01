@@ -28,6 +28,10 @@ let run_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =
 let run_test_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
 	run_script_and_check_output(`${testScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
 
+let run_html_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
+	run_script_and_check_output(`${htmlScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
+
+
 function get_snippets_object(test_script_name, mode = "default")  {
 	let path_to_snippets_json = `${getTestResultsFolder(test_script_name)}${mode}/snippets.json`;
 	assert(fs.existsSync(path_to_snippets_json));
@@ -604,9 +608,6 @@ describe("DOM", function() {
 
 describe("html", function() {
 	this.timeout(20000);
-
-	let run_html_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") =>
-		run_script_and_check_output(`${htmlScriptsDir}/${testScript}`, checkOutput, extraArgsStr);
 
 	it(
 		"should parse and run a html file with --html enabled without errors",
@@ -1388,5 +1389,18 @@ describe("sym-exec", function() {
 			assert(stdout.includes(`Script output: "operatingsystem branch"`));
 			assert(stdout.includes(`Script output: "processstoptrace branch"`));
 		}, "--sym-exec --no-sym-exec-dom --timeout 1000")
+	);
+});
+
+describe("symbolic html", function() {
+	this.timeout(2000000);
+
+	it(
+		"should concatenate all the scripts from the html, and input that into the symex mode so that it works like normal",
+		run_html_script_and_check_output("sym-exec/basic_symbol.html", (stdout) => {
+			assert(stdout.includes(`Script output: "it works1"`));
+			assert(stdout.includes(`Script output: "it works2"`));
+			assert(stdout.includes(`Script output: "it works3"`));
+		}, "--html --sym-exec --no-sym-exec-activex --timeout 1000")
 	);
 });

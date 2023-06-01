@@ -73,7 +73,8 @@ if (!html_mode && (code.match("<job") || code.match("<script"))) { // The sample
 }
 
 let numberOfExecutedSnippets = 1;
-const originalInputScript = code;
+
+const originalInputScript = (sym_exec_enabled && html_mode) ? get_symex_code_from_html(code) : code;
 
 //*INSTRUMENTING CODE*
 if (!html_mode) {
@@ -156,7 +157,11 @@ if (default_enabled || multi_exec_enabled) {
         let input = expose_json_results.done[i].input;
         //Make new folder for this new input, change directory of logging to be in this folder now
         lib.new_symex_log_context(i, input);
-        lib.logJS(code, `${numberOfExecutedSnippets}_input_script_INSTRUMENTED`, "", false, null, "INPUT SCRIPT", false);
+        if (html_mode) {
+            lib.logHTML(code, `the input HTML instrumented for jsdom emulation`);
+        } else {
+            lib.logJS(code, `${numberOfExecutedSnippets}_input_script_INSTRUMENTED`, "", false, null, "INPUT SCRIPT", false);
+        }
 
         let unique_context = {};
         for (let field in input) { //only include unique values in context
@@ -216,6 +221,24 @@ function prepend_sym_exec_script(sym_exec_script) {
     return sym_exec_script;
 }
 
+function get_symex_code_from_html(code) {
+    //input code variable is a HTML string
+    //concatenate all the scripts' code in the HTML file together
+    //return this as the input to the symbolic execution engine
+    const dom = new JSDOM(code, { includeNodeLocations: true });
+    let symex_code = "";
+
+    //for all script tags:
+    let scripts = dom.window.document.scripts;
+    for (let s = 0; s < scripts.length; s++) {
+        if (scripts[s].innerHTML.trim() !== "") {
+            symex_code += "\n" + scripts[s].innerHTML.trim();
+        }
+    }
+
+    return symex_code;
+}
+
 function instrument_html(code) {
     //for each script/piece of javascript in the html code, it is logged and replaced with rewrite(*SCRIPT*)
     const dom = new JSDOM(code, { includeNodeLocations: true });
@@ -223,16 +246,18 @@ function instrument_html(code) {
     //for all script tags:
     let scripts = dom.window.document.scripts;
     for (let s = 0; s < scripts.length; s++) {
-        if (scripts[s].innerHTML.trim() !== "")
+        if (scripts[s].innerHTML.trim() !== "") {
             lib.logJS(
                 scripts[s].innerHTML,
                 `${numberOfExecutedSnippets++}_input_script`,
                 "",
                 false,
                 scripts[s].innerHTML = rewrite(scripts[s].innerHTML),
-                `FOUND IN INPUT HTML AT CHAR ${dom.nodeLocation(scripts[s]).startOffset}`,
+                `FOUND IN INPUT HTML IN SCRIPT TAG AT CHAR ${dom.nodeLocation(scripts[s]).startOffset}`,
                 true
             );
+            listOfKnownScripts.push(scripts[s].innerHTML.trim());
+        }
     }
 
     //for all script attributes log and rewrite js:
@@ -254,6 +279,7 @@ function instrument_html(code) {
                     `FOUND IN INPUT HTML AT ATTRIBUTE ${att.nodeName} OF ELEMENT ${elem.nodeName} AT CHAR ${dom.nodeLocation(elem).startOffset}`,
                     true
                 );
+                listOfKnownScripts.push(att.nodeValue.trim());
             }
         }
     }
