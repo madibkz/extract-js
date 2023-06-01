@@ -230,15 +230,17 @@ if (default_enabled || multi_exec_enabled) {
 }
 
 function is_default_sym_exec_value(o) {
-    if (Array.isArray(o)) {
+    if (o === null) {
+        return false;
+    } else if (Array.isArray(o)) {
         return o.length === 0 || is_default_sym_exec_value(o[0]);
     } else if (typeof o === "string" && o === "") {
-        return true
+        return true;
     } else if (typeof o === "number" && o == 0) {
         return true;
     } else if (typeof o === "boolean" && o === false) {
         return true;
-    } else if (typeof o === "object" && o === Object.keys(o).length) { //check if empty object
+    } else if (typeof o === "object" && Object.keys(o).length === 0) { //check if empty object
         return true;
     }
     return false;
