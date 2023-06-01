@@ -19,7 +19,7 @@ const htmlScriptsDir = `${testScriptsDir}/html/`;
 //assuming that the test is only run once within this test suite
 let getTestResultsFolder = (nameOfTest) => `${extractDir}/${testResultsFolder}/${nameOfTest}.results/`;
 let run_script_and_check_output = (testScript, checkOutput, extraArgsStr = "") => function (done) {
-	exec(`${runExtractCommand} ${extraArgsStr} ${testScript}`, function(err, stdout) {
+	exec(`${runExtractCommand} --testing ${extraArgsStr} ${testScript}`, function(err, stdout) {
 		assert.strictEqual(err, null);
 		checkOutput(stdout);
 		done();

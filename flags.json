@@ -261,6 +261,11 @@
             "name": "local-storage-file",
             "type": "String",
             "description": "Pass in a path to a file consisting of a json to set initial localStorage values."
+        },
+        {
+            "name": "testing",
+            "type": "Boolean",
+            "description": "Ignore. Used for when running tests with Mocha."
         }
     ],
     "export": [

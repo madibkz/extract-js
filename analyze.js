@@ -1434,15 +1434,15 @@ function make_sandbox(symex_input = null) {
                     multiexec_indent = multiexec_indent.slice(0, multiexec_indent.length - 2) :
                     multiexec_indent = "";
                 if (x !== "") {
-                    lib.info("MULTI-EXEC:    " + multiexec_indent + x)
+                    lib.logME(multiexec_indent + x);
                 }
             } else if (indent === 1) {
                 if (x !== "") {
-                    lib.info("MULTI-EXEC:    " + multiexec_indent + x)
+                    lib.logME(multiexec_indent + x);
                 }
             } else if (indent === 2) {
                 if (x !== "") {
-                    lib.info("MULTI-EXEC:    " + multiexec_indent + x)
+                    lib.logME(multiexec_indent + x);
                 }
                 multiexec_indent += "  ";
             }
@@ -1485,7 +1485,7 @@ function make_sandbox(symex_input = null) {
                 } catch (e) {
                     x_str = x.toString();
                 }
-                lib.info("Script output: " + (multi_exec_enabled ? multiexec_indent : "") + x_str);
+                lib.info("Script output: " + x_str);
             },
         },
         Enumerator: require("./emulator/Enumerator"),
