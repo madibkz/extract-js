@@ -12,21 +12,30 @@ but returns the first return value it reached at the end
     }
 =>
     function example(x) {
-        functionCounter++;
+        functionReturnSet.push(false);
         if (x == 1) {
-            functionCounter == functionReturnStack.length ?
-                console.log("skipped return 0 with value ", 0) :
-                functionReturnStack.push(0);
+            if (functionReturnSet[functionReturnSet.length - 1] == false) { //if the first return has not been reached
+                functionReturnStack.push(0); // push return value on stack
+                functionReturnSet[functionReturnSet.length - 1] = true;
+            } else {
+                console.log("skipped return 0 with value ", 0)
+            }
         } else {
-            functionCounter == functionReturnStack.length ?
-                console.log("skipped return") :
+            if (functionReturnSet[functionReturnSet.length - 1] == false) {
                 functionReturnStack.push("NO RETURN VALUE");
+                functionReturnSet[functionReturnSet.length - 1] = true;
+            } else {
+                console.log("skipped return") :
+            }
         }
-        functionCounter == functionReturnStack.length ?
-            console.log("Skipped return 1 with value ", 1) :
-            functionReturnStack.push(1);
-        functionCounter--;
-        if (functionReturnStack.length == functionCounter || functionReturnStack[functionReturnStack.length - 1] == "NO RETURN VALUE") {
+        if (functionReturnSet[functionReturnSet.length - 1] == false) { //if the first return has not been reached
+            functionReturnStack.push(1); // push return value on stack
+            functionReturnSet[functionReturnSet.length - 1] = true;
+        } else {
+            console.log("skipped return 1 with value ", 1)
+        }
+        if (!functionReturnSet.pop() || functionReturnStack[functionReturnStack.length - 1] == "NO RETURN VALUE") {
+            functionReturnStack.pop();
             return;
         }
         return functionReturnStack.pop();
@@ -37,17 +46,32 @@ const escodegen = require("escodegen");
 
 //TODO: copy/clone the return value?
 //TODO: refactor duplication of traverse function
+//TODO: realized that due to multi-execution, the first return it reaches won't be the *correct* value so maybe change later to act different tho this still executes the whole function
 module.exports = (args) => {
     args.body.body.unshift({
         "type": "ExpressionStatement",
         "expression": {
-            "type": "UpdateExpression",
-            "operator": "++",
-            "prefix": false,
-            "argument": {
-                "type": "Identifier",
-                "name": "functionCounter"
+            "type": "CallExpression",
+            "callee": {
+                "type": "MemberExpression",
+                    "object": {
+                    "type": "Identifier",
+                        "name": "functionReturnSet"
+                },
+                "property": {
+                    "type": "Identifier",
+                        "name": "push"
+                },
+                "computed": false,
+                    "optional": false
+            },
+            "arguments": [
+            {
+                "type": "Literal",
+                "value": false,
             }
+            ],
+            "optional": false
         }
     });
     args.body.body.unshift({
@@ -78,92 +102,166 @@ module.exports = (args) => {
         if (!val) return;
         if (val.type == "ReturnStatement") {
             return {
-                    "type": "ExpressionStatement",
-                    "expression": {
-                        "type": "ConditionalExpression",
+                "type": "BlockStatement",
+                "body": [
+                    {
+                        "type": "IfStatement",
                         "test": {
                             "type": "BinaryExpression",
                             "left": {
-                                "type": "Identifier",
-                                "name": "functionCounter"
+                                "type": "MemberExpression",
+                                "object": {
+                                    "type": "Identifier",
+                                    "name": "functionReturnSet"
+                                },
+                                "property": {
+                                    "type": "BinaryExpression",
+                                    "left": {
+                                        "type": "MemberExpression",
+                                        "object": {
+                                            "type": "Identifier",
+                                            "name": "functionReturnSet"
+                                        },
+                                        "property": {
+                                            "type": "Identifier",
+                                            "name": "length"
+                                        },
+                                        "computed": false,
+                                        "optional": false
+                                    },
+                                    "operator": "-",
+                                    "right": {
+                                        "type": "Literal",
+                                        "value": 1,
+                                    }
+                                },
+                                "computed": true,
+                                "optional": false
                             },
                             "operator": "==",
                             "right": {
-                                "type": "MemberExpression",
-                                "object": {
-                                    "type": "Identifier",
-                                    "name": "functionReturnStack"
-                                },
-                                "property": {
-                                    "type": "Identifier",
-                                    "name": "length"
-                                },
-                                "computed": false,
-                                "optional": false
+                                "type": "Literal",
+                                "value": false,
                             }
                         },
                         "consequent": {
-                            "type": "CallExpression",
-                            "callee": {
-                                "type": "MemberExpression",
-                                "object": {
-                                    "type": "Identifier",
-                                    "name": "console"
-                                },
-                                "property": {
-                                    "type": "Identifier",
-                                    "name": "log"
-                                },
-                                "computed": false,
-                                "optional": false
-                            },
-                            "arguments": val.argument ? [
-                                    {
-                                            "type": "BinaryExpression",
-                                            "left": {
-                                                "type": "Literal",
-                                                "value": `Skipped return ${escodegen.generate(val.argument)} with value: `,
-                                            },
-                                            "operator": "+",
-                                            "right": val.argument
-                                    }
-                            ] :
-                            [
+                            "type": "BlockStatement",
+                            "body": [
                                 {
-                                    "type": "Literal",
-                                    "value": `Skipped return`,
+                                    "type": "ExpressionStatement",
+                                    "expression": {
+                                        "type": "CallExpression",
+                                        "callee": {
+                                            "type": "MemberExpression",
+                                            "object": {
+                                                "type": "Identifier",
+                                                "name": "functionReturnStack"
+                                            },
+                                            "property": {
+                                                "type": "Identifier",
+                                                "name": "push"
+                                            },
+                                            "computed": false,
+                                            "optional": false
+                                        },
+                                        "arguments": val.argument ? [ val.argument ] : [
+                                            {
+                                                "type": "Literal",
+                                                "value": `NO RETURN VALUE`,
+                                            },
+                                        ],
+                                        "optional": false
+                                    }
                                 },
-                            ],
-                            "optional": false
+                                {
+                                    "type": "ExpressionStatement",
+                                    "expression": {
+                                        "type": "AssignmentExpression",
+                                        "operator": "=",
+                                        "left": {
+                                            "type": "MemberExpression",
+                                            "object": {
+                                                "type": "Identifier",
+                                                "name": "functionReturnSet"
+                                            },
+                                            "property": {
+                                                "type": "BinaryExpression",
+                                                "left": {
+                                                    "type": "MemberExpression",
+                                                    "object": {
+                                                        "type": "Identifier",
+                                                        "name": "functionReturnSet"
+                                                    },
+                                                    "property": {
+                                                        "type": "Identifier",
+                                                        "name": "length"
+                                                    },
+                                                    "computed": false,
+                                                    "optional": false
+                                                },
+                                                "operator": "-",
+                                                "right": {
+                                                    "type": "Literal",
+                                                    "value": 1,
+                                                }
+                                            },
+                                            "computed": true,
+                                            "optional": false
+                                        },
+                                        "right": {
+                                            "type": "Literal",
+                                            "value": true,
+                                        }
+                                    }
+                                }
+                            ]
                         },
                         "alternate": {
-                            "type": "CallExpression",
-                            "callee": {
-                                "type": "MemberExpression",
-                                "object": {
-                                    "type": "Identifier",
-                                    "name": "functionReturnStack"
-                                },
-                                "property": {
-                                    "type": "Identifier",
-                                    "name": "push"
-                                },
-                                "computed": false,
-                                "optional": false
-                            },
-                            "arguments": val.argument ? [
-                                val.argument
-                            ] : [
+                            "type": "BlockStatement",
+                            "body": [
                                 {
-                                    "type": "Literal",
-                                    "value": `NO RETURN VALUE`,
-                                },
-                            ],
-                            "optional": false
+                                    "type": "ExpressionStatement",
+                                    "expression": {
+                                        "type": "CallExpression",
+                                        "callee": {
+                                            "type": "MemberExpression",
+                                            "object": {
+                                                "type": "Identifier",
+                                                "name": "console"
+                                            },
+                                            "property": {
+                                                "type": "Identifier",
+                                                "name": "log"
+                                            },
+                                            "computed": false,
+                                            "optional": false
+                                        },
+                                        "arguments": val.argument ? [
+                                                {
+                                                        "type": "BinaryExpression",
+                                                        "left": {
+                                                            "type": "Literal",
+                                                            "value": `Skipped return ${escodegen.generate(val.argument)} with value: `,
+                                                        },
+                                                        "operator": "+",
+                                                        "right": val.argument
+                                                }
+                                        ] :
+                                        [
+                                            {
+                                                "type": "Literal",
+                                                "value": `Skipped return`,
+                                            },
+                                        ],
+                                        "optional": false
+                                    }
+                                }
+                            ]
                         }
                     }
-                }
+                ]
             }
+        }
     });
     args.body.body.push({
         "type": "ExpressionStatement",
@@ -189,18 +287,6 @@ module.exports = (args) => {
             ]
         },
     });
-    args.body.body.push({
-        "type": "ExpressionStatement",
-        "expression": {
-            "type": "UpdateExpression",
-            "operator": "--",
-            "prefix": false,
-            "argument": {
-                "type": "Identifier",
-                "name": "functionCounter"
-            }
-        }
-    });
     args.body.body = args.body.body.concat(
         [
             {
@@ -208,24 +294,26 @@ module.exports = (args) => {
                 "test": {
                     "type": "LogicalExpression",
                     "left": {
-                        "type": "BinaryExpression",
-                        "left": {
-                            "type": "MemberExpression",
-                            "object": {
-                                "type": "Identifier",
-                                "name": "functionReturnStack"
+                        "type": "UnaryExpression",
+                        "operator": "!",
+                        "prefix": true,
+                        "argument": {
+                            "type": "CallExpression",
+                            "callee": {
+                                "type": "MemberExpression",
+                                "object": {
+                                    "type": "Identifier",
+                                    "name": "functionReturnSet"
+                                },
+                                "property": {
+                                    "type": "Identifier",
+                                    "name": "pop"
+                                },
+                                "computed": false,
+                                "optional": false
                             },
-                            "property": {
-                                "type": "Identifier",
-                                "name": "length"
-                            },
-                            "computed": false,
+                            "arguments": [],
                             "optional": false
-                        },
-                        "operator": "==",
-                        "right": {
-                            "type": "Identifier",
-                            "name": "functionCounter"
                         }
                     },
                     "operator": "||",
@@ -271,6 +359,27 @@ module.exports = (args) => {
                 "consequent": {
                     "type": "BlockStatement",
                     "body": [
+                        {
+                            "type": "ExpressionStatement",
+                            "expression": {
+                                "type": "CallExpression",
+                                "callee": {
+                                    "type": "MemberExpression",
+                                    "object": {
+                                        "type": "Identifier",
+                                        "name": "functionReturnStack"
+                                    },
+                                    "property": {
+                                        "type": "Identifier",
+                                        "name": "pop"
+                                    },
+                                    "computed": false,
+                                    "optional": false
+                                },
+                                "arguments": [],
+                                "optional": false
+                            }
+                        },
                         {
                             "type": "ReturnStatement",
                             "argument": null
