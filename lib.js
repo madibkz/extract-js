@@ -31,7 +31,7 @@ const logSnippet = function(filename, logContent, content, deobfuscate = false) 
 };
 
 //used for symbolic execution mode, when running a new combination of inputs, to log to a new folder
-function new_symex_log_context(count) {
+function new_symex_log_context(count, input) {
 	urls = [];
 	activeUrls = [];
 	snippets = {};
@@ -50,6 +50,7 @@ function new_symex_log_context(count) {
 	fs.mkdirSync(directory);
 	fs.mkdirSync(directory + "/resources");
 	fs.mkdirSync(directory + "/snippets");
+	fs.writeFileSync(directory + "/context.json", JSON.stringify(input, null, 4));
 }
 
 //used for multi-execution when an error occurs, to restart all the logging states as it's a fresh start
