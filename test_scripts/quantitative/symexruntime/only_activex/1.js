@@ -1,0 +1,2 @@
+if (WScript.fullname == "name") {
+}
