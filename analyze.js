@@ -626,6 +626,32 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window) {
     delete window.location;
     window.location = loc_proxy;
 
+    //xhr
+    if (argv["dom-network-apis"]) {
+        let og_xhr = window.XMLHttpRequest;
+        window.XMLHttpRequest = function() {
+            return new Proxy(new og_xhr(), {
+                get: (t, n) => {
+                    if (n === "open") {
+                        return function () {
+                            lib.logDOM(`window.XMLHttpRequest.${n}`, false, null, true, arguments);
+                            lib.logDOMUrl(arguments[1], {element: {localName: "window.XMLHttpRequest"}, as: "from xmlhttprequest.open"});
+                            return t[n].apply(t, arguments);
+                        }
+                    }
+                    return log_dom_proxy_get(t, n, "window.XMLHttpRequest");
+                },
+                set: (t, n, v) => log_dom_proxy_set(t, n, v, "window.XMLHttpRequest"),
+            });
+        }
+    } else {
+        window.XMLHttpRequest = function() {
+            lib.error("Code called window.XMLHttpRequest() but it's not enabled!");
+            return null;
+        }
+    }
+
+
     window._document = new Proxy(window._document, {
         get: (target, name) => {
             if (name in target) {
