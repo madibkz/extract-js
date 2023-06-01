@@ -18,6 +18,7 @@ let resources = {};
 let files = {};
 let IOC = [];
 let dom_logs = [];
+let instrumented_filenames_stack = [];
 //TODO: format all code to use the same convention of variables naming (either camelCase or underscores)
 let latestUrl = "";
 let latestDomStr = "";
@@ -50,6 +51,7 @@ function new_symex_log_context(count, input) {
 	files = {};
 	IOC = [];
 	dom_logs = [];
+	instrumented_filenames_stack = [];
 
 	logDom = false;
 
@@ -85,6 +87,7 @@ function restartState() {
 	files = {};
 	IOC = [];
 	dom_logs = [];
+	instrumented_filenames_stack = [];
 
 	logDom = false;
 
@@ -173,6 +176,7 @@ function logJS(code, prefix = "", suffix = "", id = true, rewrite = null, as = "
 		const filename2 = prefix + (id ? genid : "") + suffix + "_INSTRUMENTED" + ".js";
 		log("verb", `Code saved to ${filename2}`);
 		logSnippet(filename2, {as: as}, rewrite);
+		instrumented_filenames_stack.push(filename2);
 	}
 	return code; // Helps with tail call optimization
 }
@@ -441,5 +445,6 @@ module.exports = {
 				logJS(script_str, `DOM_${++number_of_jsdom_scripts}_`, "", true, null, "JavaScript found in window.document.scripts", true);
 			}
 		);
-	}
+	},
+	getLastInstrumentedFilename: () => instrumented_filenames_stack.pop(),
 };
