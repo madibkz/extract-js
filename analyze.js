@@ -122,8 +122,13 @@ if (default_enabled || multi_exec_enabled) {
 
     //delete tmpsymexscript.js and other tmp files from expose since we're done with it
     fs.unlinkSync(tmp_path);
-    fs.unlinkSync(tmp_filename + "_jalangi_.js");
-    fs.unlinkSync(tmp_filename + "_jalangi_.json");
+    try {
+        fs.unlinkSync(tmp_filename + "_jalangi_.js");
+        fs.unlinkSync(tmp_filename + "_jalangi_.json");
+    } catch (e) {
+        lib.error("(SYM-EXEC MODE) Error: The symbolic execution engine (ExpoSE) has failed");
+        throw e;
+    }
 
     //read/log info from results of expose
     fs.writeFileSync(directory + "expose_output.log", expose_result.stdout);
@@ -576,7 +581,15 @@ function make_sandbox(symex_input = null) {
         for (let field in emulatedInnerProxies) {
             if (emulatedInnerProxies.hasOwnProperty(field)) {
                 let innerProxy = emulatedInnerProxies[field];
-                emulatedObject[field] = buildProxyForEmulatedObject(symex_input, innerProxy.symex_prefix, innerProxy.file_path);
+                if (Array.isArray(emulatedObject)) {
+                    for (let a = 0; a < emulatedObject.length; a++) {
+                        if (emulatedObject[a] === field) {
+                            emulatedObject[a] = buildProxyForEmulatedObject(symex_input, innerProxy.symex_prefix, innerProxy.file_path);
+                        }
+                    }
+                } else {
+                    emulatedObject[field] = buildProxyForEmulatedObject(symex_input, innerProxy.symex_prefix, innerProxy.file_path);
+                }
             }
         }
 
