@@ -724,6 +724,15 @@ function rewrite_code_for_symex_script(code) {
                     return require("./patches/symexec/trycatchwrap.js")(val);
                 case "VariableDeclaration":
                     if (val.symexecthistraversed) return val;
+                    if (val.kind === "const") {
+                        //transform
+                        //const x = e1, y = e2;
+                        //to =>
+                        //const x = (() => {try{return e1} catch (e) {return null}})(), y = (() => {try{return e2} catch (e) {return null}})();
+                        val.declarations.forEach(d => d.init = require("./patches/symexec/consttrycatch.js")(d.init));
+                        val.symexecthistraversed = true;
+                        return val;
+                    }
                     let assignments = val.declarations.filter(d => d.init).map((d) => {
                         return {
                             type: "ExpressionStatement",
@@ -737,6 +746,11 @@ function rewrite_code_for_symex_script(code) {
                     });
                     val.declarations.forEach((d) => d.init = null);
                     val.symexecthistraversed = true;
+                    //return [
+                    //  var x, y, z, etc,
+                    //  x = thingy,
+                    //  y = anotherthing
+                    //]
                     return [
                             val,
                             ...assignments
@@ -869,7 +883,8 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
     let og_loc = window.location;
     let loc_proxy = new Proxy(og_loc, {
         get: (t, n) => {
-            if (n == Symbol.toPrimitive && symex_input && symex_input.hasOwnProperty(`location._href`)) return () => symex_input[`location._href`];
+            if (n === Symbol.toPrimitive && symex_input && symex_input.hasOwnProperty(`location.${argv["sym-exec-location-object"] ? "_" : ""}href`)) return () => symex_input[`location.${argv["sym-exec-location-object"] ? "_" : ""}href`];
+            if ((n === "valueOf" || n === "toString") && symex_input && symex_input.hasOwnProperty(`location.${argv["sym-exec-location-object"] ? "_" : ""}href`)) return () => symex_input[`location.${argv["sym-exec-location-object"] ? "_" : ""}href`];
             if (symex_input && symex_input.hasOwnProperty(`location.${n}`)) return symex_input[`location.${n}`];
             if (n === "href" && symex_input && symex_input.hasOwnProperty(`location._href`)) return symex_input[`location._href`];
             if (typeof n === "string" && n === "replace") {
@@ -923,11 +938,11 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
     window._document = new Proxy(window._document, {
         get: (target, name) => {
             if (name in target) {
-                if (name === "cookie") return target[name];
-                if (name === "location") return loc_proxy;
                 if (typeof name === "symbol") return target[name];
                 if (symex_input && name === "hasFocus" && symex_input["document.hasFocusValue"]) return () => symex_input["document.hasFocusValue"];
                 if (symex_input && symex_input[`document.${name}`]) return symex_input[`document.${name}`];
+                if (name === "cookie") return target[name];
+                if (name === "location") return loc_proxy;
                 if (typeof target[name] === "function") { //log function calls with arguments
                     return function () {
                         return return_node_proxy_or_value("window.document", target, name, true, arguments);
