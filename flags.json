@@ -28,6 +28,11 @@
             "description": "Only run multi-execution analysis: Cover all of the code by forcing execution of the multiple control paths. Since execution is out of order, there may be errors but potentially new information can be extracted."
         },
         {
+            "name": "no-multi-exec-loop",
+            "type": "Boolean",
+            "description": "Do not modify loops so that their body statements are forced to execute in multi-execution mode."
+        },
+        {
             "name": "debug",
             "type": "Boolean",
             "description": "Die when an emulation error occurs, even in \"batch mode\", and pass on the exit code."
