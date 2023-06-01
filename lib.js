@@ -6,6 +6,7 @@ const request = require("sync-request");
 const uuid = require("uuid");
 const argv = require("./argv.js").run;
 const fsextra = require("fs-extra");
+const vm = require("vm");
 
 let directory = path.normalize(process.argv[3]);
 
@@ -19,8 +20,9 @@ let dom_logs = [];
 
 let latestUrl = "";
 let number_of_wscript_code_snippets = 0;
-let numberOfSetTimeoutCalls = 0;
-let numberOfSetIntervalCalls = 0;
+let number_of_set_timeout_calls = 0;
+let number_of_set_interval_calls = 0;
+let number_of_jsdom_scripts = 0;
 
 let logDom = false;
 
@@ -49,8 +51,9 @@ function new_symex_log_context(count, input) {
 
 	latestUrl = "";
 	number_of_wscript_code_snippets = 0;
-	numberOfSetTimeoutCalls = 0;
-	numberOfSetIntervalCalls = 0;
+	number_of_set_timeout_calls = 0;
+	number_of_set_interval_calls = 0;
+	number_of_jsdom_scripts = 0;
 
 	if (count > 0) {
 		//reset directory to normal directory
@@ -81,8 +84,9 @@ function restartState() {
 
 	latestUrl = "";
 	number_of_wscript_code_snippets = 0;
-	numberOfSetTimeoutCalls = 0;
-	numberOfSetIntervalCalls = 0;
+	number_of_set_timeout_calls = 0;
+	number_of_set_interval_calls = 0;
+	number_of_jsdom_scripts = 0;
 
 	//delete any written files
 	fsextra.emptyDirSync(directory);
@@ -273,7 +277,7 @@ module.exports = {
 	logSnippet,
 	logJS,
 	logDOM: function(property, write = false, write_val = null, func = false, args = null) {
-		function argsToString() {
+		function args_to_string() {
 			let str = "";
 			for (let arg of args) {
 				if (arg.nodeType) {
@@ -284,10 +288,36 @@ module.exports = {
 			}
 			return str;
 		}
+
+		function check_for_javascript_code(value, found_in = "emulation") {
+			function is_one_variable(value) {
+				//the vm.Script allows "scripts" that are just one variable like "lol"
+				//this function is used to filter out these one variable scripts since nothing is happening in them
+				//https://stackoverflow.com/questions/50118131/how-to-check-if-regex-matches-whole-string-in-javascript
+				return value.match(/[a-zA-Z]+[a-zA-Z0-9]*/)[0] === value;
+			}
+
+			try {
+				if (typeof value === "string" && value.trim() !== "" && !is_one_variable(value)) {
+					const script = new vm.Script(value);
+					logJS(value, `DOM_${++number_of_jsdom_scripts}_`, "", true, null, `JavaScript string found in ${found_in}`);
+				}
+			} catch (err) {
+			}
+		}
+
 		if (logDom) {
-			let dom_str = `DOM: Code ${write ? "modified" : (func ? "called" : "accessed") } ${property}${func ? "(" + (args ? argsToString() : "") + ")" : ""}${write_val ? " with value " + write_val : ""}`;
+			if (args) {
+				for (let i = 0; i < args.length; i++) {
+					check_for_javascript_code(args[i], `arg [${i}] of call of ${property}(${args_to_string()})`);
+				}
+			} else if (write_val) {
+				check_for_javascript_code(write_val, `write value for ${property}`);
+			}
+
+			let dom_str = `DOM: Code ${write ? "modified" : (func ? "called" : "accessed") } ${property}${func ? "(" + (args ? args_to_string() : "") + ")" : ""}${write_val ? " with value " + write_val : ""}`;
 			if (property === "setTimeout" || property === "setInterval") {
-				logJS(String(args[1]), `${property === "setTimeout" ? ++numberOfSetTimeoutCalls : ++numberOfSetIntervalCalls}_${property}_`, "", true, null, `${property} call`, true);
+				logJS(String(args[1]), `${property === "setTimeout" ? ++number_of_set_timeout_calls : ++number_of_set_interval_calls}_${property}_`, "", true, null, `${property} call`, true);
 			}
 			log("info", dom_str);
 
