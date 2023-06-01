@@ -1440,6 +1440,12 @@ describe("multi-exec html", function() {
 			assert(stdout.includes(`Script output: "reached end"`));
 		}, "--html --multi-exec --dom-resource-loading")
 	);
+	it(
+		"should force execution of html attributes at the end of emulation",
+		run_html_script_and_check_output("multi-exec/attribute_code.html", (stdout) => {
+			assert(stdout.includes(`Script output: "forced execution of body onclick test pass"`));
+		}, "--html --multi-exec --dom-resource-loading")
+	);
 });
 
 describe("symbolic html", function() {

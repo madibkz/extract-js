@@ -2,7 +2,7 @@
 // go through all declared variables in the script looking for valid JavaScript in the contents
 // eval the javascript so it gets sandboxed
 toggleLogDOM()
-console.log("(SEARCHING STRINGS AFTER FINISHED EXECUTION.)");
+logInfo("(SEARCHING STRINGS AFTER FINISHED EXECUTION.)");
 const vm = require('vm');
 let number_of_js_str = 0;
 for (varName in this) {
@@ -32,6 +32,22 @@ for (varName in this) {
                 logUrl(u, `UNKNOWNMETHOD`, "FOUND IN URL SEARCH AT THE END IN A VARIABLE CALLED: " + varName);
             }
         }) : null;
+    }
+}
+
+if (htmlAndMulti) {
+    //for all script attributes rewrite and force execution:
+    logMultiexec("(FORCING EXECUTION OF CODE IN HTML ATTRIBUTES.)", 1);
+    let all_elements = document.getElementsByTagName("*");
+    for (let e = 0; e < all_elements.length; e++) {
+        let atts = all_elements[e].attributes;
+        for (let a = 0; a < atts.length; a++) {
+            let att = atts[a];
+            if (att.nodeName.startsWith("on") && att.nodeValue.trim() !== "") {
+                logMultiexec(`(FORCING EXECUTION OF ATTRIBUTE ${att.nodeName} OF HTML ATTRIBUTE ${all_elements[e].nodeName}.)`, 1);
+                eval(att.nodeValue);
+            }
+        }
     }
 }
 
