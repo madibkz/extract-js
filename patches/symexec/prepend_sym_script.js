@@ -8,6 +8,9 @@ let InstallProduct = (x) => {
 }
 
 var window = global;
+var self = global;
+
+global.origin = S$.symbol("origin", "");
 
 (() => {
     function buildProxyForEmulatedObject(symex_prefix, file_path) {
