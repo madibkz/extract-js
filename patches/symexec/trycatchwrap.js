@@ -1,8 +1,8 @@
 //wraps around a statement with a try/catch
 
 module.exports = (args) => {
-    if (args.symexectrytraversed === true) return;
-    args.symexectrytraversed = true;
+    if (args.trycatchtraversed === true) return;
+    args.trycatchtraversed = true;
     return {
         "type": "TryStatement",
         "block": {

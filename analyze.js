@@ -26,6 +26,7 @@ const sym_exec_enabled = mode === "sym-exec";
 const html_mode = argv["html"];
 const dont_set_in_jsdom_from_sandbox = ["setInterval", "setTimeout", "alert", "JSON", /*"console",*/ "location", "navigator", "document", "origin", "self", "window"];
 let listOfKnownScripts = [];
+let real_eval = undefined;
 
 class LoggingResourceLoader extends jsdom.ResourceLoader {
     fetch(url, options) {
@@ -38,7 +39,7 @@ class LoggingResourceLoader extends jsdom.ResourceLoader {
                 try { //if val is javascript, then we wrap it with eval
                     const script = new vm.Script(val.toString());
                     listOfKnownScripts.push(val.toString());
-                    let rewrite_val = wrap_code_with_eval(val.toString());
+                    let rewrite_val = rewrite(val.toString());
                     listOfKnownScripts.push(rewrite_val);
                     lib.logJS(
                         val.toString(),
@@ -297,8 +298,6 @@ function instrument_html(code) {
             let old_js = scripts[s].innerHTML;
             listOfKnownScripts.push(old_js);
             scripts[s].innerHTML = rewrite(scripts[s].innerHTML);
-            if (multi_exec_enabled)  //wrap scripts into an eval for multi-exec error skipping
-                scripts[s].innerHTML = wrap_code_with_eval(scripts[s].innerHTML);
             lib.logJS(
                 old_js,
                 `${numberOfExecutedSnippets++}_input_script`,
@@ -322,8 +321,7 @@ function instrument_html(code) {
             if (att.nodeName.startsWith("on") && att.nodeValue.trim() !== "") { //script attribute like onclick
                 let old_js = att.nodeValue;
                 listOfKnownScripts.push(old_js);
-                if (!multi_exec_enabled)
-                    elem.setAttribute(att.nodeName, rewrite(att.nodeValue));
+                elem.setAttribute(att.nodeName, rewrite(att.nodeValue));
                 lib.logJS(
                     old_js,
                     `${numberOfExecutedSnippets++}_input_attribute_script`,
@@ -355,6 +353,73 @@ function instrument_html(code) {
     dom.window.document.body.appendChild(append_script);
 
     return dom.serialize();
+}
+
+//used in either rewrite_code_for_symex_script or rewrite with multi-exec
+function rewrite_wrap_try_catch(tree, multi_exec = true) {
+    const path_to_patches = "./patches/" + (multi_exec ? "multiexec" : "symexec") + "/";
+    traverse(tree, function (key, val) {
+        if (!val) return;
+        switch (val.type) {
+            case "TryStatement":
+                recursively_set_field(val.block, "trycatchtraversed", true);
+                if (!multi_exec && val.finalizer !== null) {
+                    recursively_set_field(val.finalizer, "trycatchtraversed", true);
+                }
+                return;
+            case "ExpressionStatement":
+                if (multi_exec && val.expression.type === "CallExpression" && val.expression.callee.name === "logMultiexec") return;
+            case "IfStatement":
+            case "SwitchStatement":
+            case "WhileStatement":
+            case "DoWhileStatement":
+                return require(path_to_patches + "trycatchwrap.js")(val);
+            case "VariableDeclaration":
+                if (val.trycatchtraversed) return val;
+                if (val.kind === "const") {
+                    //transform
+                    //const x = e1, y = e2;
+                    //to =>
+                    //const x = (() => {try{return e1} catch (e) {return null}})(), y = (() => {try{return e2} catch (e) {return null}})();
+                    val.declarations.forEach(d => d.init = require(path_to_patches + "consttrycatch.js")(d.init));
+                    val.trycatchtraversed = true;
+                    return val;
+                }
+                let assignments = val.declarations.filter(d => d.init).map((d) => {
+                    return {
+                        type: "ExpressionStatement",
+                        expression: {
+                            type: "AssignmentExpression",
+                            operator: "=",
+                            left: d.id,
+                            right: d.init
+                        },
+                    }
+                });
+                val.declarations.forEach((d) => d.init = null);
+                val.trycatchtraversed = true;
+                //return [
+                //  var x, y, z, etc,
+                //  x = thingy,
+                //  y = anotherthing
+                //]
+                return [
+                    val,
+                    ...assignments
+                ];
+            case "ForStatement":
+                //prevents the trycatch wrapping of the init part of the for loop
+                val.init ? val.init.trycatchtraversed = true : {};
+                return require(path_to_patches + "trycatchwrap.js")(val);
+            case "ForOfStatement":
+            case "ForInStatement":
+                //prevents the trycatch wrapping of the init part of the forIn loop
+                val.left ? val.left.trycatchtraversed = true : {};
+                return require(path_to_patches + "trycatchwrap.js")(val);
+            default:
+                break;
+        }
+    });
 }
 
 function rewrite(code) {
@@ -646,6 +711,9 @@ cc decoder.c -o decoder
                             break;
                     }
                 });
+
+                //wrap stuff with try/catch for error handling
+                rewrite_wrap_try_catch(tree);
             }
 
             // console.log("rewritten tree is: ", tree)
@@ -685,6 +753,14 @@ cc decoder.c -o decoder
     return code;
 }
 
+//utility function used in rewrite functions
+function recursively_set_field(obj, field, value) {
+    obj[field] = value;
+    for (let i of Object.keys(obj))
+        if (obj[i] !== null && typeof obj[i] === "object")
+            recursively_set_field(obj[i], field, value);
+}
+
 function rewrite_code_for_symex_script(code) {
     try {
         lib.verbose("Rewriting code for symbolic execution script...", false);
@@ -703,74 +779,16 @@ function rewrite_code_for_symex_script(code) {
             return;
         }
 
-        function recursively_set_field(obj, field, value) {
-            obj[field] = value;
-            for (let i of Object.keys(obj))
-                if (obj[i] !== null && typeof obj[i] === "object")
-                    recursively_set_field(obj[i], field, value);
-        }
 
         traverse(tree, function(key, val) {
             if (!val) return;
             switch (val.type) {
                 case "ThisExpression":
                     return require("./patches/symexec/this.js")(val);
-                case "TryStatement":
-                    recursively_set_field(val.block, "symexectrytraversed", true);
-                    if (val.finalizer !== null)
-                        recursively_set_field(val.finalizer, "symexectrytraversed", true);
-                    return;
-                case "ExpressionStatement":
-                case "IfStatement":
-                case "SwitchStatement":
-                case "WhileStatement":
-                case "DoWhileStatement":
-                    return require("./patches/symexec/trycatchwrap.js")(val);
-                case "VariableDeclaration":
-                    if (val.symexectrytraversed) return val;
-                    if (val.kind === "const") {
-                        //transform
-                        //const x = e1, y = e2;
-                        //to =>
-                        //const x = (() => {try{return e1} catch (e) {return null}})(), y = (() => {try{return e2} catch (e) {return null}})();
-                        val.declarations.forEach(d => d.init = require("./patches/symexec/consttrycatch.js")(d.init));
-                        val.symexectrytraversed = true;
-                        return val;
-                    }
-                    let assignments = val.declarations.filter(d => d.init).map((d) => {
-                        return {
-                            type: "ExpressionStatement",
-                            expression: {
-                                type: "AssignmentExpression",
-                                operator: "=",
-                                left: d.id,
-                                right: d.init
-                            },
-                        }
-                    });
-                    val.declarations.forEach((d) => d.init = null);
-                    val.symexectrytraversed = true;
-                    //return [
-                    //  var x, y, z, etc,
-                    //  x = thingy,
-                    //  y = anotherthing
-                    //]
-                    return [
-                            val,
-                            ...assignments
-                    ];
-                case "ForStatement":
-                    //prevents the trycatch wrapping of the init part of the for loop
-                    val.init ? val.init.symexectrytraversed = true : {};
-                    return require("./patches/symexec/trycatchwrap.js")(val);
-                case "ForInStatement":
-                    //prevents the trycatch wrapping of the init part of the forIn loop
-                    val.left ? val.left.symexectrytraversed = true : {};
-                    return require("./patches/symexec/trycatchwrap.js")(val);
-                default:
-                    break;
             }
         });
+
+        rewrite_wrap_try_catch(tree, false);
 
         code = escodegen.generate(tree);
 
@@ -820,9 +838,9 @@ function log_dom_proxy_get(target, name, prefix) {
 
 function force_event_multi_exec(register_str, target, event_name) {
     if (!argv["no-multi-exec-events"]) {
-        currentLogMultiexec(`FORCING EXECUTION OF NEW EVENT REGISTERED FOR ${register_str}.`, 1)
+        lib.info(`FORCING EXECUTION OF NEW EVENT REGISTERED FOR ${register_str}.`)
         target.dispatchEvent(new currentWindowEventClass(event_name));
-        currentLogMultiexec(`END FORCING EXECUTION OF NEW EVENT REGISTERED FOR ${register_str}.`, 1)
+        lib.info(`END FORCING EXECUTION OF NEW EVENT REGISTERED FOR ${register_str}.`)
     }
 }
 
@@ -1007,13 +1025,13 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
             let maybe_snippet_name = lib.logDOM(method[0], false, null, true, arguments);
             if (method[1]) { //if implemented in jsdom
                 if (multi_exec_enabled && (method[0] === "setTimeout" || method[0] === "setInterval")) {
-                    currentLogMultiexec(`FORCING EXECUTION OF ${method[0]}((code in snippet ${maybe_snippet_name}), ${arguments[1].toString()}).`, 1)
+                    lib.info(`FORCING EXECUTION OF ${method[0]}((code in snippet ${maybe_snippet_name}), ${arguments[1].toString()}).`);
                     if (typeof arguments[0] === "string") {
-                        sandbox.evalUntilPasses(sandbox.rewrite(arguments[0]), window.eval);
+                        sandbox.evalUntilPasses(sandbox.rewrite(arguments[0]), real_eval);
                     } else {
                         arguments[0]();
                     }
-                    currentLogMultiexec(`END FORCING EXECUTION OF ${method[0]}((code in snippet ${maybe_snippet_name}), ${arguments[1].toString()}).`, 1)
+                    lib.info(`END FORCING EXECUTION OF ${method[0]}((code in snippet ${maybe_snippet_name}), ${arguments[1].toString()}).`);
                 }
                 let res = og_function.apply(window, arguments);
                 if (multi_exec_enabled && method[0] === "addEventListener") {
@@ -1089,7 +1107,7 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_i
         configurable: false
     });
 
-    let real_eval = window.eval;
+    real_eval = window.eval;
     Object.defineProperty(window, "eval", {
         get: function ()  {
             return (code) => {
