@@ -38,26 +38,26 @@ function getDefaultFields() {
     return {
 //https://developer.mozilla.org/en-US/docs/Web/API/Navigator
 //STANDARD PROPERTIES:
-        //connection: S$.symbol('navigator.connection', {}), experimental complex feature //TODO
+        connection: false, //not implemented by firefox and not sure really why malware would use this
         cookieEnabled: true,
         credentials: false, //need CredentialsContainer interface implemented TODO maybe as to do with security but very complicated and async
         deviceMemory: 2.0,
         geolocation: false,
         //hid: S$.symbol('navigator.hid', {}), needs HID object but I really doubt malware would use HID
-        //keyboard: S$.symbol('navigator.keyboard', {}),  complicated object //maybe TODO?
+        keyboard: false,  //complicated object and async
         language: "en-US", //technically uses DOMString object but is a string
         languages: ["en-US", "en"],
         //locks: S$.symbol('navigator.languages', ["en-US", "en"]), needs LockManage object
         maxTouchPoints: 1, //seems like malware wouldnt use this
-        //mediaCapabilities: S$.symbol('navigator.mediaCapabilities', ["en-US", "en"]), complex object/ API needed //maybe TODO?
+        mediaCapabilities: false,
         mediaDevices: false, //needs MediaDevices object plus malware not sure
         //mediaSession: S$.symbol('navigator.mediaSession', {}), needs MediaSession object //
         onLine: true,
-        //permissions: S$.symbol('navigator.permissions', {}), //complex object Permissions needed //TODO
+        permissions: false, //needs browser user to click agree to permissions so can't do it
         //presentation: S$.symbol('navigator.presentation', {}), //presentation object needed
         serial: false, //needs serial object
         serviceWorker: false, //needs ServiceWorkerContainer object
-        //storage: S$.symbol('navigator.storage', {}), //needs storagemanager object TODO
+        storage: false, //needs storagemanager object TODO: implement after async has been fixed in ExpoSE as StorageManager only has async methods
         userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36",
         webdriver: false,
         windowControlsOverlay: false,//needs WindowControlsOverlay intrface
@@ -110,7 +110,12 @@ function getObject() {
             "mediaDevices",
             "serial",
             "serviceWorker",
+            "storage",
             "windowControlsOverlay",
+            "permissions",
+            "mediaCapabilities",
+            "connection",
+            "keyboard",
         ],
 //STANDARD PROPERTIES:
         hardwareConcurrency: 1, //can range but I doubt malware would want to ask for this
