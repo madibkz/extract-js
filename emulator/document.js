@@ -3,7 +3,7 @@ function getProxyHandler() {
         get: function (target, name) {
             switch (name) {
                 case Symbol.toPrimitive:
-                    return () => target.toString();
+                    return () => "[object HTMLDocument]";
                 default:
                     if (name in target) {
                         return target[name];
