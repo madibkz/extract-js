@@ -941,6 +941,57 @@ describe("multi-exec", function() {
 			assert(stdout.includes(`EXITED FUNCTION test1() WITH RETURN VALUE: FINALRETURNVALUE`));
 		}, "--multi-exec")
 	);
+
+
+
+	//tests for skipping errors
+	it(
+		"should skip and log an error-causing line and continue executing the rest of the code",
+		run_multiexec_script_and_check_output("errors/skiponerror.js", (stdout) => {
+			assert(stdout.includes(`*RESTARTING MULTI-EXECUTION AFTER ERROR OCCURRED*`));
+			assert(stdout.includes(`Script output: "start of script"`));
+			assert(stdout.includes(`SKIPPED ERROR IN GLOBAL SCOPE`));
+			assert(stdout.includes(`Script output: "end of script (TEST PASS)"`));
+		}, "--multi-exec")
+	);
+	it(
+		"should skip and log multiple error-causing lines and continue executing the rest of the code",
+		run_multiexec_script_and_check_output("errors/skipmultipleerrors.js", (stdout) => {
+			assert(stdout.includes(`*RESTARTING MULTI-EXECUTION AFTER ERROR OCCURRED*`));
+			assert(stdout.includes(`Script output: "end of script reached (test pass)"`));
+		}, "--multi-exec")
+	);
+	it(
+		"should skip and log an error caused by an eval and continue executing the rest of the code",
+		run_multiexec_script_and_check_output("errors/skipevalerror.js", (stdout) => {
+			assert(stdout.includes(`*RESTARTING EVAL CALL AFTER ERROR OCCURRED WITHIN IT*`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL:`));
+			assert(stdout.includes(`Script output: "end of script reached (test pass)"`));
+		}, "--multi-exec")
+	);
+	it(
+		"should skip and log multiple errors in an eval and continue executing the rest of the eval",
+		run_multiexec_script_and_check_output("errors/skiperrorsineval.js", (stdout) => {
+			assert(stdout.includes(`*RESTARTING EVAL CALL AFTER ERROR OCCURRED WITHIN IT*`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: undefinedFunction`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: anotherUndefined`));
+			assert(stdout.includes(`Script output: 1`));
+			assert(stdout.includes(`Script output: 2`));
+			assert(stdout.includes(`Script output: "end of script reached (test pass)"`));
+		}, "--multi-exec")
+	);
+	it(
+		"should skip and log multiple errors even in nested evals and continue executing the rest of the code",
+		run_multiexec_script_and_check_output("errors/skipnestedevalerror.js", (stdout) => {
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: undefinedFunction`));
+			assert(stdout.includes(`SKIPPED ERROR IN AN EVAL CALL: anotherUndefined`));
+			assert(stdout.includes(`Script output: 1`));
+			assert(stdout.includes(`Script output: 2`));
+			assert(stdout.includes(`Script output: 3`));
+			assert(stdout.includes(`Script output: 4`));
+			assert(stdout.includes(`Script output: "end of script reached (test pass)"`));
+		}, "--multi-exec")
+	);
 });
 
 describe("sym-exec", function() {
