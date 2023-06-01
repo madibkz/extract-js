@@ -1098,6 +1098,13 @@ describe("multi-exec", function() {
 			assert(stdout.includes(`Script output: "test passed"`));
 		}, "--multi-exec")
 	);
+
+	it(
+		"should not rewrite code within function declarations with the --no-multi-exec-function flag",
+		run_multiexec_script_and_check_output("functions/nofunction.js", (stdout) => {
+			assert(stdout.includes(`Script output: "test passed"`));
+		}, "--multi-exec --no-multi-exec-function")
+	);
 });
 
 describe("multi-exec html", function() {

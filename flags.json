@@ -88,6 +88,11 @@
             "description": "Do not force event execution in multi-execution mode."
         },
         {
+            "name": "no-multi-exec-function",
+            "type": "Boolean",
+            "description": "Do not rewrite function declarations in multi-execution mode (run functions normally)."
+        },
+        {
             "name": "limit-dom-log-length",
             "type": "Boolean",
             "description": "This limits the length of logged dom function arguments to be only around 30 characters. This makes the logs easier to read."
