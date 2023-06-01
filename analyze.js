@@ -661,7 +661,7 @@ cc decoder.c -o decoder
                 });
             }
 
-            if (multi_exec_enabled && !(argv["multi-exec-only-eval"] && !for_eval)) {
+            if (multi_exec_enabled && !(argv["multi-exec-only-eval"] && !for_eval) && !(argv["multi-exec-no-eval"] && for_eval)) {
                 lib.verbose("    Rewriting code to force multiexecution [because of --multiexec]", false);
                 traverse(tree, function(key, val) {
                     if (!val) return;

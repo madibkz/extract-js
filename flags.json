@@ -108,6 +108,11 @@
             "description": "Only apply multi-execution rewriting to code passed into eval."
         },
         {
+            "name": "multi-exec-no-eval",
+            "type": "Boolean",
+            "description": "Do not apply multi-execution rewriting to code passed into eval (only to global)."
+        },
+        {
             "name": "limit-dom-log-length",
             "type": "Boolean",
             "description": "This limits the length of logged dom function arguments to be only around 30 characters. This makes the logs easier to read."
