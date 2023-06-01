@@ -14,7 +14,7 @@ let uniq_iocs = [];
 let uniq_urls = [];
 let uniq_active_urls = [];
 
-function summarize(results_dir) {
+function summarize(results_dir, file_copying = true) {
     console.log("(AGGREGATOR) Summarizing extracted information across ran modes for " + results_dir);
 
     let default_exists = fs.existsSync(results_dir + "/default");
@@ -64,7 +64,7 @@ function summarize(results_dir) {
         fs.writeFileSync(results_dir + "/summary/unique_active_urls.json", JSON.stringify(uniq_active_urls, null, "\t"));
 
     //copy the snippet/resource files over to the folders
-    if (!is_empty_obj(uniq_snippets)) {
+    if (file_copying && !is_empty_obj(uniq_snippets)) {
         fs.mkdirSync(results_dir + "/summary/unique_snippets");
 
         for (let snip_name in uniq_snippets) {
@@ -74,7 +74,7 @@ function summarize(results_dir) {
         }
     }
 
-    if (!is_empty_obj(uniq_resources)) {
+    if (file_copying && !is_empty_obj(uniq_resources)) {
         fs.mkdirSync(results_dir + "/summary/unique_resources");
 
         for (let r_name in uniq_resources) {
@@ -244,7 +244,6 @@ function is_equal(val1, val2) {
                 }
             }
             return true;
-            break;
         case "number":
         case "bigint":
         case "string":
