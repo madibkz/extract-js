@@ -637,9 +637,11 @@ function log_dom_proxy_get(target, name, prefix) {
 }
 
 function force_event_multi_exec(register_str, target, event_name) {
-    currentLogMultiexec(`FORCING EXECUTION OF NEW EVENT REGISTERED FOR ${register_str}.`, 1)
-    target.dispatchEvent(new currentWindowEventClass(event_name));
-    currentLogMultiexec(`END FORCING EXECUTION OF NEW EVENT REGISTERED FOR ${register_str}.`, 1)
+    if (!argv["no-multi-exec-events"]) {
+        currentLogMultiexec(`FORCING EXECUTION OF NEW EVENT REGISTERED FOR ${register_str}.`, 1)
+        target.dispatchEvent(new currentWindowEventClass(event_name));
+        currentLogMultiexec(`END FORCING EXECUTION OF NEW EVENT REGISTERED FOR ${register_str}.`, 1)
+    }
 }
 
 function log_dom_proxy_set(target, name, val, prefix) {
