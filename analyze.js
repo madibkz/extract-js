@@ -597,7 +597,13 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
             try {
                 const virtualConsole = new jsdom.VirtualConsole();
                 virtualConsole.sendTo(lib, { omitJSDOMErrors: true });
-                virtualConsole.on("jsdomError", (e) => {throw e.detail});
+                virtualConsole.on("jsdomError", (e) => {
+                    if (e.detail) {
+                        throw e.detail
+                    } else {
+                        throw e
+                    }
+                });
 
                 let dom_str = `<html><head></head><body></body><script>${code}</script></html>`;
 
@@ -655,8 +661,9 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                         window_log_vals.methods.forEach((m) => {
                             let og_function = window[m[0]];
                             window[m[0]] = function () {
-                                lib.logDOM(m[0], false, null, true);
-                                return og_function.apply(window, arguments);
+                                lib.logDOM(m[0], false, null, true, arguments);
+                                if (m[1])  //if implemented in jsdom
+                                    return og_function.apply(window, arguments);
                             }
                         })
                     }

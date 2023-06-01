@@ -261,9 +261,9 @@ module.exports = {
 		}
 		return code; // Helps with tail call optimization
 	},
-	logDOM: function(property, write = false, write_val = null, func = false) {
+	logDOM: function(property, write = false, write_val = null, func = false, args = null) {
 		if (logDom) {
-			let dom_str = `DOM: Code ${write ? "modified" : (func ? "called" : "accessed") } ${property}${func ? "()" : ""}${write_val ? " with value " + write_val : ""}`;
+			let dom_str = `DOM: Code ${write ? "modified" : (func ? "called" : "accessed") } ${property}${func ? "()" : ""}${write_val ? " with value " + write_val : ""}${args ? " with arguments " + JSON.stringify(args) : ""}`;
 			log("info", dom_str);
 
 			dom_logs.push(dom_str);
