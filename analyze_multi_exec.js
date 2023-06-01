@@ -305,8 +305,8 @@ cc decoder.c -o decoder
                             return require("./patches/multiexec/break.js")(val);
                         case "TryStatement":
                             return require("./patches/multiexec/try.js")(val);
-                        case "":
-                            return require("./patches/multiexec/try.js")(val);
+                        case "WhileStatement":
+                            return require("./patches/multiexec/while.js")(val);
                         default:
                             break;
                     }
@@ -316,7 +316,6 @@ cc decoder.c -o decoder
                     if (!val) return;
                     switch (val.type) {
                         case "FunctionDeclaration":
-                            console.log("In functionbody")
                             return require("./patches/multiexec/function.js")(val);
                         default:
                             break;
