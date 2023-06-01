@@ -651,12 +651,13 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window) {
                 return prop[1] ? real_val : window[`__${prop[0]}`];
             },
             enumerable: true,
-            configurable: !prop[1]
+            configurable: false
         };
         if (!prop[1]) {
             window[`__${prop[0]}`] = real_val;
             attributes.set = function (val) {
-                lib.logDOM(`window.${prop[0]}`, true, val);
+                if (val !== window[`__${prop[0]}`])
+                    lib.logDOM(`window.${prop[0]}`, true, val);
                 window[`__${prop[0]}`] = val;
             };
         }
