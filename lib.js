@@ -294,6 +294,12 @@ module.exports = {
 	logCookies: function(cookieJar) {
 		fs.writeFileSync(path.join(directory, "cookies.json"), JSON.stringify(cookieJar.serializeSync(), null, "\t"));
 	},
+	logBrowserStorage: function(localStorage, sessionStorage) {
+		if (JSON.stringify(localStorage) !== "{}")  //if not empty
+			fs.writeFileSync(path.join(directory, "localStorage.json"), JSON.stringify(localStorage, null, "\t"));
+		if (JSON.stringify(sessionStorage) !== "{}")  //if not empty
+			fs.writeFileSync(path.join(directory, "sessionStorage.json"), JSON.stringify(sessionStorage, null, "\t"));
+	},
 	// turnOnLogDOM: () => {logDom = true},
 	// turnOffLogDOM: () => {logDom = false},
 	toggleLogDOM: () => {logDom = !logDom},
