@@ -115,13 +115,16 @@ else
 const outputDir = argv["output-dir"] || "./";
 tasks.forEach(({filepath, filename}) => {
 	const results_dir = get_results_dir(filename);
-	if (argv["only-multi-exec"]) {
-		q.push(cb => analyze(results_dir, filepath, filename, cb, true))
-	} else if (argv["only-default"]) {
-		q.push(cb => analyze(results_dir, filepath, filename, cb, false))
-	} else {
-		q.push(cb => analyze(results_dir, filepath, filename, cb, false, false))
-		q.push(cb => analyze(results_dir, filepath, filename, cb, true, false))
+	if (argv["all"]) {
+		q.push(cb => analyze(results_dir, filepath, filename, cb, "default", false))
+		q.push(cb => analyze(results_dir, filepath, filename, cb, "multi-exec", false))
+		q.push(cb => analyze(results_dir, filepath, filename, cb, "sym-exec", false))
+	} else if (argv["multi-exec"]) {
+		q.push(cb => analyze(results_dir, filepath, filename, cb, "multi-exec"))
+	} else if (argv["sym-exec"]) {
+		q.push(cb => analyze(results_dir, filepath, filename, cb, "sym-exec"))
+	} else { //default
+		q.push(cb => analyze(results_dir, filepath, filename, cb, "default"))
 	}
 });
 
@@ -147,19 +150,19 @@ function get_results_dir(filename) {
 	return directory;
 }
 
-function analyze(directory, filepath, filename, cb, multi_exec = false, logToStdout = true) {
+function analyze(directory, filepath, filename, cb, mode = "default", logToStdout = true) {
 
-	multi_exec ? directory += "multi-exec" : directory += "default";
+	directory += mode;
 	fs.mkdirSync(directory);
 	fs.mkdirSync(directory + "/resources");
 	fs.mkdirSync(directory + "/snippets");
 	directory += "/";
 
-	console.log(`(${multi_exec ? "MULTI-EXECUTION MODE" : "DEFAULT MODE"}) Starting thread for analyzing ${filename}...`);
-	const worker = cp.fork(path.join(__dirname, "analyze"), [filepath, directory, /*multi_exec?*/ multi_exec, logToStdout, ...options]);
+	console.log(`(${mode.toUpperCase()} MODE) Starting thread for analyzing ${filename}...`);
+	const worker = cp.fork(path.join(__dirname, "analyze"), [filepath, directory, /*multi_exec?*/ mode, logToStdout, ...options]);
 
 	const killTimeout = setTimeout(() => {
-		console.log(`(${multi_exec ? "MULTI-EXECUTION MODE" : "DEFAULT MODE"}) Analysis for ${filename} timed out.`);
+		console.log(`(${mode.toUpperCase()} MODE) Analysis for ${filename} timed out.`);
 		if (!argv.preprocess)
 			console.log("Hint: if the script is heavily obfuscated, --preprocess --unsafe-preprocess can speed up the emulation.");
 		worker.kill();
@@ -186,7 +189,7 @@ function analyze(directory, filepath, filename, cb, multi_exec = false, logToStd
 			process.exit(5);
 		}
 		if (code === 1) {
-			console.log(`(${multi_exec ? "MULTI-EXECUTION MODE" : "DEFAULT MODE"}) Analysis for ${filename} failed.
+			console.log(`(${mode.toUpperCase()} MODE) Analysis for ${filename} failed.
  * If the error is about a weird \"Unknown ActiveXObject\", try --no-kill.
  * Otherwise, report a bug at https://github.com/CapacitorSet/box-js/issues/ .`);
 		}
@@ -197,7 +200,7 @@ function analyze(directory, filepath, filename, cb, multi_exec = false, logToStd
 	});
 
 	worker.on("error", function(err) {
-		console.log(`(${multi_exec ? "MULTI-EXECUTION MODE" : "DEFAULT MODE"}) Analysis for ${filename} has an error:
+		console.log(`(${mode.toUpperCase()} MODE) Analysis for ${filename} has an error:
 					${err}`);
 		clearTimeout(killTimeout);
 		worker.kill();
@@ -206,7 +209,7 @@ function analyze(directory, filepath, filename, cb, multi_exec = false, logToStd
 	});
 
 	process.on("exit", () => {
-		console.log(`(${multi_exec ? "MULTI-EXECUTION MODE" : "DEFAULT MODE"}) Analysis for ${filename} exited`);
+		console.log(`(${mode.toUpperCase()} MODE) Analysis for ${filename} exited`);
 		worker.kill();
 		cb();
 	});

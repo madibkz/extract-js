@@ -15,7 +15,10 @@ const traverse = require("./utils.js").traverse
 const traverseFully = require("./utils.js").traverseFully
 
 const filename = process.argv[2];
-const multi_exec_enabled = process.argv[4] == "true";
+const mode = process.argv[4];
+const default_enabled = mode === "default";
+const multi_exec_enabled = mode === "multi-exec";
+const sym_exec_enabled = mode === "sym-exec";
 
 // JScriptMemberFunctionStatement plugin registration
 require("./patches/prototype-plugin.js")(acorn);
@@ -46,6 +49,7 @@ if (argv.encoding) {
     }
 }
 
+//READ CODE
 let code = iconv.decode(sampleBuffer, encoding);
 
 if (code.match("<job") || code.match("<script")) { // The sample may actually be a .wsf, which is <job><script>..</script><script>..</script></job>.
@@ -55,12 +59,42 @@ if (code.match("<job") || code.match("<script")) { // The sample may actually be
     code = code.replace(/\]\]>/g, "");
 }
 
-function lacksBinary(name) {
-    const path = child_process.spawnSync("command", ["-v", name], {
-        shell: true
-    }).stdout;
-    return path.length === 0;
-}
+let numberOfExecutedSnippets = 1;
+const originalInputScript = code;
+
+lib.logJS(originalInputScript, `${numberOfExecutedSnippets}_input_script`, "", false, null, "INPUT SCRIPT", true);
+
+//*INSTRUMENTING CODE*
+code = rewrite(code);
+
+prependUsersPrependCode();
+
+// prepend patch code
+code = fs.readFileSync(path.join(__dirname, "patch.js"), "utf8") + code;
+
+// append more code
+code += "\n\n" + fs.readFileSync(path.join(__dirname, "appended-code.js"));
+
+//*END INSTRUMENTING CODE*
+
+lib.logJS(code, `${numberOfExecutedSnippets}_input_script_INSTRUMENTED`, "", false, null, "INPUT SCRIPT", false);
+
+Array.prototype.Count = function() {
+    return this.length;
+};
+
+var wscript_proxy = makeWscriptProxy();
+
+let multiexec_indent = "";
+
+const sandbox = makeSandbox();
+
+// See https://github.com/nodejs/node/issues/8071#issuecomment-240259088
+// It will prevent console.log from calling the "inspect" property,
+// which can be kinda messy with Proxies
+require("util").inspect.defaultOptions.customInspect = false;
+
+run_in_vm();
 
 function rewrite(code) {
     if (code.match("@cc_on")) {
@@ -372,266 +406,223 @@ cc decoder.c -o decoder
     return code;
 }
 
-let numberOfExecutedSnippets = 1;
-let originalInputScript = code;
-
-lib.logJS(originalInputScript, `${numberOfExecutedSnippets}_input_script`, "", false, null, "INPUT SCRIPT", true);
-
-code = rewrite(code);
-
-// prepend extra JS containing mock objects in the given file(s) onto the code
-if (argv["prepended-code"]) {
-
-    var prependedCode = ""
-    var files = []
-
-    // get all the files in the directory and sort them alphebetically
-    if (fs.lstatSync(argv["prepended-code"]).isDirectory()) {
-
-        dir_files = fs.readdirSync(argv["prepended-code"]);
-        for (var i = 0; i < dir_files.length; i++) {
-            files.push(path.join(argv["prepended-code"], dir_files[i]))
-        }
-
-        // make sure we're adding mock code in the right order
-        files.sort()
+function run_in_vm() {
+    if (argv["dangerous-vm"]) {
+        lib.verbose("Analyzing with native vm module (dangerous!)");
+        const vm = require("vm");
+        vm.runInNewContext(code, sandbox, {
+            displayErrors: true,
+            // lineOffset: -fs.readFileSync(path.join(__dirname, "patch.js"), "utf8").split("\n").length,
+            filename: "sample.js",
+        });
     } else {
-        files.push(argv["prepended-code"])
-    }
+        lib.debug("Analyzing with vm2 v" + require("vm2/package.json").version);
 
-    for (var i = 0; i < files.length; i++) {
-        prependedCode += fs.readFileSync(files[i], 'utf-8') + "\n\n"
-    }
+        // Fake cscript.exe style ReferenceError messages.
+        code = "ReferenceError.prototype.toString = function() { return \"[object Error]\";};\n\n" + code;
+        // Fake up Object.toString not being defined in cscript.exe.
+        //code = "Object.prototype.toString = undefined;\n\n" + code;
 
-    code = prependedCode + "\n\n" + code
-}
-
-// prepend patch code
-code = fs.readFileSync(path.join(__dirname, "patch.js"), "utf8") + code;
-
-// append more code
-code += "\n\n" + fs.readFileSync(path.join(__dirname, "appended-code.js"));
-
-lib.logJS(code, `${numberOfExecutedSnippets}_input_script_INSTRUMENTED`, "", false, null, "INPUT SCRIPT", false);
-
-Array.prototype.Count = function() {
-    return this.length;
-};
-
-var wscript_proxy = new Proxy({
-    arguments: new Proxy((n) => `${n}th argument`, {
-        get: function(target, name) {
-            switch (name) {
-            case "Unnamed":
-                return [];
-            case "length":
-                return 0;
-            case "ShowUsage":
-                return {
-                    typeof: "unknown",
-                };
-            case "Named":
-                return [];
-            default:
-                return new Proxy(
-                    target[name], {
-                        get: (target, name) => name.toLowerCase() === "typeof" ? "unknown" : target[name],
-                    }
-                );
-            }
-        },
-    }),
-    buildversion: "1234",
-    fullname: "C:\\WINDOWS\\system32\\wscript.exe",
-    interactive: true,
-    name: "wscript.exe",
-    path: "C:\\TestFolder\\",
-    //scriptfullname: "C:\\Documents and Settings\\User\\Desktop\\sample.js",
-    //scriptfullname: "C:\\Users\\Sysop12\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\ons.jse",
-    scriptfullname: "C:\Users\\Sysop12\\AppData\\Roaming\\Microsoft\\Templates\\0.2638666.jse",
-    scriptname: "0.2638666.jse",
-    get stderr() {
-        lib.error("WScript.StdErr not implemented");
-    },
-    get stdin() {
-        lib.error("WScript.StdIn not implemented");
-    },
-    get stdout() {
-        lib.error("WScript.StdOut not implemented");
-    },
-    version: "5.8",
-    get connectobject() {
-        lib.error("WScript.ConnectObject not implemented");
-    },
-    createobject: ActiveXObject,
-    get disconnectobject() {
-        lib.error("WScript.DisconnectObject not implemented");
-    },
-    echo() {},
-    get getobject() {
-        lib.error("WScript.GetObject not implemented");
-    },
-    quit() {},
-    // Note that Sleep() is implemented in patch.js because it requires
-    // access to the variable _globalTimeOffset, which belongs to the script
-    // and not to the emulator.
-    [Symbol.toPrimitive]: () => "Windows Script Host",
-    tostring: "Windows Script Host",
-}, {
-    get(target, prop) {
-        // For whatever reasons, WScript.* properties are case insensitive.
-        if (typeof prop === "string")
-            prop = prop.toLowerCase();
-        return target[prop];
-    }
-});
-
-let multiexec_indent = "";
-
-const sandbox = {
-    saveAs : function(data, fname) {
-        // TODO: If Blob need to extract the data.
-        lib.writeFile(fname, data);
-    },
-    setInterval : function() {},
-    setTimeout : function(func, time) {
-
-        // The interval should be an int, so do a basic check for int.
-        if ((typeof(time) !== "number") || (time == null)) {
-            throw("time is not a number.");
-        }
-        
-        // Just call the function immediately, no waiting.
-        if (typeof(func) === "function") {
-            func();
-        }
-        else {
-            throw("Callback must be a function");
-        }
-    },
-    //Blob : Blob,
-    logJS: lib.logJS,
-    logIOC: lib.logIOC,
-    logMultiexec: (x, indent) => {
-        if (indent === 0) {
-            (multiexec_indent !== "" && multiexec_indent.length > 1) ?
-                multiexec_indent = multiexec_indent.slice(0, multiexec_indent.length - 2) :
-                multiexec_indent = "";
-            if (x !== "") {
-                lib.info("MULTI-EXEC:    " + multiexec_indent + x)
-            }
-        } else if (indent === 1) {
-            if (x !== "") {
-                lib.info("MULTI-EXEC:    " + multiexec_indent + x)
-            }
-        } else if (indent === 2) {
-            if (x !== "") {
-                lib.info("MULTI-EXEC:    " + multiexec_indent + x)
-            }
-            multiexec_indent += "  ";
-        }
-    },
-    evalUntilPasses : (evalCode, evalFunc) => { //TODO: only have this function in the sandbox (and other multiexec when multiexec is enabled
-        let codeHadAnError = true;
+        let codeHadAnError = multi_exec_enabled;
         do {
             try {
-                evalFunc(evalCode);
+                const vm = new VM({
+                    timeout: (argv.timeout || 10) * 1000,
+                    sandbox,
+                });
+
+                vm.run(code);
                 codeHadAnError = false;
             } catch (e) {
-                evalCode = replaceErrorCausingCode(e, evalCode, true);
-                //TODO: Maintain correct multiexec_indent
+                if (multi_exec_enabled) {
+                    code = replaceErrorCausingCode(e, code);
+
+                    //RESTART LOGGING AND SANDBOX STUFF:
+                    restartLoggedState();
+                } else {
+                    lib.error(e.stack, true, false);
+                    throw e;
+                }
             }
         } while (codeHadAnError)
-    },
-    ActiveXObject,
-    dom,
-    alert: (x) => {},
-    InstallProduct: (x) => {
-        lib.logUrl("InstallProduct", x);
-    },
-    console: {
-        //		log: console.log.bind(console),
-        log: (x) => lib.info("Script output: " + (multi_exec_enabled ? multiexec_indent : "") + JSON.stringify(x)),
-    },
-    Enumerator: require("./emulator/Enumerator"),
-    GetObject: require("./emulator/WMI").GetObject,
-    JSON,
-    location: new Proxy({
-        href: "http://www.foobar.com/",
-        protocol: "http:",
-        host: "www.foobar.com",
-        hostname: "www.foobar.com",
-    }, {
-        get: function(target, name) {
-            switch (name) {
-                case Symbol.toPrimitive:
-                    return () => "http://www.foobar.com/";
-                default:
-                    return target[name.toLowerCase()];
+    }
+}
+
+function makeSandbox() {
+    return {
+        saveAs: function (data, fname) {
+            // TODO: If Blob need to extract the data.
+            lib.writeFile(fname, data);
+        },
+        setInterval: function () {
+        },
+        setTimeout: function (func, time) {
+
+            // The interval should be an int, so do a basic check for int.
+            if ((typeof (time) !== "number") || (time == null)) {
+                throw("time is not a number.");
+            }
+
+            // Just call the function immediately, no waiting.
+            if (typeof (func) === "function") {
+                func();
+            } else {
+                throw("Callback must be a function");
             }
         },
-    }),
-    parse: (x) => {},
-    rewrite: (code, log = false) => {
-        const ret = rewrite(code);
-        if (log) lib.logJS(code, `${++numberOfExecutedSnippets}_`, "", true, ret, "eval'd JS", true);
-        return ret;
-    },
-    ScriptEngine: () => {
-        const type = "JScript"; // or "JavaScript", or "VBScript"
-        // lib.warn(`Emulating a ${type} engine (in ScriptEngine)`);
-        return type;
-    },
-    _typeof: (x) => x.typeof ? x.typeof : typeof x,
-    WScript: wscript_proxy,
-    WSH: wscript_proxy,
-    self: {},
-    require
-};
-
-// See https://github.com/nodejs/node/issues/8071#issuecomment-240259088
-// It will prevent console.log from calling the "inspect" property,
-// which can be kinda messy with Proxies
-require("util").inspect.defaultOptions.customInspect = false;
-
-if (argv["dangerous-vm"]) {
-    lib.verbose("Analyzing with native vm module (dangerous!)");
-    const vm = require("vm");
-    vm.runInNewContext(code, sandbox, {
-        displayErrors: true,
-        // lineOffset: -fs.readFileSync(path.join(__dirname, "patch.js"), "utf8").split("\n").length,
-        filename: "sample.js",
-    });
-} else {
-    lib.debug("Analyzing with vm2 v" + require("vm2/package.json").version);
-
-    // Fake cscript.exe style ReferenceError messages.
-    code = "ReferenceError.prototype.toString = function() { return \"[object Error]\";};\n\n" + code;
-    // Fake up Object.toString not being defined in cscript.exe.
-    //code = "Object.prototype.toString = undefined;\n\n" + code;
-
-    let codeHadAnError = multi_exec_enabled ? true : false;
-    do {
-        try {
-            const vm = new VM({
-                timeout: (argv.timeout || 10) * 1000,
-                sandbox,
-            });
-
-            vm.run(code);
-            codeHadAnError = false;
-        } catch (e) {
-            if (multi_exec_enabled) {
-                code = replaceErrorCausingCode(e, code);
-
-                //RESTART LOGGING AND SANDBOX STUFF:
-                restartLoggedState();
-            } else {
-                lib.error(e.stack, true, false);
-                throw e;
+        //Blob : Blob,
+        logJS: lib.logJS,
+        logIOC: lib.logIOC,
+        logMultiexec: (x, indent) => {
+            if (indent === 0) {
+                (multiexec_indent !== "" && multiexec_indent.length > 1) ?
+                    multiexec_indent = multiexec_indent.slice(0, multiexec_indent.length - 2) :
+                    multiexec_indent = "";
+                if (x !== "") {
+                    lib.info("MULTI-EXEC:    " + multiexec_indent + x)
+                }
+            } else if (indent === 1) {
+                if (x !== "") {
+                    lib.info("MULTI-EXEC:    " + multiexec_indent + x)
+                }
+            } else if (indent === 2) {
+                if (x !== "") {
+                    lib.info("MULTI-EXEC:    " + multiexec_indent + x)
+                }
+                multiexec_indent += "  ";
             }
+        },
+        evalUntilPasses: (evalCode, evalFunc) => { //TODO: only have this function in the sandbox (and other multiexec when multiexec is enabled
+            let codeHadAnError = true;
+            do {
+                try {
+                    evalFunc(evalCode);
+                    codeHadAnError = false;
+                } catch (e) {
+                    evalCode = replaceErrorCausingCode(e, evalCode, true);
+                    //TODO: Maintain correct multiexec_indent
+                }
+            } while (codeHadAnError)
+        },
+        ActiveXObject,
+        dom,
+        alert: (x) => {
+        },
+        InstallProduct: (x) => {
+            lib.logUrl("InstallProduct", x);
+        },
+        console: {
+            //		log: console.log.bind(console),
+            log: (x) => lib.info("Script output: " + (multi_exec_enabled ? multiexec_indent : "") + JSON.stringify(x)),
+        },
+        Enumerator: require("./emulator/Enumerator"),
+        GetObject: require("./emulator/WMI").GetObject,
+        JSON,
+        location: new Proxy({
+            href: "http://www.foobar.com/",
+            protocol: "http:",
+            host: "www.foobar.com",
+            hostname: "www.foobar.com",
+        }, {
+            get: function (target, name) {
+                switch (name) {
+                    case Symbol.toPrimitive:
+                        return () => "http://www.foobar.com/";
+                    default:
+                        return target[name.toLowerCase()];
+                }
+            },
+        }),
+        parse: (x) => {
+        },
+        rewrite: (code, log = false) => {
+            const ret = rewrite(code);
+            if (log) lib.logJS(code, `${++numberOfExecutedSnippets}_`, "", true, ret, "eval'd JS", true);
+            return ret;
+        },
+        ScriptEngine: () => {
+            const type = "JScript"; // or "JavaScript", or "VBScript"
+            // lib.warn(`Emulating a ${type} engine (in ScriptEngine)`);
+            return type;
+        },
+        _typeof: (x) => x.typeof ? x.typeof : typeof x,
+        WScript: wscript_proxy,
+        WSH: wscript_proxy,
+        self: {},
+        require //require is required for some of the ActiveX stuff to work - TODO: change this
+    };
+}
+
+function makeWscriptProxy() {
+    return new Proxy({
+        arguments: new Proxy((n) => `${n}th argument`, {
+            get: function (target, name) {
+                switch (name) {
+                    case "Unnamed":
+                        return [];
+                    case "length":
+                        return 0;
+                    case "ShowUsage":
+                        return {
+                            typeof: "unknown",
+                        };
+                    case "Named":
+                        return [];
+                    default:
+                        return new Proxy(
+                            target[name], {
+                                get: (target, name) => name.toLowerCase() === "typeof" ? "unknown" : target[name],
+                            }
+                        );
+                }
+            },
+        }),
+        buildversion: "1234",
+        fullname: "C:\\WINDOWS\\system32\\wscript.exe",
+        interactive: true,
+        name: "wscript.exe",
+        path: "C:\\TestFolder\\",
+        //scriptfullname: "C:\\Documents and Settings\\User\\Desktop\\sample.js",
+        //scriptfullname: "C:\\Users\\Sysop12\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\ons.jse",
+        scriptfullname: "C:\Users\\Sysop12\\AppData\\Roaming\\Microsoft\\Templates\\0.2638666.jse",
+        scriptname: "0.2638666.jse",
+        get stderr() {
+            lib.error("WScript.StdErr not implemented");
+        },
+        get stdin() {
+            lib.error("WScript.StdIn not implemented");
+        },
+        get stdout() {
+            lib.error("WScript.StdOut not implemented");
+        },
+        version: "5.8",
+        get connectobject() {
+            lib.error("WScript.ConnectObject not implemented");
+        },
+        createobject: ActiveXObject,
+        get disconnectobject() {
+            lib.error("WScript.DisconnectObject not implemented");
+        },
+        echo() {
+        },
+        get getobject() {
+            lib.error("WScript.GetObject not implemented");
+        },
+        quit() {
+        },
+        // Note that Sleep() is implemented in patch.js because it requires
+        // access to the variable _globalTimeOffset, which belongs to the script
+        // and not to the emulator.
+        [Symbol.toPrimitive]: () => "Windows Script Host",
+        tostring: "Windows Script Host",
+    }, {
+        get(target, prop) {
+            // For whatever reasons, WScript.* properties are case insensitive.
+            if (typeof prop === "string")
+                prop = prop.toLowerCase();
+            return target[prop];
         }
-    } while (codeHadAnError)
+    });
 }
 
 function ActiveXObject(name) {
@@ -649,73 +640,34 @@ function ActiveXObject(name) {
     }
 
     switch (name) {
-    case "windowsinstaller.installer":
-        // Stubbed out for now.
-        return "";
-    case "adodb.stream":
-        return require("./emulator/ADODBStream")();
-    case "adodb.recordset":
-        return require("./emulator/ADODBRecordSet")();
-    case "adodb.connection":
-        return require("./emulator/ADODBConnection")();
-    case "scriptcontrol":
-        return require("./emulator/ScriptControl");
-    case "scripting.filesystemobject":
-        return require("./emulator/FileSystemObject");
-    case "scripting.dictionary":
-        return require("./emulator/Dictionary");
-    case "shell.application":
-        return require("./emulator/ShellApplication");
-    case "wscript.network":
-        return require("./emulator/WScriptNetwork");
-    case "wscript.shell":
-        return require("./emulator/WScriptShell");
-    case "wbemscripting.swbemlocator":
-        return require("./emulator/WBEMScriptingSWBEMLocator");
-    case "msscriptcontrol.scriptcontrol":
-        return require("./emulator/MSScriptControlScriptControl");
-    default:
-        lib.kill(`Unknown ActiveXObject ${name}`);
-        break;
-    }
-}
-
-// Emulation of member function statements hoisting of by doing some reordering within AST
-function hoist(obj, scope) {
-    scope = scope || obj;
-    // All declarations should be moved to the top of current function scope
-    let newScope = scope;
-    if (obj.type === "FunctionExpression" && obj.body.type === "BlockStatement")
-        newScope = obj.body;
-
-    for (const key of Object.keys(obj)) {
-        if (obj[key] !== null && typeof obj[key] === "object") {
-            const hoisted = [];
-            if (Array.isArray(obj[key])) {
-                obj[key] = obj[key].reduce((arr, el) => {
-                    if (el && el.hoist) {
-                        // Mark as hoisted yet
-                        el.hoist = false;
-                        // Should be hoisted? Add to array and filter out from current.
-                        hoisted.push(el);
-                        // If it was an expression: leave identifier
-                        if (el.hoistExpression)
-                            arr.push(el.expression.left);
-                    } else
-                        arr.push(el);
-                    return arr;
-                }, []);
-            } else if (obj[key].hoist) {
-                const el = obj[key];
-
-                el.hoist = false;
-                hoisted.push(el);
-                obj[key] = el.expression.left;
-            }
-            scope.body.unshift(...hoisted);
-            // Hoist all elements
-            hoist(obj[key], newScope);
-        }
+        case "windowsinstaller.installer":
+            // Stubbed out for now.
+            return "";
+        case "adodb.stream":
+            return require("./emulator/ADODBStream")();
+        case "adodb.recordset":
+            return require("./emulator/ADODBRecordSet")();
+        case "adodb.connection":
+            return require("./emulator/ADODBConnection")();
+        case "scriptcontrol":
+            return require("./emulator/ScriptControl");
+        case "scripting.filesystemobject":
+            return require("./emulator/FileSystemObject");
+        case "scripting.dictionary":
+            return require("./emulator/Dictionary");
+        case "shell.application":
+            return require("./emulator/ShellApplication");
+        case "wscript.network":
+            return require("./emulator/WScriptNetwork");
+        case "wscript.shell":
+            return require("./emulator/WScriptShell");
+        case "wbemscripting.swbemlocator":
+            return require("./emulator/WBEMScriptingSWBEMLocator");
+        case "msscriptcontrol.scriptcontrol":
+            return require("./emulator/MSScriptControlScriptControl");
+        default:
+            lib.kill(`Unknown ActiveXObject ${name}`);
+            break;
     }
 }
 
@@ -820,3 +772,79 @@ function restartLoggedState() {
     lib.logJS(originalInputScript, `${numberOfExecutedSnippets}_input_script`, "", false, null, "INPUT SCRIPT", true);
     lib.logJS(code, `${numberOfExecutedSnippets}_input_script_INSTRUMENTED`, "", false, null, "INPUT SCRIPT", false);
 }
+
+function prependUsersPrependCode() {
+// prepend extra JS containing mock objects in the given file(s) onto the code
+    if (argv["prepended-code"]) {
+
+        var prependedCode = ""
+        var files = []
+
+        // get all the files in the directory and sort them alphebetically
+        if (fs.lstatSync(argv["prepended-code"]).isDirectory()) {
+
+            dir_files = fs.readdirSync(argv["prepended-code"]);
+            for (var i = 0; i < dir_files.length; i++) {
+                files.push(path.join(argv["prepended-code"], dir_files[i]))
+            }
+
+            // make sure we're adding mock code in the right order
+            files.sort()
+        } else {
+            files.push(argv["prepended-code"])
+        }
+
+        for (var i = 0; i < files.length; i++) {
+            prependedCode += fs.readFileSync(files[i], 'utf-8') + "\n\n"
+        }
+
+        code = prependedCode + "\n\n" + code
+    }
+}
+
+function lacksBinary(name) {
+    const path = child_process.spawnSync("command", ["-v", name], {
+        shell: true
+    }).stdout;
+    return path.length === 0;
+}
+
+// Emulation of member function statements hoisting of by doing some reordering within AST
+function hoist(obj, scope) {
+    scope = scope || obj;
+    // All declarations should be moved to the top of current function scope
+    let newScope = scope;
+    if (obj.type === "FunctionExpression" && obj.body.type === "BlockStatement")
+        newScope = obj.body;
+
+    for (const key of Object.keys(obj)) {
+        if (obj[key] !== null && typeof obj[key] === "object") {
+            const hoisted = [];
+            if (Array.isArray(obj[key])) {
+                obj[key] = obj[key].reduce((arr, el) => {
+                    if (el && el.hoist) {
+                        // Mark as hoisted yet
+                        el.hoist = false;
+                        // Should be hoisted? Add to array and filter out from current.
+                        hoisted.push(el);
+                        // If it was an expression: leave identifier
+                        if (el.hoistExpression)
+                            arr.push(el.expression.left);
+                    } else
+                        arr.push(el);
+                    return arr;
+                }, []);
+            } else if (obj[key].hoist) {
+                const el = obj[key];
+
+                el.hoist = false;
+                hoisted.push(el);
+                obj[key] = el.expression.left;
+            }
+            scope.body.unshift(...hoisted);
+            // Hoist all elements
+            hoist(obj[key], newScope);
+        }
+    }
+}
+

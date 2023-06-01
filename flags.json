@@ -18,12 +18,17 @@
             "description": "Show the license and quit"
         },
         {
-            "name": "only-default",
+            "name": "all",
             "type": "Boolean",
-            "description": "Only run default analysis: This runs and analyzes the script in the sandbox in normal execution order."
+            "description": "Run all modes of analysis: default, multi-execution and symbolic-execution."
         },
         {
-            "name": "only-multi-exec",
+            "name": "sym-exec",
+            "type": "Boolean",
+            "description": "Only run symbolic execution mode: This runs the script under dynamic symbolic execution to find different sandbox contexts which trigger different behaviours."
+        },
+        {
+            "name": "multi-exec",
             "type": "Boolean",
             "description": "Only run multi-execution analysis: Cover all of the code by forcing execution of the multiple control paths. Since execution is out of order, there may be errors but potentially new information can be extracted."
         },
