@@ -699,10 +699,32 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                             },
                         });
 
+                        let og_loc = window.location;
+                        let loc_proxy = new Proxy(og_loc, {
+                            get: (target, name) => {
+                                if (name in target) {
+                                    if (typeof name !== "symbol")
+                                        lib.logDOM(`window.location.${name}`);
+                                    return target[name];
+                                }
+                                return undefined;
+                            },
+                            set: function(target, name, val) {
+                                if (name in target) {
+                                    lib.logDOM(`window.location.${name}`, true, val);
+                                    target[name] = val;
+                                }
+                                return false;
+                            },
+                        });
+                        delete window.location;
+                        window.location = loc_proxy;
+
                         window._document = new Proxy(window._document, {
                             get: (target, name) => {
                                 if (name in target) {
                                     if (name === "cookie") return target[name];
+                                    if (name === "location") return loc_proxy;
                                     if (typeof name !== "symbol") {
                                         if (typeof target[name] === "function") { //log function calls with arguments
                                             return function () {
@@ -717,10 +739,18 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                                 return undefined;
                             },
                             set: function (target, name, val) {
-                                if (name === "cookie") return target[name];
+                                if (name === "cookie") {
+                                    target[name] = val;
+                                    return true;
+                                }
+                                if (name === "location") {
+                                    og_loc = val;
+                                    return true;
+                                }
                                 if (name in target) {
                                     lib.logDOM(`window.document.${name}`, true, val);
                                     target[name] = val;
+                                    return true;
                                 }
                                 return false;
                             },
@@ -765,26 +795,6 @@ async function run_in_vm(code, sandbox, sym_ex_vm2_flag = false) {
                                     return og_function.apply(window, arguments);
                             }
                         })
-
-                        let loc_proxy = new Proxy(window.location, {
-                            get: (target, name) => {
-                                if (name in target) {
-                                    if (typeof name !== "symbol")
-                                        lib.logDOM(`window.location.${name}`);
-                                    return target[name];
-                                }
-                                return undefined;
-                            },
-                            set: function(target, name, val) {
-                                if (name in target) {
-                                    lib.logDOM(`window.location.${name}`, true, val);
-                                    target[name] = val;
-                                }
-                                return false;
-                            },
-                        });
-                        window.location = loc_proxy;
-                        // delete window.document.location;
 
 
                         let nav_proxy = new Proxy(window.navigator, {
