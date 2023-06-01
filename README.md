@@ -12,6 +12,9 @@ It is possible for code to break out of the emulated environment and attack the 
 Another thing to be warned about, is that the information produced by `--multi-exec` mode has a chance of being incorrect. The emulation is not the same as a complete browser of course so there can be some inaccuracies in the logged results.
 
 ## Install
+You need to ensure that `ExpoSE` is installed properly in the `ExpoSE` folder first.
+
+Then run `npm install` to install all the packages
 
 You can run this tool from it's directory with `node run.js`.
 
