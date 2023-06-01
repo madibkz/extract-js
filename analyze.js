@@ -716,14 +716,28 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window) {
 
     window._sessionStorage = make_log_dom_proxy(window._sessionStorage, "window.sessionStorage");
 
-    let nav_proxy = make_log_dom_proxy(window.navigator, "window.navigator");
+    let nav_proxy = new Proxy(window.navigator, {
+        get: (t, n) => {
+            if (n === "sendBeacon") {
+                return function () {
+                    lib.logDOM(`window.navigator.sendBeacon`, false, null, true, arguments);
+                    lib.logDOMUrl(arguments[0], {element: {localName: "window.navigator.sendBeacon"}}, "POST");
+                    //sendBeacon is not actually implemented in jsdom TODO: make my own sendBeacon
+                    return false;
+                }
+            }
+            return log_dom_proxy_get(t, n, "window.navigator");
+        },
+        set: (t, n, v) => log_dom_proxy_set(t, n, v, "window.navigator"),
+    });
+
     Object.defineProperty(window, "navigator", {
         get: function () {
             return nav_proxy;
         },
         enumerable: true,
         configurable: false
-    })
+    });
 }
 
 function create_node_proxy(node, prefix, node_name, from_func_call = false, args = null, index_str = null) {

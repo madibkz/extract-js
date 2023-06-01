@@ -177,7 +177,7 @@ describe("DOM", function() {
 	it(
 		"should log the url src for a new script element added to the dom",
 		run_dom_script_and_check_output("create_linked_script.js", (stdout) => {
-			assert(stdout.includes(`Resource at https://code.jquery.com/jquery-3.6.0.slim.min.js was requested from DOM emulation from element script.`));
+			assert(stdout.includes(`Resource at https://code.jquery.com/jquery-3.6.0.slim.min.js [GET] was requested from DOM emulation from element script.`));
 			let path_to_urls = `${getTestResultsFolder("create_linked_script.js")}default/urls.json`;
 			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://code.jquery.com/jquery-3.6.0.slim.min.js"));
 		}, "--dom-resource-loading")
@@ -185,7 +185,7 @@ describe("DOM", function() {
 	it(
 		"should log the url src for a new stylesheet element added to the dom",
 		run_dom_script_and_check_output("create_linked_stylesheet.js", (stdout) => {
-			assert(stdout.includes(`Resource at https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css was requested from DOM emulation from element link.`));
+			assert(stdout.includes(`Resource at https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css [GET] was requested from DOM emulation from element link.`));
 			let path_to_urls = `${getTestResultsFolder("create_linked_stylesheet.js")}default/urls.json`;
 			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"));
 		}, "--dom-resource-loading")
@@ -193,7 +193,7 @@ describe("DOM", function() {
 	it(
 		"should log the url src for a new iframe element added to the dom",
 		run_dom_script_and_check_output("create_linked_iframe.js", (stdout) => {
-			assert(stdout.includes(`Resource at https://example.com/ was requested from DOM emulation from element iframe.`));
+			assert(stdout.includes(`Resource at https://example.com/ [GET] was requested from DOM emulation from element iframe.`));
 			let path_to_urls = `${getTestResultsFolder("create_linked_iframe.js")}default/urls.json`;
 			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://example.com/"));
 		}, "--dom-resource-loading")
@@ -382,10 +382,20 @@ describe("DOM", function() {
 		"should log the URL and functions of window.XMLHttpRequest if --dom-network-apis is not there",
 		run_dom_script_and_check_output("XHR.js", (stdout) => {
 			assert(stdout.includes(`Code called window.XMLHttpRequest.open(GET, https://example.com/, )`));
-			assert(stdout.includes(`Resource at https://example.com/ was requested from DOM emulation from element window.XMLHttpRequest.`));
+			assert(stdout.includes(`Resource at https://example.com/ [GET] was requested from DOM emulation from element window.XMLHttpRequest.`));
 			assert(stdout.includes(`Code called window.XMLHttpRequest.send()`));
 			assert(stdout.includes(`Code modified window.XMLHttpRequest.onload`));
 			let path_to_urls = `${getTestResultsFolder("XHR.js")}default/urls.json`;
+			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://example.com/"));
+		}, "--dom-network-apis")
+	);
+
+	it(
+		"should log the URL of window.navigator.sendBeacon",
+		run_dom_script_and_check_output("send_beacon.js", (stdout) => {
+			assert(stdout.includes(`Code called window.navigator.sendBeacon(https://example.com/, )`));
+			assert(stdout.includes(`Resource at https://example.com/ [POST] was requested from DOM emulation from element window.navigator.sendBeacon.`));
+			let path_to_urls = `${getTestResultsFolder("send_beacon.js")}default/urls.json`;
 			assert(fs.readFileSync(path_to_urls, "utf8").includes("https://example.com/"));
 		}, "--dom-network-apis")
 	);

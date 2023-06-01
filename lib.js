@@ -159,8 +159,8 @@ function logUrl(method, url) {
 	saveUrl(url);
 }
 
-function logDOMUrl(url, options) {
-	log("info", `DOM: Resource at ${url} was requested from DOM emulation${options.element ? " from element " + options.element.localName : ""}. Options: ${JSON.stringify(options)}`);
+function logDOMUrl(url, options, method = "GET") {
+	log("info", `DOM: Resource at ${url} [${method}] was requested from DOM emulation${options.element ? " from element " + options.element.localName : ""}. Options: ${JSON.stringify(options)}`);
 	saveUrl(url);
 }
 
