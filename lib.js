@@ -380,7 +380,15 @@ module.exports = {
 			if (typeof value === "string") {
 				if (isURL(value.trim()) || isIP(value.trim())) {
 					logDOMUrl(value.trim(), {element: {localName: property}}, `UNKNOWNMETHOD`, false);
+					return;
 				}
+				//https://stackoverflow.com/questions/3809401/what-is-a-good-regular-expression-to-match-a-url
+				let matched = value.match(/(https?:\/\/)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g)
+				matched ? matched.forEach(u => {
+					if (isURL(u) || isIP(u)) {
+						logDOMUrl(u, {element: {localName: property}}, `UNKNOWNMETHOD`, false);
+					}
+				}) : null;
 			}
 		}
 
