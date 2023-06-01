@@ -16,7 +16,7 @@ let uniq_active_urls = [];
 let uniq_cookies = [];
 let uniq_localStorage = {};
 let uniq_sessionStorage = {};
-//TODO: REFACTOR the duplication out
+
 function summarize(results_dir, file_copying = true) {
 
     let default_exists = fs.existsSync(results_dir + "/default");
@@ -55,49 +55,40 @@ function summarize(results_dir, file_copying = true) {
         }
     }
 
+    function write_if_not_empty(obj, file_name) {
+        if ((Array.isArray(obj) && obj.length !== 0) || (!Array.isArray(obj) && !is_empty_obj(obj)))
+            fs.writeFileSync(results_dir + `/summary/${file_name}`, JSON.stringify(obj, null, "\t"));
+    }
+
     //write the json files
-    if (!is_empty_obj(uniq_snippets))
-        fs.writeFileSync(results_dir + "/summary/unique_snippets.json", JSON.stringify(uniq_snippets, null, "\t"));
-    if (!is_empty_obj(uniq_resources))
-        fs.writeFileSync(results_dir + "/summary/unique_resources.json", JSON.stringify(uniq_resources, null, "\t"));
-    if (!(uniq_iocs.length === 0))
-        fs.writeFileSync(results_dir + "/summary/unique_IOCs.json", JSON.stringify(uniq_iocs, null, "\t"));
-    if (!(uniq_urls.length === 0))
-        fs.writeFileSync(results_dir + "/summary/unique_urls.json", JSON.stringify(uniq_urls, null, "\t"));
-    if (!(uniq_active_urls.length === 0))
-        fs.writeFileSync(results_dir + "/summary/unique_active_urls.json", JSON.stringify(uniq_active_urls, null, "\t"));
-    if (!(uniq_cookies.length === 0))
-        fs.writeFileSync(results_dir + "/summary/unique_cookies.json", JSON.stringify(uniq_cookies, null, "\t"));
-    if (!is_empty_obj(uniq_localStorage))
-        fs.writeFileSync(results_dir + "/summary/unique_localStorage.json", JSON.stringify(uniq_localStorage, null, "\t"));
-    if (!is_empty_obj(uniq_sessionStorage))
-        fs.writeFileSync(results_dir + "/summary/unique_sessionStorage.json", JSON.stringify(uniq_sessionStorage, null, "\t"));
+    write_if_not_empty(uniq_snippets, "unique_snippets.json");
+    write_if_not_empty(uniq_resources, "unique_resources.json");
+    write_if_not_empty(uniq_iocs, "unique_IOCs.json");
+    write_if_not_empty(uniq_urls, "unique_urls.json");
+    write_if_not_empty(uniq_active_urls, "unique_active_urls.json");
+    write_if_not_empty(uniq_cookies, "unique_cookies.json");
+    write_if_not_empty(uniq_localStorage, "unique_localStorage.json");
+    write_if_not_empty(uniq_sessionStorage, "unique_sessionStorage.json");
 
-    //copy the snippet/resource files over to the folders
-    if (file_copying && !is_empty_obj(uniq_snippets)) {
-        fs.mkdirSync(results_dir + "/summary/unique_snippets");
 
-        for (let snip_name in uniq_snippets) {
-            if (uniq_snippets.hasOwnProperty(snip_name)) {
-                fs.copyFileSync(uniq_snippets[snip_name].location[0], results_dir + "/summary/unique_snippets/" + snip_name);
-            }
+    function copy_files_to_folder(obj, folder_name) {
+        if (file_copying && !is_empty_obj(obj)) {
+            fs.mkdirSync(`${results_dir}/summary/${folder_name}`);
+
+            for (let thing in obj)
+                if (obj.hasOwnProperty(thing))
+                    fs.copyFileSync(obj[thing].location[0], `${results_dir}/summary/${folder_name}/${thing}`);
         }
     }
 
-    if (file_copying && !is_empty_obj(uniq_resources)) {
-        fs.mkdirSync(results_dir + "/summary/unique_resources");
-
-        for (let r_name in uniq_resources) {
-            if (uniq_resources.hasOwnProperty(r_name)) {
-                fs.copyFileSync(uniq_resources[r_name].location[0], results_dir + "/summary/unique_resources/" + r_name);
-            }
-        }
-    }
+    copy_files_to_folder(uniq_snippets, "unique_snippets");
+    copy_files_to_folder(uniq_resources, "unique_resources");
 }
 
+//TODO: REFACTOR the duplication out here (it will be complicated as there are lots of edge cases)
 //extract the unique information from an execution folder
 function extract_from_exec(path) {
-    //urls
+    //urls - []
     if (fs.existsSync(path + "/urls.json")) {
         let urls = JSON.parse(fs.readFileSync(path + "/urls.json", "utf8"));
         for (let i = 0; i < urls.length; i++) {
@@ -116,7 +107,7 @@ function extract_from_exec(path) {
         }
     }
 
-    //active urls
+    //active urls - []
     if (fs.existsSync(path + "/active_urls.json")) {
         let urls = JSON.parse(fs.readFileSync(path + "/active_urls.json", "utf8"));
         for (let i = 0; i < urls.length; i++) {
@@ -135,7 +126,7 @@ function extract_from_exec(path) {
         }
     }
 
-    //snippets
+    //snippets - {}
     if (fs.existsSync(path + "/snippets.json")) {
         let snips = JSON.parse(fs.readFileSync(path + "/snippets.json", "utf8"));
         for (let snip_name in snips) {
@@ -167,7 +158,7 @@ function extract_from_exec(path) {
         }
     }
 
-    //iocs
+    //iocs - []
     if (fs.existsSync(path + "/IOC.json")) {
         let iocs = JSON.parse(fs.readFileSync(path + "/IOC.json", "utf8"));
         for (let i = 0; i < iocs.length; i++) {
@@ -194,7 +185,7 @@ function extract_from_exec(path) {
         }
     }
 
-    //resources
+    //resources - {}
     if (fs.existsSync(path + "/resources.json")) {
         let resources = JSON.parse(fs.readFileSync(path + "/resources.json", "utf8"));
         for (let r_name in resources) {
@@ -224,7 +215,7 @@ function extract_from_exec(path) {
         }
     }
 
-    let path_to_cookies = path + "/cookies.json";
+    let path_to_cookies = path + "/cookies.json"; //[]
     if (fs.existsSync(path_to_cookies)) {
         let cookies = JSON.parse(fs.readFileSync(path_to_cookies, "utf8")).cookies;
         for (let i = 0; i < cookies.length; i++) {
@@ -285,8 +276,8 @@ function extract_from_exec(path) {
         }
     }
 
-    extract_from_storage(path + "/sessionStorage.json", uniq_sessionStorage);
-    extract_from_storage(path + "/localStorage.json", uniq_localStorage);
+    extract_from_storage(path + "/sessionStorage.json", uniq_sessionStorage); //{}
+    extract_from_storage(path + "/localStorage.json", uniq_localStorage); //{}
 
 }
 
