@@ -20,7 +20,7 @@ let dom_logs = [];
 let latestUrl = "";
 let number_of_wscript_code_snippets = 0;
 
-let logDom = true;
+let logDom = false;
 
 const logSnippet = function(filename, logContent, content, deobfuscate = false) {
 	snippets[filename] = logContent;
@@ -43,7 +43,7 @@ function new_symex_log_context(count, input) {
 	IOC = [];
 	dom_logs = [];
 
-	logDom = true;
+	logDom = false;
 
 	if (count > 0) {
 		//reset directory to normal directory
@@ -70,7 +70,7 @@ function restartState() {
 	IOC = [];
 	dom_logs = [];
 
-	logDom = true;
+	logDom = false;
 
 	latestUrl = "";
 	number_of_wscript_code_snippets = 0;
@@ -270,7 +270,9 @@ module.exports = {
 			fs.writeFileSync(path.join(directory, "dom_logs.json"), JSON.stringify(dom_logs, null, "\t"));
 		}
 	},
-	turnOffLogDOM: () => {logDom = false},
+	// turnOnLogDOM: () => {logDom = true},
+	// turnOffLogDOM: () => {logDom = false},
+	toggleLogDOM: () => {logDom = !logDom},
 	logIOC,
 	runShellCommand: (command) => {
 		const filename = "WSCRIPT_CODE_" + (++number_of_wscript_code_snippets) + "_" + getUUID();
