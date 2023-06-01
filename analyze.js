@@ -1043,12 +1043,14 @@ async function run_in_jsdom_vm(sandbox, code, symex_input = null) {
 
                 //RESTART LOGGING AND SANDBOX STUFF:
                 restartLoggedState(code);
-            } else if (sym_exec_enabled) {
-                lib.error(e.stack, true, false);
-                return;
             } else {
+                lib.turnOffLogDOM();
                 lib.error(e.stack, true, false);
-                throw e;
+                if (sym_exec_enabled) {
+                    return;
+                } else {
+                    throw e;
+                }
             }
         }
     } while (codeHadAnError)
