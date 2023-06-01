@@ -148,6 +148,7 @@ if (default_enabled || multi_exec_enabled) {
         let input = expose_json_results.done[i].input;
         //Make new folder for this new input, change directory of logging to be in this folder now
         lib.new_symex_log_context(i, input);
+        lib.logJS(code, `${numberOfExecutedSnippets}_input_script_INSTRUMENTED`, "", false, null, "INPUT SCRIPT", false);
 
         let unique_context = {};
         for (let field in input) { //only include unique values in context
@@ -168,7 +169,7 @@ if (default_enabled || multi_exec_enabled) {
         //Run sandbox for this input combination
         const sandbox = make_sandbox(input);
         //pass true to make them run in vm2 rather than jsdom for now
-        run_emulation(code, sandbox, true);
+        run_emulation(code, sandbox, input);
     }
 }
 
@@ -603,7 +604,7 @@ function make_log_dom_proxy(obj, prefix) {
     });
 }
 
-function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window) {
+function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window, symex_input = null) {
     //add our sandbox properties
     for (let field in sandbox) {
         if (sandbox.hasOwnProperty(field) && !dont_set_from_sandbox.includes(field)) {
@@ -682,7 +683,7 @@ function instrument_jsdom_global(sandbox, dont_set_from_sandbox, window) {
 
     //Add logging to the window's members
     logged_dom_vals.window.properties.forEach((prop) => {
-        let real_val = window[prop[0]];
+        let real_val = (symex_input && symex_input[prop[0]]) ? symex_input[prop[0]] :  window[prop[0]];
         let attributes = {
             get: function () {
                 lib.logDOM(`window.${prop[0]}`);
@@ -805,7 +806,7 @@ function return_node_proxy_or_value(prefix_str, t, n, function_ctx, args = null)
     return result;
 }
 
-async function run_in_jsdom_vm(sandbox, code) {
+async function run_in_jsdom_vm(sandbox, code, symex_input = null) {
     lib.debug("Analyzing with jsdom");
 
     let url = "https://example.com/";
@@ -904,7 +905,7 @@ async function run_in_jsdom_vm(sandbox, code) {
 
                 //Setting up the global context of the emulation
                 beforeParse(window) {
-                    instrument_jsdom_global(sandbox, dont_set_in_jsdom_from_sandbox, window);
+                    instrument_jsdom_global(sandbox, dont_set_in_jsdom_from_sandbox, window, symex_input);
                 }
             });
 
@@ -976,11 +977,11 @@ function run_in_vm2(sandbox, code) {
     } while (codeHadAnError)
 }
 
-async function run_emulation(code, sandbox, sym_ex_vm2_flag = false) {
-    if (argv["vm2"] || sym_ex_vm2_flag) {
+async function run_emulation(code, sandbox, symex_input = null) {
+    if (argv["vm2"]) {
         run_in_vm2(sandbox, code);
     } else { //jsdom default emulation context
-        await run_in_jsdom_vm(sandbox, code);
+        await run_in_jsdom_vm(sandbox, code, symex_input);
     }
 }
 

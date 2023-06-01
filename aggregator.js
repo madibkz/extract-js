@@ -132,6 +132,7 @@ function extract_from_exec(path) {
         for (let snip_name in snips) {
             if (snips.hasOwnProperty(snip_name)) {
                 if (snip_name.includes("input_script")) continue; //skip input script snippets
+                if (snip_name.includes("HTML_1_initial")) continue; //skip initial HTML snippets
 
                 let path_to_snip = path + "/snippets/" + snip_name;
                 let snip_contents = fs.readFileSync(path_to_snip, "utf8");

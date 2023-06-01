@@ -3,11 +3,30 @@ var S$ = require('S$'); //TODO: wrap this in an anonymous function maybe?
 var window = global;
 var self = global;
 
+//window symbolic tracking properties
 global.origin = S$.symbol("origin", "");
+global.closed = S$.symbol("closed", false);
+global.devicePixelRatio = S$.symbol("devicePixelRatio", 0);
+global.fullScreen = S$.symbol("fullScreen", false);
+global.innerHeight = S$.symbol("innerHeight", 0);
+global.innerWidth = S$.symbol("innerWidth", 0);
+global.name = S$.symbol("name", "");
+var opener = global;
+global.outerHeight = S$.symbol("outerHeight", 0);
+global.outerWidth = S$.symbol("outerWidth", 0);
+global.pageXOffset = S$.symbol("pageXOffset", 0);
+global.pageYOffset = S$.symbol("pageYOffset", 0);
+var parent = global;
+global.screenX = S$.symbol("screenX", 0);
+global.screenY = S$.symbol("screenY", 0);
+global.screenLeft = S$.symbol("screenLeft", 0);
+global.screenTop = S$.symbol("screenTop", 0);
+global.status = S$.symbol("status", "");
+var top = global;
 
-//build DOM emulation / symbol tracking
+
 (() => {
-    function buildProxyForEmulatedObject(symex_prefix, file_path) {
+    let buildProxyForEmulatedObject = (symex_prefix, file_path) => {
         let emulatedPatch = require(file_path);
         let emulatedObject = emulatedPatch.getObject();
         let emulatedHandler = emulatedPatch.getProxyHandler();
@@ -39,7 +58,7 @@ global.origin = S$.symbol("origin", "");
         return new Proxy(emulatedObject, emulatedHandler);
     }
 
-    function getDefaultValForType(o) {
+    let getDefaultValForType = (o) => {
         if (Array.isArray(o)) {
             return [getDefaultValForType(o[0])];
         } else if (typeof o === "string") {
@@ -54,13 +73,13 @@ global.origin = S$.symbol("origin", "");
         throw new Error("(SYM-EXEC MODE): Error in prepend_sym_script.js: cannot find type of object " + o);
     }
 
+    //build DOM emulation / symbol tracking
     global.location = buildProxyForEmulatedObject("location.", "./emulator/location.js");
     global.navigator = buildProxyForEmulatedObject("navigator.", "./emulator/navigator/navigator.js");
     global.document = buildProxyForEmulatedObject("document.", "./emulator/document.js")
-})();
+    global.clientInformation = navigator;
 
-//build active x emulation/symbol tracking
-(() => {
+    //build active x emulation/symbol tracking
     let wmi = require("./emulator/WMI");
     global.InstallProduct = (x) => {
         console.log("InstallProduct " + x);
@@ -163,4 +182,3 @@ global.origin = S$.symbol("origin", "");
     global.WSH = wscript_proxy;
     global.ActiveXObject = activex_mock.ActiveXObject;
 })();
-

@@ -10,7 +10,8 @@ for (varName in this) {
     if (typeof(varValue) == "string") {
         // check that the string is valid JS syntax
         try {
-            if (varValue.trim() !== "" && varValue !== "dangerously") {
+            if (varValue.trim() !== "" && varValue !== "dangerously" && varValue.match(/[a-zA-Z]+[a-zA-Z0-9]*/)[0] !== varValue) {
+
                 const script = new vm.Script(varValue);
                 logJS(varValue, `STRING_${++number_of_js_str}_`, "", true, null, "JavaScript string found in var " + varName)
                 // Automatically evaling all JS can result in the program state getting polluted.
