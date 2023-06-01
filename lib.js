@@ -7,6 +7,7 @@ const uuid = require("uuid");
 const argv = require("./argv.js").run;
 const fsextra = require("fs-extra");
 const vm = require("vm");
+const {list_of_event_attributes} = require("./utils");
 
 let directory = path.normalize(process.argv[3]);
 
@@ -23,6 +24,7 @@ let number_of_wscript_code_snippets = 0;
 let number_of_set_timeout_calls = 0;
 let number_of_set_interval_calls = 0;
 let number_of_jsdom_scripts = 0;
+let number_of_event_scripts = 0;
 
 let logDom = false;
 
@@ -54,6 +56,7 @@ function new_symex_log_context(count, input) {
 	number_of_set_timeout_calls = 0;
 	number_of_set_interval_calls = 0;
 	number_of_jsdom_scripts = 0;
+	number_of_event_scripts = 0;
 
 	if (count > 0) {
 		//reset directory to normal directory
@@ -87,6 +90,7 @@ function restartState() {
 	number_of_set_timeout_calls = 0;
 	number_of_set_interval_calls = 0;
 	number_of_jsdom_scripts = 0;
+	number_of_event_scripts = 0;
 
 	//delete any written files
 	fsextra.emptyDirSync(directory);
@@ -280,11 +284,11 @@ module.exports = {
 		function args_to_string() {
 			let str = "";
 			for (let arg of args) {
-				if (arg.nodeType) {
+				// if (arg.nodeType) {
+				// 	str += arg.toString() + ", ";
+				// } else {
 					str += arg.toString() + ", ";
-				} else {
-					str += JSON.stringify(arg) + ", ";
-				}
+				// }
 			}
 			return str;
 		}
@@ -297,12 +301,33 @@ module.exports = {
 				return value.match(/[a-zA-Z]+[a-zA-Z0-9]*/)[0] === value;
 			}
 
-			try {
-				if (typeof value === "string" && value.trim() !== "" && !is_one_variable(value)) {
-					const script = new vm.Script(value);
-					logJS(value, `DOM_${++number_of_jsdom_scripts}_`, "", true, null, `JavaScript string found in ${found_in}`);
+			function is_event_prop(found) {
+				let found_split = found.split(".");
+				let prop = found_split[found_split.length - 1];
+
+				// for (let e of list_of_event_attributes) {
+				// 	if (prop.startsWith(e)) {
+				// 		return true;
+				// 	}
+				// }
+				// return false;
+
+				//technically each event starts with on so this is less computationally expensive however slightly less accurate
+				return prop.startsWith("on");
+			}
+
+
+			if (typeof value === "string") {
+				try {
+					if (value.trim() !== "" && !is_one_variable(value)) {
+						const script = new vm.Script(value);
+						logJS(value, `DOM_${++number_of_jsdom_scripts}_`, "", true, null, `JavaScript string found in ${found_in}`);
+					}
+				} catch (err) {
 				}
-			} catch (err) {
+			} else if (typeof value === "function" && (found_in.includes("addEventListener") || is_event_prop(found_in))) {
+				//this is an event
+				logJS(value.toString(), `DOM_${++number_of_event_scripts}_`, "", true, null, `JavaScript function found in ${found_in}`);
 			}
 		}
 
